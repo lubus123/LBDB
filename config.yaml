@@ -1,4 +1,4 @@
 theme: "hyde-hyde"
-baseURL: http://example.org/
+baseURL: /
 languageCode: en-us
-title: My New Hugo Site
+title: LBDB
