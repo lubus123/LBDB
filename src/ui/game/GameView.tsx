@@ -362,7 +362,7 @@ const GameView: Component<{ onExit: () => void; mode: GameMode }> = (props) => {
             height: '100%',
             "pointer-events": 'none',
           }}
-          viewBox="0 0 920 560"
+          viewBox="0 0 780 640"
         >
           <Dice dice={currentState().dice} movesLeft={currentState().movesLeft} />
         </svg>
