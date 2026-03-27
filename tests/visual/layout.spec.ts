@@ -1,0 +1,240 @@
+/**
+ * Visual layout tests for LibreGammon.
+ *
+ * Run: npx playwright test
+ * Update baselines: npx playwright test --update-snapshots
+ *
+ * These tests capture screenshots at key states across viewports
+ * (desktop, Android portrait, iPhone SE) and verify:
+ *   1. No scrolling on the game view — everything fits in viewport
+ *   2. Board is fully visible (not clipped by header)
+ *   3. Controls are accessible
+ *   4. Landing page renders correctly
+ */
+
+import { test, expect, Page } from '@playwright/test';
+import * as fs from 'fs';
+import * as path from 'path';
+
+const SCREENSHOT_DIR = path.join(__dirname, '../../screenshots');
+
+// Ensure screenshot dir exists
+function ensureDir(dir: string) {
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+}
+
+function screenshotPath(name: string, project: string): string {
+  const dir = path.join(SCREENSHOT_DIR, project);
+  ensureDir(dir);
+  return path.join(dir, `${name}.png`);
+}
+
+async function assertNoScroll(page: Page) {
+  const scrollInfo = await page.evaluate(() => {
+    const el = document.scrollingElement || document.documentElement;
+    return {
+      scrollHeight: el.scrollHeight,
+      clientHeight: el.clientHeight,
+      scrollTop: el.scrollTop,
+      bodyOverflow: getComputedStyle(document.body).overflow,
+      hasVerticalScroll: el.scrollHeight > el.clientHeight + 2,
+    };
+  });
+  // Allow 2px tolerance for sub-pixel rounding
+  expect(
+    scrollInfo.hasVerticalScroll,
+    `Page has scroll: scrollHeight=${scrollInfo.scrollHeight}, clientHeight=${scrollInfo.clientHeight}`
+  ).toBe(false);
+}
+
+async function assertBoardVisible(page: Page) {
+  const boardSvg = page.locator('.board-svg');
+  await expect(boardSvg).toBeVisible();
+
+  const box = await boardSvg.boundingBox();
+  expect(box, 'Board SVG has no bounding box').not.toBeNull();
+  expect(box!.y).toBeGreaterThanOrEqual(0); // Not clipped above viewport
+  expect(box!.height).toBeGreaterThan(50); // Has meaningful size
+  expect(box!.width).toBeGreaterThan(50);
+
+  // Board top must be below the header
+  const headerBox = await page.locator('.header').boundingBox();
+  if (headerBox) {
+    expect(
+      box!.y,
+      `Board top (${box!.y}) must be >= header bottom (${headerBox.y + headerBox.height})`
+    ).toBeGreaterThanOrEqual(headerBox.y + headerBox.height - 1);
+  }
+}
+
+async function assertControlsVisible(page: Page) {
+  // Roll button should be visible on initial game state
+  const rollBtn = page.locator('button', { hasText: 'Roll' });
+  await expect(rollBtn).toBeVisible();
+
+  // Bottom controls (Flip, New, Exit) should be visible
+  const flipBtn = page.locator('button', { hasText: 'Flip' });
+  await expect(flipBtn).toBeVisible();
+}
+
+// ─── Landing Page ───
+
+test.describe('Landing page', () => {
+  test('renders correctly', async ({ page }, testInfo) => {
+    await page.goto('/');
+    await page.waitForSelector('.landing');
+
+    // Capture screenshot
+    await page.screenshot({
+      path: screenshotPath('01-landing', testInfo.project.name),
+      fullPage: false,
+    });
+
+    // Title visible
+    await expect(page.locator('.landing h1')).toBeVisible();
+
+    // Both play buttons visible
+    await expect(page.locator('button', { hasText: 'Play vs AI' })).toBeVisible();
+    await expect(page.locator('button', { hasText: 'Local 2-Player' })).toBeVisible();
+
+    // No scroll
+    await assertNoScroll(page);
+  });
+});
+
+// ─── Game View: Initial State ───
+
+test.describe('Game view - initial state', () => {
+  test('board fits viewport with no scroll', async ({ page }, testInfo) => {
+    await page.goto('/');
+    await page.click('button:has-text("Play vs AI")');
+    await page.waitForSelector('.board-svg');
+
+    // Small wait for layout to settle
+    await page.waitForTimeout(300);
+
+    // Screenshot: initial game state
+    await page.screenshot({
+      path: screenshotPath('02-game-initial', testInfo.project.name),
+      fullPage: false,
+    });
+
+    // Core assertions
+    await assertBoardVisible(page);
+    await assertNoScroll(page);
+    await assertControlsVisible(page);
+  });
+
+  test('board is not clipped by header', async ({ page }, testInfo) => {
+    await page.goto('/');
+    await page.click('button:has-text("Play vs AI")');
+    await page.waitForSelector('.board-svg');
+    await page.waitForTimeout(300);
+
+    await assertBoardVisible(page);
+
+    // Additional: check that point numbers at top of board are visible
+    // The SVG should start below the header
+    const boardBox = await page.locator('.board-svg').boundingBox();
+    const headerBox = await page.locator('.header').boundingBox();
+    expect(boardBox!.y).toBeGreaterThanOrEqual(headerBox!.y + headerBox!.height);
+  });
+});
+
+// ─── Game View: After Rolling ───
+
+test.describe('Game view - after roll', () => {
+  test('dice visible and board still fits', async ({ page }, testInfo) => {
+    await page.goto('/');
+    await page.click('button:has-text("Play vs AI")');
+    await page.waitForSelector('.board-svg');
+    await page.waitForTimeout(300);
+
+    // Click Roll
+    await page.click('button:has-text("Roll")');
+    await page.waitForTimeout(500);
+
+    await page.screenshot({
+      path: screenshotPath('03-after-roll', testInfo.project.name),
+      fullPage: false,
+    });
+
+    // Board still visible and not clipped
+    await assertBoardVisible(page);
+    await assertNoScroll(page);
+
+    // Dice should be displayed (the SVG dice group exists)
+    const diceGroup = page.locator('.dice-group');
+    // Dice might be in overlay SVG, check it exists
+    const diceCount = await diceGroup.count();
+    expect(diceCount).toBeGreaterThanOrEqual(1);
+  });
+});
+
+// ─── Game View: AI Turn ───
+
+test.describe('Game view - AI turn', () => {
+  test('AI plays and board stays in viewport', async ({ page }, testInfo) => {
+    await page.goto('/');
+    await page.click('button:has-text("Play vs AI")');
+    await page.waitForSelector('.board-svg');
+    await page.waitForTimeout(300);
+
+    // Roll, then let AI take its turn
+    await page.click('button:has-text("Roll")');
+
+    // Wait for AI to finish (roll delay + move delays)
+    await page.waitForTimeout(3000);
+
+    await page.screenshot({
+      path: screenshotPath('04-after-ai-turn', testInfo.project.name),
+      fullPage: false,
+    });
+
+    await assertBoardVisible(page);
+    await assertNoScroll(page);
+  });
+});
+
+// ─── Game Over (via board flip to verify modal) ───
+
+test.describe('Game view - board flip', () => {
+  test('flipped board stays in viewport', async ({ page }, testInfo) => {
+    await page.goto('/');
+    await page.click('button:has-text("Play vs AI")');
+    await page.waitForSelector('.board-svg');
+    await page.waitForTimeout(300);
+
+    // Press F to flip
+    await page.keyboard.press('f');
+    await page.waitForTimeout(200);
+
+    await page.screenshot({
+      path: screenshotPath('05-board-flipped', testInfo.project.name),
+      fullPage: false,
+    });
+
+    await assertBoardVisible(page);
+    await assertNoScroll(page);
+  });
+});
+
+// ─── Local 2-Player Mode ───
+
+test.describe('Local 2-player mode', () => {
+  test('renders correctly', async ({ page }, testInfo) => {
+    await page.goto('/');
+    await page.click('button:has-text("Local 2-Player")');
+    await page.waitForSelector('.board-svg');
+    await page.waitForTimeout(300);
+
+    await page.screenshot({
+      path: screenshotPath('06-local-mode', testInfo.project.name),
+      fullPage: false,
+    });
+
+    await assertBoardVisible(page);
+    await assertNoScroll(page);
+    await assertControlsVisible(page);
+  });
+});

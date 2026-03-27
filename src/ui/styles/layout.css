@@ -9,6 +9,7 @@ html, body {
   font-family: var(--font-main);
   background: var(--bg-primary);
   color: var(--text-primary);
+  overflow: hidden;
 }
 
 #app {
@@ -25,6 +26,7 @@ html, body {
   padding: 0 16px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   flex-shrink: 0;
+  z-index: 10;
 }
 
 .header-logo {
@@ -41,9 +43,16 @@ html, body {
 
 .main-content {
   flex: 1;
+  min-height: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
+  overflow: hidden;
+}
+
+/* On mobile, don't center — align to top so board isn't pushed above viewport */
+@media (max-width: 768px) {
+  .main-content {
+    align-items: stretch;
+  }
 }
