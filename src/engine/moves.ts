@@ -13,10 +13,17 @@ import {
 
 /**
  * Get the destination point for a checker move.
+ * Handles bar entry as a special case.
  * Returns the target point, or a bear-off indicator (<=0 for white, >=25 for black).
  */
 function destination(from: number, die: number, color: Color): number {
-  if (color === 'w') return from - die;
+  if (color === 'w') {
+    // White enters from bar (index 0) at point 25-die (opponent's home board)
+    if (from === W_BAR) return 25 - die;
+    return from - die;
+  }
+  // Black enters from bar (index 25) at point die (opponent's home board)
+  if (from === B_BAR) return die;
   return from + die;
 }
 
