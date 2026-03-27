@@ -1,11 +1,11 @@
-import { Component, Show, createSignal, createMemo, createEffect } from 'solid-js';
+import { Component, Show, createSignal, createMemo, createEffect, onCleanup } from 'solid-js';
 import type { GameState, Color, CheckerMove, GameResult } from '../../shared/types';
 import { W_BAR, B_BAR } from '../../shared/constants';
-import { cloneBoard, applyMove as applyBoardMove } from '../../engine/board';
 import { newGame, doRoll, doMove, doDouble, doAcceptDouble, doDropDouble, undoMove, confirmTurn, getGameResult } from '../../engine/game';
 import { legalDestinations, movableCheckers, hasAnyMoves } from '../../engine/moves';
 import { canDouble } from '../../engine/cube';
 import { pipCount } from '../../engine/pip';
+import { chooseBestTurn } from '../../engine/ai';
 import { formatTurn, formatDice } from '../../shared/notation';
 import Board from '../board/Board';
 import Dice from '../board/Dice';
@@ -17,17 +17,38 @@ interface TurnRecord {
   moves: CheckerMove[];
 }
 
-const GameView: Component<{ onExit: () => void }> = (props) => {
+export type GameMode = 'local' | 'ai';
+
+const AI_ROLL_DELAY = 500;
+const AI_MOVE_DELAY = 350;
+
+const GameView: Component<{ onExit: () => void; mode: GameMode }> = (props) => {
   const [state, setState] = createSignal<GameState>(newGame());
   const [selectedPoint, setSelectedPoint] = createSignal<number | null>(null);
   const [flipped, setFlipped] = createSignal(false);
   const [history, setHistory] = createSignal<TurnRecord[]>([]);
+  const [aiThinking, setAiThinking] = createSignal(false);
+
+  let aiTimeouts: number[] = [];
+
+  onCleanup(() => {
+    aiTimeouts.forEach(t => clearTimeout(t));
+  });
+
+  function clearAiTimeouts() {
+    aiTimeouts.forEach(t => clearTimeout(t));
+    aiTimeouts = [];
+  }
 
   const currentState = () => state();
+  const isAiMode = () => props.mode === 'ai';
+  const isAiTurn = () => isAiMode() && currentState().turn === 'b';
+  const playerColor = (): Color => 'w';
 
   const moveablePoints = createMemo(() => {
     const s = currentState();
     if (s.phase !== 'moving') return [];
+    if (isAiTurn()) return []; // Don't show highlights during AI turn
     return movableCheckers(s.board, s.movesLeft, s.turn);
   });
 
@@ -35,6 +56,7 @@ const GameView: Component<{ onExit: () => void }> = (props) => {
     const s = currentState();
     const sel = selectedPoint();
     if (s.phase !== 'moving' || sel === null) return [];
+    if (isAiTurn()) return [];
     return legalDestinations(s.board, sel, s.movesLeft, s.turn);
   });
 
@@ -43,21 +65,99 @@ const GameView: Component<{ onExit: () => void }> = (props) => {
 
   const gameResult = createMemo(() => getGameResult(currentState()));
 
+  // AI auto-play effect
+  createEffect(() => {
+    const s = currentState();
+    if (!isAiMode()) return;
+    if (s.phase === 'gameOver') return;
+    if (s.turn !== 'b') return;
+
+    if (s.phase === 'cubeOffered') {
+      // AI always accepts doubles (simple strategy)
+      const t = window.setTimeout(() => {
+        setState(prev => {
+          if (prev.phase !== 'cubeOffered') return prev;
+          return doAcceptDouble(prev);
+        });
+      }, AI_ROLL_DELAY);
+      aiTimeouts.push(t);
+      return;
+    }
+
+    if (s.phase === 'waiting') {
+      setAiThinking(true);
+      const t = window.setTimeout(() => {
+        setState(prev => {
+          if (prev.phase !== 'waiting' || prev.turn !== 'b') return prev;
+          return doRoll(prev);
+        });
+      }, AI_ROLL_DELAY);
+      aiTimeouts.push(t);
+      return;
+    }
+
+    if (s.phase === 'moving' && s.dice) {
+      setAiThinking(true);
+      const aiResult = chooseBestTurn(s);
+
+      if (aiResult.moves.length === 0) {
+        // No moves - confirm turn
+        const t = window.setTimeout(() => {
+          setState(prev => {
+            if (prev.phase !== 'moving' || prev.turn !== 'b') return prev;
+            recordTurn(prev, prev);
+            return confirmTurn(prev);
+          });
+          setAiThinking(false);
+        }, AI_MOVE_DELAY);
+        aiTimeouts.push(t);
+        return;
+      }
+
+      // Apply AI moves one by one with delays for animation feel
+      let currentDelay = AI_MOVE_DELAY;
+      const savedDice = s.dice;
+
+      for (let i = 0; i < aiResult.moves.length; i++) {
+        const move = aiResult.moves[i];
+        const isLast = i === aiResult.moves.length - 1;
+
+        const t = window.setTimeout(() => {
+          setState(prev => {
+            if (prev.turn !== 'b' || prev.phase !== 'moving') return prev;
+            const next = doMove(prev, move);
+
+            if (isLast || next.phase === 'waiting' || next.phase === 'gameOver') {
+              // Turn ended
+              setHistory(h => [...h, {
+                ply: prev.ply,
+                player: 'b',
+                dice: savedDice,
+                moves: aiResult.moves,
+              }]);
+              setAiThinking(false);
+            }
+            return next;
+          });
+        }, currentDelay);
+        aiTimeouts.push(t);
+        currentDelay += AI_MOVE_DELAY;
+      }
+    }
+  });
+
   function handleRoll() {
     const s = currentState();
     if (s.phase !== 'waiting') return;
+    if (isAiTurn()) return;
     const newState = doRoll(s);
     setState(newState);
-
-    // If it was a forced pass (phase went back to 'waiting'), record it
-    if (newState.phase === 'waiting' && newState.dice === null) {
-      // Turn was auto-skipped
-    }
   }
 
   function handleDouble() {
     const s = currentState();
     if (s.phase !== 'waiting') return;
+    if (isAiTurn()) return;
     setState(doDouble(s));
   }
 
@@ -72,20 +172,18 @@ const GameView: Component<{ onExit: () => void }> = (props) => {
   function handlePointClick(point: number) {
     const s = currentState();
     if (s.phase !== 'moving') return;
+    if (isAiTurn()) return;
 
     const sel = selectedPoint();
 
     // If clicking a destination
     if (sel !== null && legalDests().includes(point)) {
-      // Find the move
       const dests = legalDestinations(s.board, sel, s.movesLeft, s.turn);
       if (dests.includes(point)) {
-        // Determine which die to use
         const uniqueDice = [...new Set(s.movesLeft)];
         let usedDie = 0;
         for (const die of uniqueDice) {
           const dest = s.turn === 'w' ? sel - die : sel + die;
-          // Handle bear off
           if (s.turn === 'w' && dest <= 0 && (point === 0)) {
             usedDie = die;
             break;
@@ -117,7 +215,6 @@ const GameView: Component<{ onExit: () => void }> = (props) => {
         setState(newState);
         setSelectedPoint(null);
 
-        // If turn ended, record it
         if (newState.phase === 'waiting' || newState.phase === 'gameOver') {
           recordTurn(s, newState);
         }
@@ -125,13 +222,11 @@ const GameView: Component<{ onExit: () => void }> = (props) => {
       }
     }
 
-    // If clicking a moveable checker
     if (moveablePoints().includes(point)) {
       setSelectedPoint(sel === point ? null : point);
       return;
     }
 
-    // Clicking elsewhere deselects
     setSelectedPoint(null);
   }
 
@@ -139,12 +234,14 @@ const GameView: Component<{ onExit: () => void }> = (props) => {
     const s = currentState();
     const sel = selectedPoint();
     if (sel === null || s.phase !== 'moving') return;
+    if (isAiTurn()) return;
 
     const bearOffPoint = s.turn === 'w' ? 0 : 25;
     handlePointClick(bearOffPoint);
   }
 
   function handleUndo() {
+    if (isAiTurn()) return;
     const newState = undoMove(currentState());
     setState(newState);
     setSelectedPoint(null);
@@ -153,8 +250,8 @@ const GameView: Component<{ onExit: () => void }> = (props) => {
   function handleConfirm() {
     const s = currentState();
     if (s.phase !== 'moving') return;
+    if (isAiTurn()) return;
 
-    // Only confirm if no more moves possible
     if (!hasAnyMoves(s.board, s.movesLeft, s.turn)) {
       const newState = confirmTurn(s);
       recordTurn(s, newState);
@@ -163,32 +260,82 @@ const GameView: Component<{ onExit: () => void }> = (props) => {
     }
   }
 
-  function recordTurn(before: GameState, after: GameState) {
+  function recordTurn(before: GameState, _after: GameState) {
     if (before.dice) {
       setHistory(prev => [...prev, {
         ply: before.ply,
         player: before.turn,
         dice: before.dice!,
-        moves: before.turnMoves.length > 0 ? before.turnMoves : after.turnMoves.length > 0 ? after.turnMoves : before.turnMoves,
+        moves: before.turnMoves,
       }]);
     }
   }
 
   function handleNewGame() {
+    clearAiTimeouts();
+    setAiThinking(false);
     setState(newGame());
     setSelectedPoint(null);
     setHistory([]);
   }
 
+  function handleExit() {
+    clearAiTimeouts();
+    props.onExit();
+  }
+
   const canConfirmTurn = createMemo(() => {
     const s = currentState();
+    if (isAiTurn()) return false;
     return s.phase === 'moving' && !hasAnyMoves(s.board, s.movesLeft, s.turn);
   });
 
   const canUndo = createMemo(() => {
     const s = currentState();
+    if (isAiTurn()) return false;
     return s.phase === 'moving' && s.turnMoves.length > 0;
   });
+
+  const turnLabel = () => {
+    const s = currentState();
+    if (s.phase === 'gameOver') return '';
+    if (isAiMode()) {
+      if (s.turn === 'w') return "Your turn";
+      return "AI thinking...";
+    }
+    return s.turn === 'w' ? "White's turn" : "Black's turn";
+  };
+
+  // Keyboard shortcuts
+  function handleKeyDown(e: KeyboardEvent) {
+    if (e.target instanceof HTMLInputElement) return;
+    switch (e.key) {
+      case 'f':
+        setFlipped(f => !f);
+        break;
+      case 'z':
+        handleUndo();
+        break;
+      case 'Enter':
+        if (currentState().phase === 'waiting' && !isAiTurn()) {
+          handleRoll();
+        } else if (canConfirmTurn()) {
+          handleConfirm();
+        }
+        break;
+      case 'd':
+        handleDouble();
+        break;
+      case 'Escape':
+        setSelectedPoint(null);
+        break;
+    }
+  }
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('keydown', handleKeyDown);
+    onCleanup(() => window.removeEventListener('keydown', handleKeyDown));
+  }
 
   return (
     <div class="board-container">
@@ -222,24 +369,29 @@ const GameView: Component<{ onExit: () => void }> = (props) => {
       </div>
 
       <div class="side-panel">
+        {/* Turn indicator */}
+        <div class="panel-section turn-indicator">
+          <div class="turn-label">{turnLabel()}</div>
+          <Show when={aiThinking()}>
+            <div class="ai-thinking-dots">
+              <span class="dot" />
+              <span class="dot" />
+              <span class="dot" />
+            </div>
+          </Show>
+        </div>
+
         {/* Player info */}
         <div class="panel-section">
           <div class={`player-info ${currentState().turn === 'b' ? 'active' : ''}`}>
             <div class="color-dot black" />
-            <span>Black</span>
+            <span>{isAiMode() ? 'AI' : 'Black'}</span>
+            <span class="pip-inline">{blackPips()} pips</span>
           </div>
           <div class={`player-info ${currentState().turn === 'w' ? 'active' : ''}`}>
             <div class="color-dot white" />
-            <span>White</span>
-          </div>
-        </div>
-
-        {/* Pip count */}
-        <div class="panel-section">
-          <div class="panel-title">Pip Count</div>
-          <div class="pip-display">
-            <span>White: <span class="pip-value">{whitePips()}</span></span>
-            <span>Black: <span class="pip-value">{blackPips()}</span></span>
+            <span>{isAiMode() ? 'You' : 'White'}</span>
+            <span class="pip-inline">{whitePips()} pips</span>
           </div>
         </div>
 
@@ -250,7 +402,8 @@ const GameView: Component<{ onExit: () => void }> = (props) => {
             <span class="cube-value">{currentState().cube.value}</span>
             <span style={{ color: 'var(--text-secondary)', "font-size": '12px' }}>
               {currentState().cube.owner === 'center' ? 'Center' :
-                currentState().cube.owner === 'w' ? 'White' : 'Black'}
+                currentState().cube.owner === 'w' ? (isAiMode() ? 'You' : 'White') :
+                (isAiMode() ? 'AI' : 'Black')}
             </span>
           </div>
         </div>
@@ -259,24 +412,37 @@ const GameView: Component<{ onExit: () => void }> = (props) => {
         <div class="panel-section">
           <div class="panel-title">Actions</div>
           <div class="controls">
-            <Show when={currentState().phase === 'waiting'}>
-              <button class="btn btn-primary" onClick={handleRoll}>Roll</button>
+            <Show when={currentState().phase === 'waiting' && !isAiTurn()}>
+              <button class="btn btn-primary" onClick={handleRoll}>
+                Roll <span class="shortcut-hint">Enter</span>
+              </button>
               <Show when={canDouble(currentState().cube, currentState().turn)}>
-                <button class="btn" onClick={handleDouble}>Double</button>
+                <button class="btn" onClick={handleDouble}>
+                  Double <span class="shortcut-hint">D</span>
+                </button>
               </Show>
             </Show>
 
-            <Show when={currentState().phase === 'cubeOffered'}>
-              <button class="btn btn-primary" onClick={handleAcceptDouble}>Accept</button>
-              <button class="btn btn-danger" onClick={handleDropDouble}>Drop</button>
+            <Show when={currentState().phase === 'cubeOffered' && !isAiTurn()}>
+              <div class="double-offer">
+                <span class="double-msg">
+                  {isAiMode() ? 'AI doubles!' : (currentState().turn === 'w' ? 'White' : 'Black') + ' doubles!'}
+                </span>
+                <button class="btn btn-primary" onClick={handleAcceptDouble}>Accept</button>
+                <button class="btn btn-danger" onClick={handleDropDouble}>Drop</button>
+              </div>
             </Show>
 
-            <Show when={currentState().phase === 'moving'}>
+            <Show when={currentState().phase === 'moving' && !isAiTurn()}>
               <Show when={canUndo()}>
-                <button class="btn btn-small" onClick={handleUndo}>Undo</button>
+                <button class="btn btn-small" onClick={handleUndo}>
+                  Undo <span class="shortcut-hint">Z</span>
+                </button>
               </Show>
               <Show when={canConfirmTurn()}>
-                <button class="btn btn-primary btn-small" onClick={handleConfirm}>Confirm</button>
+                <button class="btn btn-primary btn-small" onClick={handleConfirm}>
+                  Confirm <span class="shortcut-hint">Enter</span>
+                </button>
               </Show>
             </Show>
           </div>
@@ -285,10 +451,11 @@ const GameView: Component<{ onExit: () => void }> = (props) => {
         {/* Move history */}
         <div class="panel-section" style={{ flex: 1, "min-height": 0 }}>
           <div class="panel-title">Moves</div>
-          <div class="move-list">
+          <div class="move-list" id="move-list">
             {history().map(h => (
               <div class="move-entry">
                 <span class="ply">{h.ply + 1}.</span>
+                <span class={`color-indicator ${h.player === 'w' ? 'white' : 'black'}`} />
                 <span class="dice-label">{formatDice(h.dice)}</span>
                 <span>{formatTurn(h.moves, h.player)}</span>
               </div>
@@ -297,28 +464,39 @@ const GameView: Component<{ onExit: () => void }> = (props) => {
         </div>
 
         {/* Misc controls */}
-        <div class="controls">
-          <button class="btn btn-small" onClick={() => setFlipped(f => !f)}>Flip</button>
+        <div class="controls bottom-controls">
+          <button class="btn btn-small" onClick={() => setFlipped(f => !f)}>
+            Flip <span class="shortcut-hint">F</span>
+          </button>
           <button class="btn btn-small" onClick={handleNewGame}>New</button>
-          <button class="btn btn-small" onClick={props.onExit}>Exit</button>
+          <button class="btn btn-small" onClick={handleExit}>Exit</button>
         </div>
       </div>
 
       {/* Game over modal */}
       <Show when={gameResult()}>
-        {(result) => (
-          <div class="game-over-overlay" onClick={handleNewGame}>
-            <div class="game-over-modal" onClick={(e) => e.stopPropagation()}>
-              <h2>{result().winner === 'w' ? 'White' : 'Black'} Wins!</h2>
-              <div class="result-type">
-                {result().type === 'backgammon' ? 'Backgammon!' :
-                  result().type === 'gammon' ? 'Gammon!' : 'Single game'}
+        {(result) => {
+          const winnerLabel = () => {
+            if (isAiMode()) {
+              return result().winner === 'w' ? 'You Win!' : 'AI Wins!';
+            }
+            return (result().winner === 'w' ? 'White' : 'Black') + ' Wins!';
+          };
+
+          return (
+            <div class="game-over-overlay" onClick={handleNewGame}>
+              <div class="game-over-modal" onClick={(e) => e.stopPropagation()}>
+                <h2>{winnerLabel()}</h2>
+                <div class="result-type">
+                  {result().type === 'backgammon' ? 'Backgammon!' :
+                    result().type === 'gammon' ? 'Gammon!' : 'Single game'}
+                </div>
+                <div class="points">{result().points} pts</div>
+                <button class="btn btn-primary" onClick={handleNewGame}>New Game</button>
               </div>
-              <div class="points">{result().points} pts</div>
-              <button class="btn btn-primary" onClick={handleNewGame}>New Game</button>
             </div>
-          </div>
-        )}
+          );
+        }}
       </Show>
     </div>
   );
