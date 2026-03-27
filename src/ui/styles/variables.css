@@ -1,0 +1,49 @@
+:root {
+  /* Dark moody theme */
+  --bg-primary: #0f0f1a;
+  --bg-secondary: #1a1a2e;
+  --bg-tertiary: #16213e;
+  --bg-board: #2a1810;
+  --bg-board-inner: #1e120c;
+
+  /* Board colors */
+  --point-dark: #8b4513;
+  --point-light: #d4a76a;
+  --point-dark-alt: #654321;
+  --point-light-alt: #c9956b;
+  --board-border: #3d2817;
+  --bar-color: #3d2817;
+
+  /* Checker colors */
+  --checker-white: #e8dcc8;
+  --checker-white-border: #c4b8a4;
+  --checker-black: #2c2c2c;
+  --checker-black-border: #1a1a1a;
+
+  /* UI colors */
+  --text-primary: #e0e0e0;
+  --text-secondary: #a0a0a0;
+  --text-muted: #666;
+  --accent: #7c6f5b;
+  --accent-hover: #9a8b74;
+  --accent-glow: rgba(124, 111, 91, 0.3);
+  --highlight: #4a9eff;
+  --highlight-move: rgba(74, 158, 255, 0.3);
+  --danger: #e74c3c;
+  --success: #2ecc71;
+
+  /* Dice */
+  --dice-bg: #f5f0e8;
+  --dice-dot: #1a1a1a;
+  --dice-border: #c4b8a4;
+
+  /* Layout */
+  --header-height: 48px;
+  --border-radius: 4px;
+  --transition-fast: 150ms ease;
+  --transition-move: 200ms ease;
+
+  /* Typography */
+  --font-main: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'SF Mono', 'Fira Code', monospace;
+}
