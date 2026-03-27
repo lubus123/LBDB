@@ -205,14 +205,81 @@ describe('Legal Move Generation', () => {
   it('must enter from bar before moving other checkers', () => {
     const b = board({ [W_BAR]: 1, 6: 3, 24: -2, 23: -2, 22: -2, 21: -2, 20: -2 });
     // White on bar, entry points 24-20 blocked. Point 19 open.
-    // With roll [6, 1]: can enter with 6 (to point 19), then move from 6
+    // With roll [6, 1]: can enter with 6 (bar -> point 19), then move from 6
     const turns = generateAllTurns(b, [6, 1], 'w');
+    expect(turns.length).toBeGreaterThan(0);
+    // At least one turn should have moves (not all forced pass)
+    const hasRealMoves = turns.some(t => t.length > 0);
+    expect(hasRealMoves).toBe(true);
     for (const turn of turns) {
       if (turn.length > 0) {
         // First move must be from bar
         expect(turn[0].from).toBe(W_BAR);
+        // Bar entry with die 6 should land on point 19
+        expect(turn[0].to).toBe(19);
       }
     }
+  });
+
+  it('white enters from bar correctly', () => {
+    // White on bar, open points. Roll [3, 5].
+    // bar -> 25-3=22, bar -> 25-5=20
+    const b = board({ [W_BAR]: 2 });
+    const turns = generateAllTurns(b, [3, 5], 'w');
+    expect(turns.length).toBeGreaterThan(0);
+    const turn = turns[0];
+    expect(turn.length).toBe(2);
+    // Both moves from bar
+    expect(turn[0].from).toBe(W_BAR);
+    expect(turn[1].from).toBe(W_BAR);
+    // Destinations: 22 and 20 (in some order)
+    const dests = turn.map(m => m.to).sort();
+    expect(dests).toEqual([20, 22]);
+  });
+
+  it('black enters from bar correctly', () => {
+    // Black on bar, open points. Roll [2, 4].
+    // bar -> 2, bar -> 4
+    const b = board({ [B_BAR]: -2 });
+    const turns = generateAllTurns(b, [2, 4], 'b');
+    expect(turns.length).toBeGreaterThan(0);
+    const turn = turns[0];
+    expect(turn.length).toBe(2);
+    expect(turn[0].from).toBe(B_BAR);
+    expect(turn[1].from).toBe(B_BAR);
+    const dests = turn.map(m => m.to).sort();
+    expect(dests).toEqual([2, 4]);
+  });
+
+  it('white can hit from bar entry', () => {
+    // White on bar, black blot on point 22. Roll [3, 1].
+    const b = board({ [W_BAR]: 1, 22: -1, 6: 2 });
+    const turns = generateAllTurns(b, [3, 1], 'w');
+    // Should have a turn where bar -> 22 (hit), then 22 -> 21 or 6 -> 5, etc.
+    const hitsFromBar = turns.some(t =>
+      t.some(m => m.from === W_BAR && m.to === 22 && m.hit)
+    );
+    expect(hitsFromBar).toBe(true);
+  });
+
+  it('bar entry blocked means partial or forced pass', () => {
+    // White on bar, point 24 and 23 blocked, others open. Roll [1, 2].
+    // Die 1: bar -> 24 (blocked). Die 2: bar -> 23 (blocked).
+    const b = board({ [W_BAR]: 1, 24: -2, 23: -2, 6: 3 });
+    const turns = generateAllTurns(b, [1, 2], 'w');
+    // Both entry points blocked — forced pass
+    expect(turns.length).toBe(1);
+    expect(turns[0].length).toBe(0);
+  });
+
+  it('bar entry partially blocked uses available die', () => {
+    // White on bar, point 24 blocked, point 23 open. Roll [1, 2].
+    // Die 1: bar -> 24 (blocked). Die 2: bar -> 23 (open!).
+    const b = board({ [W_BAR]: 1, 24: -2, 6: 3 });
+    const turns = generateAllTurns(b, [1, 2], 'w');
+    expect(turns.length).toBeGreaterThan(0);
+    const hasBarEntry = turns.some(t => t.some(m => m.from === W_BAR && m.to === 23));
+    expect(hasBarEntry).toBe(true);
   });
 
   it('bearing off with exact die', () => {

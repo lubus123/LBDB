@@ -434,11 +434,18 @@ const GameView: Component<{ onExit: () => void; mode: GameMode }> = (props) => {
             </Show>
 
             <Show when={currentState().phase === 'moving' && !isAiTurn()}>
-              <Show when={canUndo()}>
-                <button class="btn btn-small" onClick={handleUndo}>
-                  Undo <span class="shortcut-hint">Z</span>
-                </button>
-              </Show>
+              <span class="move-hint">
+                {currentState().movesLeft.length > 0
+                  ? `Move (${currentState().movesLeft.join(', ')} left)`
+                  : 'All dice used'}
+              </span>
+              <button
+                class="btn btn-small"
+                onClick={handleUndo}
+                disabled={!canUndo()}
+              >
+                Undo <span class="shortcut-hint">Z</span>
+              </button>
               <Show when={canConfirmTurn()}>
                 <button class="btn btn-primary btn-small" onClick={handleConfirm}>
                   Confirm <span class="shortcut-hint">Enter</span>

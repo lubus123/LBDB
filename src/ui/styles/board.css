@@ -2,7 +2,7 @@
 .board-container {
   display: flex;
   gap: 16px;
-  align-items: stretch;
+  align-items: start;
   height: calc(100vh - var(--header-height));
   padding: 16px;
   overflow: hidden;
@@ -13,14 +13,15 @@
   flex: 1;
   min-width: 0;
   display: flex;
-  align-items: center;
+  align-items: start;
   justify-content: center;
 }
 
 .board-svg {
   display: block;
-  max-width: 100%;
-  max-height: 100%;
+  width: 100%;
+  height: auto;
+  max-height: calc(100vh - var(--header-height) - 32px);
   filter: drop-shadow(0 4px 24px rgba(0, 0, 0, 0.5));
   user-select: none;
   -webkit-user-select: none;
@@ -39,32 +40,30 @@
   .board-wrapper {
     flex: none;
     width: 100%;
-    /* Board takes ~55% of available height — leaves room for controls */
-    height: 55vh;
-    padding: 4px;
+    padding: 2px 4px;
+    align-items: start;
   }
 
   .board-svg {
-    max-width: 100%;
-    max-height: 100%;
-    width: auto;
+    width: 100%;
     height: auto;
+    max-height: none;
     margin: 0 auto;
     filter: drop-shadow(0 2px 12px rgba(0, 0, 0, 0.4));
   }
 
   .side-panel {
     width: 100% !important;
-    flex-shrink: 1 !important;
+    flex-shrink: 0 !important;
     flex-direction: column !important;
     gap: 4px !important;
-    padding: 6px 10px !important;
+    padding: 4px 10px 6px !important;
     overflow-y: auto;
     min-height: 0;
   }
 
   .side-panel .panel-section {
-    padding: 6px 10px;
+    padding: 5px 10px;
   }
 
   /* Compact: hide verbose sections, show essentials inline */
@@ -73,7 +72,17 @@
   }
 
   .side-panel .turn-indicator {
-    padding: 6px 10px;
+    padding: 4px 10px;
+  }
+
+  /* Hide the cube section on mobile to save space */
+  .side-panel .panel-section:nth-child(3) {
+    display: none;
+  }
+
+  /* Hide move history on mobile to save space */
+  .side-panel .panel-section:last-of-type {
+    display: none;
   }
 
   .move-list {
@@ -82,7 +91,7 @@
 
   .controls.bottom-controls {
     justify-content: center;
-    padding: 4px 0;
+    padding: 2px 0;
   }
 
   .landing {
@@ -301,6 +310,13 @@
   padding: 1px 4px;
   border-radius: 2px;
   font-family: var(--font-mono);
+}
+
+/* Move hint during moving phase */
+.move-hint {
+  font-size: 12px;
+  color: var(--text-secondary);
+  width: 100%;
 }
 
 /* Double offer */

@@ -38,12 +38,10 @@ export default defineConfig({
         // Pixel 5: 393x851 CSS viewport
       },
     },
-    {
-      name: 'iphone-se',
-      use: {
-        ...devices['iPhone SE'],
-        // iPhone SE: 375x667 — smallest common phone
-      },
-    },
+    // iPhone SE removed: requires WebKit browser install
+    // {
+    //   name: 'iphone-se',
+    //   use: { ...devices['iPhone SE'] },
+    // },
   ],
 });
