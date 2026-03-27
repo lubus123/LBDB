@@ -1,25 +1,18 @@
-import { Component, For, Show, createMemo } from 'solid-js';
+import { Component, For, Show, createMemo, createSignal, onCleanup } from 'solid-js';
 import type { BoardArray, Color } from '../../shared/types';
 import { W_BAR, B_BAR } from '../../shared/constants';
 import { checkersAt } from '../../engine/board';
 
-// Board layout — taller aspect ratio to fill viewport
+// Board layout
 const BOARD_W = 780;
 const BOARD_H = 640;
 const MARGIN = 16;
-const BAR_W = 56;
+const BAR_W = 40;
 const POINT_W = 52;
 const CHECKER_R = 22;
 const CHECKER_SPACING = 40;
 const BEAR_OFF_W = 32;
 const HALF_POINTS = 6;
-
-// Jail constants
-const JAIL_BAR_W = 3;
-const JAIL_BAR_GAP = 8;
-const JAIL_BARS = 5;
-const JAIL_COLOR = '#8b0000';
-const JAIL_GLOW = 'rgba(139, 0, 0, 0.4)';
 
 const COLORS = {
   boardBg: '#1e120c',
@@ -27,7 +20,6 @@ const COLORS = {
   pointDark: '#8b4513',
   pointLight: '#d4a76a',
   bar: '#2a1a10',
-  barDark: '#1a0e06',
   checkerWhite: '#e8dcc8',
   checkerWhiteBorder: '#c4b8a4',
   checkerBlack: '#2c2c2c',
@@ -38,7 +30,7 @@ const COLORS = {
   bearOff: '#2a1810',
 };
 
-interface BoardProps {
+export interface BoardProps {
   board: BoardArray;
   turn: Color;
   whiteOff: number;
@@ -49,16 +41,21 @@ interface BoardProps {
   onPointClick: (point: number) => void;
   onBearOffClick: () => void;
   flipped: boolean;
+  /** Called when a checker is dropped on a point via drag */
+  onDropOnPoint?: (point: number) => void;
 }
 
-function colToPoint(col: number, top: boolean, flipped: boolean): number {
+// Export these so the Jail component can calculate drop targets
+export const BOARD_VIEWBOX = { w: BOARD_W, h: BOARD_H };
+
+export function colToPoint(col: number, top: boolean, flipped: boolean): number {
   if (flipped) {
     return top ? col + 1 : 24 - col;
   }
   return top ? 24 - col : col + 1;
 }
 
-function pointX(col: number): number {
+export function pointX(col: number): number {
   const halfCol = col < HALF_POINTS ? col : col + 1;
   const leftEdge = MARGIN + BEAR_OFF_W + 6;
   return leftEdge + halfCol * POINT_W + POINT_W / 2 + (col >= HALF_POINTS ? BAR_W : 0);
@@ -70,43 +67,6 @@ function checkerY(index: number, top: boolean): number {
   const maxNormal = 5;
   const spacing = index < maxNormal ? CHECKER_SPACING : CHECKER_SPACING * 0.6;
   return edge + dir * (CHECKER_R + index * spacing);
-}
-
-/** Render prison bars around a jailed checker */
-function JailBars(props: { cx: number; cy: number; r: number; animClass: string }) {
-  const totalW = (JAIL_BARS - 1) * JAIL_BAR_GAP;
-  const startX = props.cx - totalW / 2;
-  const topY = props.cy - props.r - 6;
-  const botY = props.cy + props.r + 6;
-  const barH = botY - topY;
-
-  return (
-    <g class={`jail-bars ${props.animClass}`}>
-      {/* Red glow behind bars */}
-      <circle
-        cx={props.cx} cy={props.cy} r={props.r + 4}
-        fill="none" stroke={JAIL_GLOW} stroke-width={6}
-        class="jail-glow"
-      />
-      {/* Vertical bars */}
-      <For each={Array.from({ length: JAIL_BARS }, (_, i) => i)}>
-        {(i) => (
-          <rect
-            x={startX + i * JAIL_BAR_GAP - JAIL_BAR_W / 2}
-            y={topY}
-            width={JAIL_BAR_W}
-            height={barH}
-            rx={1}
-            fill={JAIL_COLOR}
-            class="jail-bar"
-          />
-        )}
-      </For>
-      {/* Horizontal crossbars */}
-      <rect x={startX - 2} y={topY} width={totalW + 4} height={2.5} rx={1} fill={JAIL_COLOR} />
-      <rect x={startX - 2} y={botY - 2.5} width={totalW + 4} height={2.5} rx={1} fill={JAIL_COLOR} />
-    </g>
-  );
 }
 
 const Board: Component<BoardProps> = (props) => {
@@ -143,20 +103,6 @@ const Board: Component<BoardProps> = (props) => {
   });
 
   const barX = MARGIN + BEAR_OFF_W + 6 + HALF_POINTS * POINT_W + BAR_W / 2;
-  const midY = BOARD_H / 2;
-
-  const whiteBarCount = createMemo(() => checkersAt(props.board, W_BAR, 'w'));
-  const blackBarCount = createMemo(() => checkersAt(props.board, B_BAR, 'b'));
-
-  const isBarMoveable = createMemo(() => {
-    if (props.turn === 'w') return props.moveablePoints.includes(W_BAR);
-    return props.moveablePoints.includes(B_BAR);
-  });
-
-  const isBarSelected = createMemo(() => {
-    if (props.turn === 'w') return props.selectedPoint === W_BAR;
-    return props.selectedPoint === B_BAR;
-  });
 
   const isBearOffDest = createMemo(() => {
     return props.legalDests.includes(0) || props.legalDests.includes(25);
@@ -169,7 +115,6 @@ const Board: Component<BoardProps> = (props) => {
       xmlns="http://www.w3.org/2000/svg"
     >
       <defs>
-        {/* Bar area gradient — darker, prison-like */}
         <linearGradient id="barGrad" x1="0" y1="0" x2="1" y2="0">
           <stop offset="0%" stop-color="#1a0e06" />
           <stop offset="50%" stop-color="#241408" />
@@ -181,26 +126,12 @@ const Board: Component<BoardProps> = (props) => {
       <rect x={0} y={0} width={BOARD_W} height={BOARD_H} rx={6} fill={COLORS.boardFrame} />
       <rect x={MARGIN} y={MARGIN} width={BOARD_W - MARGIN * 2} height={BOARD_H - MARGIN * 2} fill={COLORS.boardBg} />
 
-      {/* Bar area — wider, darker */}
+      {/* Bar divider */}
       <rect
-        x={barX - BAR_W / 2}
-        y={MARGIN}
-        width={BAR_W}
-        height={BOARD_H - MARGIN * 2}
+        x={barX - BAR_W / 2} y={MARGIN}
+        width={BAR_W} height={BOARD_H - MARGIN * 2}
         fill="url(#barGrad)"
       />
-      {/* Bar label */}
-      <text
-        x={barX} y={midY + 4}
-        text-anchor="middle"
-        font-size="10"
-        fill="#443322"
-        font-weight="600"
-        letter-spacing="2"
-        style={{ "pointer-events": "none" }}
-      >
-        BAR
-      </text>
 
       {/* Points (triangles) */}
       <For each={pointsData()}>
@@ -291,50 +222,6 @@ const Board: Component<BoardProps> = (props) => {
           );
         }}
       </For>
-
-      {/* ═══ BAR / JAIL — White checkers (bottom half) ═══ */}
-      <Show when={whiteBarCount() > 0}>
-        <For each={Array.from({ length: whiteBarCount() }, (_, i) => i)}>
-          {(i) => {
-            const cy = midY + CHECKER_R + 16 + i * (CHECKER_SPACING * 0.8);
-            return (
-              <g class="jail-entry">
-                <circle
-                  cx={barX} cy={cy} r={CHECKER_R}
-                  fill={COLORS.checkerWhite}
-                  stroke={isBarSelected() && props.turn === 'w' ? COLORS.highlightStroke : COLORS.checkerWhiteBorder}
-                  stroke-width={isBarSelected() && props.turn === 'w' ? 3 : 1.5}
-                  class={`checker ${isBarMoveable() && props.turn === 'w' ? 'movable' : ''}`}
-                  onClick={isBarMoveable() && props.turn === 'w' ? () => props.onPointClick(W_BAR) : undefined}
-                />
-                <JailBars cx={barX} cy={cy} r={CHECKER_R} animClass="jail-active" />
-              </g>
-            );
-          }}
-        </For>
-      </Show>
-
-      {/* ═══ BAR / JAIL — Black checkers (top half) ═══ */}
-      <Show when={blackBarCount() > 0}>
-        <For each={Array.from({ length: blackBarCount() }, (_, i) => i)}>
-          {(i) => {
-            const cy = midY - CHECKER_R - 16 - i * (CHECKER_SPACING * 0.8);
-            return (
-              <g class="jail-entry">
-                <circle
-                  cx={barX} cy={cy} r={CHECKER_R}
-                  fill={COLORS.checkerBlack}
-                  stroke={isBarSelected() && props.turn === 'b' ? COLORS.highlightStroke : COLORS.checkerBlackBorder}
-                  stroke-width={isBarSelected() && props.turn === 'b' ? 3 : 1.5}
-                  class={`checker ${isBarMoveable() && props.turn === 'b' ? 'movable' : ''}`}
-                  onClick={isBarMoveable() && props.turn === 'b' ? () => props.onPointClick(B_BAR) : undefined}
-                />
-                <JailBars cx={barX} cy={cy} r={CHECKER_R} animClass="jail-active" />
-              </g>
-            );
-          }}
-        </For>
-      </Show>
 
       {/* Bear off tray — Right (White) */}
       <g>

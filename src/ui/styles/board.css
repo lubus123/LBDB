@@ -8,11 +8,18 @@
   overflow: hidden;
 }
 
-.board-wrapper {
-  position: relative;
+.board-and-jail {
   flex: 1;
   min-width: 0;
   height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.board-wrapper {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -21,7 +28,7 @@
 .board-svg {
   display: block;
   width: auto;
-  height: calc(100vh - var(--header-height) - 24px);
+  height: calc(100vh - var(--header-height) - 80px);
   max-width: 100%;
   filter: drop-shadow(0 4px 24px rgba(0, 0, 0, 0.5));
   user-select: none;
@@ -38,19 +45,17 @@
     overflow: hidden;
   }
 
-  .board-wrapper {
+  .board-and-jail {
     flex: 1 1 0;
     min-height: 0;
     width: 100%;
-    padding: 2px 4px;
-    align-items: center;
-    justify-content: center;
+    padding: 2px 4px 0;
   }
 
   .board-svg {
     width: 100%;
     height: auto;
-    max-height: 100%;
+    max-height: calc(100vh - var(--header-height) - 200px);
     margin: 0 auto;
     filter: drop-shadow(0 2px 12px rgba(0, 0, 0, 0.4));
   }
@@ -153,43 +158,148 @@
   filter: brightness(1.3);
 }
 
-/* ─── Jail / Prison bar animations ─── */
-.jail-entry {
+/* ─── Jail strip below board ─── */
+.jail-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: #151520;
+  border-radius: 0 0 6px 6px;
+  width: 100%;
+  max-width: 100%;
+  min-height: 52px;
+}
+
+.jail-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #555;
+  flex-shrink: 0;
+}
+
+.jail-cells {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.jail-cell {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  overflow: hidden;
   animation: jail-slam 0.4s ease-out;
 }
 
 @keyframes jail-slam {
-  0% { opacity: 0; transform: scale(1.3); }
-  40% { opacity: 1; transform: scale(0.95); }
-  70% { transform: scale(1.03); }
+  0% { opacity: 0; transform: scale(1.4); }
+  40% { opacity: 1; transform: scale(0.92); }
+  70% { transform: scale(1.04); }
   100% { transform: scale(1); }
 }
 
-.jail-bars {
+.jail-cell.jail-can-play {
+  cursor: grab;
+}
+
+.jail-cell.jail-selected {
+  box-shadow: 0 0 0 2px var(--highlight), 0 0 12px rgba(74, 158, 255, 0.4);
+  border-radius: 6px;
+}
+
+.jail-checker {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  z-index: 1;
+}
+
+.jail-checker.white {
+  background: var(--checker-white);
+  border: 2px solid var(--checker-white-border);
+}
+
+.jail-checker.black {
+  background: var(--checker-black);
+  border: 2px solid var(--checker-black-border);
+}
+
+/* Thick grey bars overlay */
+.jail-bars-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: space-evenly;
+  align-items: stretch;
+  z-index: 2;
   pointer-events: none;
+  transition: transform 0.6s cubic-bezier(0.1, 0, 0.2, 1), opacity 0.6s cubic-bezier(0.1, 0, 0.2, 1);
 }
 
-.jail-bars.jail-active {
-  animation: bars-close 0.35s ease-out;
+.jail-bar-thick {
+  width: 4px;
+  background: #7a7a7a;
+  border-radius: 1px;
+  box-shadow: 1px 0 2px rgba(0,0,0,0.3);
 }
 
-@keyframes bars-close {
-  0% { opacity: 0; transform: scaleY(0); }
-  50% { opacity: 0.7; transform: scaleY(1.08); }
-  100% { opacity: 1; transform: scaleY(1); }
+/* Crossbars */
+.jail-crossbar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: #7a7a7a;
+  z-index: 3;
+  pointer-events: none;
+  border-radius: 1px;
+  transition: transform 0.6s cubic-bezier(0.1, 0, 0.2, 1), opacity 0.6s cubic-bezier(0.1, 0, 0.2, 1);
 }
 
-.jail-bar {
+.jail-crossbar.top { top: 0; }
+.jail-crossbar.bottom { bottom: 0; }
+
+/* Bars OPEN animation: slow at first, then fast (ease-in cubic-bezier) */
+.jail-bars-overlay.bars-opening {
+  animation: bars-slide-open 0.8s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+.jail-crossbar.bars-opening {
+  animation: crossbar-open 0.8s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+@keyframes bars-slide-open {
+  0% { transform: scaleX(1); opacity: 1; }
+  30% { transform: scaleX(0.95); opacity: 0.9; }
+  100% { transform: scaleX(0); opacity: 0; }
+}
+
+@keyframes crossbar-open {
+  0% { transform: scaleY(1); opacity: 1; }
+  30% { transform: scaleY(0.9); opacity: 0.9; }
+  100% { transform: scaleY(0); opacity: 0; }
+}
+
+/* Drag ghost */
+.drag-ghost {
+  position: fixed;
+  pointer-events: none;
+  z-index: 200;
+  transform: translate(-50%, -50%);
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));
+}
+
+.drag-ghost .jail-checker {
+  width: 44px;
+  height: 44px;
   opacity: 0.85;
-}
-
-.jail-glow {
-  animation: glow-pulse 2s ease-in-out infinite;
-}
-
-@keyframes glow-pulse {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 0.7; }
 }
 
 /* Move destination highlights */
