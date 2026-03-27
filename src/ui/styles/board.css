@@ -1,20 +1,116 @@
+/* ─── Desktop: horizontal layout ─── */
 .board-container {
   display: flex;
   gap: 16px;
   align-items: stretch;
-  max-height: calc(100vh - var(--header-height) - 32px);
+  height: calc(100vh - var(--header-height));
   padding: 16px;
+  overflow: hidden;
+}
+
+.board-wrapper {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .board-svg {
   display: block;
   max-width: 100%;
-  max-height: calc(100vh - var(--header-height) - 64px);
-  width: auto;
-  height: auto;
+  max-height: 100%;
   filter: drop-shadow(0 4px 24px rgba(0, 0, 0, 0.5));
   user-select: none;
   -webkit-user-select: none;
+}
+
+/* ─── Mobile: vertical stack, zero scroll ─── */
+@media (max-width: 768px) {
+  .board-container {
+    flex-direction: column;
+    padding: 0;
+    gap: 0;
+    height: calc(100vh - var(--header-height));
+    overflow: hidden;
+  }
+
+  .board-wrapper {
+    flex: none;
+    width: 100%;
+    /* Board takes ~55% of available height — leaves room for controls */
+    height: 55vh;
+    padding: 4px;
+  }
+
+  .board-svg {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    margin: 0 auto;
+    filter: drop-shadow(0 2px 12px rgba(0, 0, 0, 0.4));
+  }
+
+  .side-panel {
+    width: 100% !important;
+    flex-shrink: 1 !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+    padding: 6px 10px !important;
+    overflow-y: auto;
+    min-height: 0;
+  }
+
+  .side-panel .panel-section {
+    padding: 6px 10px;
+  }
+
+  /* Compact: hide verbose sections, show essentials inline */
+  .side-panel .panel-title {
+    display: none;
+  }
+
+  .side-panel .turn-indicator {
+    padding: 6px 10px;
+  }
+
+  .move-list {
+    max-height: 60px !important;
+  }
+
+  .controls.bottom-controls {
+    justify-content: center;
+    padding: 4px 0;
+  }
+
+  .landing {
+    padding: 24px 16px;
+  }
+
+  .landing h1 {
+    font-size: 32px !important;
+  }
+
+  .landing .tagline {
+    font-size: 15px !important;
+  }
+
+  .landing-buttons {
+    flex-direction: column;
+  }
+
+  .landing .play-btn {
+    padding: 12px 36px !important;
+    font-size: 16px !important;
+  }
+
+  .game-over-modal {
+    min-width: auto !important;
+    margin: 16px;
+    padding: 24px !important;
+  }
 }
 
 /* Checker styles */

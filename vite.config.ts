@@ -10,5 +10,6 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
+    exclude: ['tests/visual/**', 'node_modules/**'],
   },
 });
