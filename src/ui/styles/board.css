@@ -6,15 +6,92 @@
   padding: 16px;
 }
 
+.board-wrapper {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
 .board-svg {
   display: block;
-  max-width: 100%;
-  max-height: calc(100vh - var(--header-height) - 64px);
-  width: auto;
+  width: 100%;
   height: auto;
+  max-height: calc(100vh - var(--header-height) - 64px);
   filter: drop-shadow(0 4px 24px rgba(0, 0, 0, 0.5));
   user-select: none;
   -webkit-user-select: none;
+}
+
+/* Mobile: stack vertically, board on top, panel below */
+@media (max-width: 768px) {
+  .board-container {
+    flex-direction: column;
+    align-items: stretch;
+    max-height: none;
+    padding: 8px;
+    gap: 8px;
+    overflow-y: auto;
+    height: calc(100vh - var(--header-height));
+  }
+
+  .board-wrapper {
+    flex: none;
+    width: 100%;
+  }
+
+  .board-svg {
+    max-height: none;
+    width: 100%;
+  }
+
+  .side-panel {
+    width: 100% !important;
+    flex-direction: row !important;
+    flex-wrap: wrap;
+    gap: 8px !important;
+  }
+
+  .side-panel .panel-section {
+    flex: 1 1 auto;
+    min-width: 140px;
+    padding: 8px;
+  }
+
+  .side-panel .panel-section[style*="flex: 1"] {
+    flex-basis: 100%;
+  }
+
+  .move-list {
+    max-height: 120px !important;
+  }
+
+  .controls.bottom-controls {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .landing h1 {
+    font-size: 32px !important;
+  }
+
+  .landing .tagline {
+    font-size: 15px !important;
+  }
+
+  .landing-buttons {
+    flex-direction: column;
+  }
+
+  .landing .play-btn {
+    padding: 12px 36px !important;
+    font-size: 16px !important;
+  }
+
+  .game-over-modal {
+    min-width: auto !important;
+    margin: 16px;
+    padding: 24px !important;
+  }
 }
 
 /* Checker styles */

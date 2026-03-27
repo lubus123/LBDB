@@ -339,7 +339,7 @@ const GameView: Component<{ onExit: () => void; mode: GameMode }> = (props) => {
 
   return (
     <div class="board-container">
-      <div style={{ position: 'relative' }}>
+      <div class="board-wrapper">
         <Board
           board={currentState().board}
           turn={currentState().turn}

@@ -9,7 +9,6 @@ html, body {
   font-family: var(--font-main);
   background: var(--bg-primary);
   color: var(--text-primary);
-  overflow: hidden;
 }
 
 #app {
@@ -45,5 +44,6 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
 }
