@@ -1,19 +1,5 @@
-import { Component, For, Show, createSignal, createMemo, onCleanup } from 'solid-js';
+import { Component, For, Show, createSignal, createMemo } from 'solid-js';
 import type { Color } from '../../shared/types';
-
-/**
- * Jail strip — sits below the board.
- * Shows captured checkers behind thick grey bars.
- * When the checker can play, bars animate open (slow start, fast finish).
- * Supports click-to-select and drag-to-play.
- */
-
-const CHECKER_SIZE = 36;  // Diameter in pixels
-const BAR_THICKNESS = 4;
-const BAR_COUNT = 7;
-const BAR_GAP = 7;
-const BAR_COLOR = '#7a7a7a';
-const BAR_COLOR_DARK = '#555';
 
 interface JailProps {
   whiteCount: number;
@@ -22,36 +8,84 @@ interface JailProps {
   canMoveFromBar: boolean;
   isSelected: boolean;
   onBarClick: () => void;
-  /** Called when drag ends — passes client x,y for hit-testing the board */
   onDragEnd?: (clientX: number, clientY: number) => void;
 }
+
+const BAR_COUNT = 7;
+const DRAG_THRESHOLD = 8; // px before we consider it a drag vs tap
 
 const Jail: Component<JailProps> = (props) => {
   const totalJailed = createMemo(() => props.whiteCount + props.blackCount);
 
-  // Drag state
   const [isDragging, setIsDragging] = createSignal(false);
   const [dragPos, setDragPos] = createSignal({ x: 0, y: 0 });
+  const [dragStart, setDragStart] = createSignal({ x: 0, y: 0 });
+  const [didDrag, setDidDrag] = createSignal(false);
   const dragColor = createMemo((): Color => props.turn);
 
-  function handlePointerDown(e: PointerEvent) {
+  let cellRef: HTMLDivElement | undefined;
+
+  function handlePointerDown(e: PointerEvent, el: HTMLDivElement) {
     if (!props.canMoveFromBar) return;
     e.preventDefault();
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    e.stopPropagation();
+    // Capture on the cell element itself, not e.target (which could be a child)
+    el.setPointerCapture(e.pointerId);
     setIsDragging(true);
+    setDidDrag(false);
+    setDragStart({ x: e.clientX, y: e.clientY });
     setDragPos({ x: e.clientX, y: e.clientY });
   }
 
   function handlePointerMove(e: PointerEvent) {
     if (!isDragging()) return;
-    setDragPos({ x: e.clientX, y: e.clientY });
+    e.preventDefault();
+    const pos = { x: e.clientX, y: e.clientY };
+    setDragPos(pos);
+    // Check if we've moved enough to count as a drag
+    const dx = pos.x - dragStart().x;
+    const dy = pos.y - dragStart().y;
+    if (Math.abs(dx) > DRAG_THRESHOLD || Math.abs(dy) > DRAG_THRESHOLD) {
+      setDidDrag(true);
+    }
   }
 
   function handlePointerUp(e: PointerEvent) {
     if (!isDragging()) return;
+    e.preventDefault();
     setIsDragging(false);
-    // If we barely moved, treat as a click
-    props.onDragEnd?.(e.clientX, e.clientY);
+
+    if (didDrag()) {
+      // Was a real drag — drop on the board
+      props.onDragEnd?.(e.clientX, e.clientY);
+    } else {
+      // Was a tap — select the bar checker
+      props.onBarClick();
+    }
+  }
+
+  function renderCell(color: Color) {
+    const isActive = () => props.canMoveFromBar && props.turn === color;
+    const isSelected = () => props.isSelected && props.turn === color;
+
+    return (
+      <div
+        ref={(el) => { cellRef = el; }}
+        class={`jail-cell ${isActive() ? 'jail-can-play' : ''} ${isSelected() ? 'jail-selected' : ''}`}
+        onPointerDown={(e) => isActive() ? handlePointerDown(e, e.currentTarget) : undefined}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+      >
+        <div class={`jail-checker ${color === 'w' ? 'white' : 'black'}`} />
+        <div class={`jail-bars-overlay ${isActive() ? 'bars-opening' : ''}`}>
+          <For each={Array.from({ length: BAR_COUNT }, (_, i) => i)}>
+            {() => <div class="jail-bar-thick" />}
+          </For>
+        </div>
+        <div class={`jail-crossbar top ${isActive() ? 'bars-opening' : ''}`} />
+        <div class={`jail-crossbar bottom ${isActive() ? 'bars-opening' : ''}`} />
+      </div>
+    );
   }
 
   return (
@@ -59,54 +93,15 @@ const Jail: Component<JailProps> = (props) => {
       <div class="jail-strip">
         <div class="jail-label">JAIL</div>
         <div class="jail-cells">
-          {/* White jailed checkers */}
           <For each={Array.from({ length: props.whiteCount }, (_, i) => i)}>
-            {() => (
-              <div
-                class={`jail-cell ${props.canMoveFromBar && props.turn === 'w' ? 'jail-can-play' : ''} ${props.isSelected && props.turn === 'w' ? 'jail-selected' : ''}`}
-                onClick={props.canMoveFromBar && props.turn === 'w' ? () => props.onBarClick() : undefined}
-                onPointerDown={props.canMoveFromBar && props.turn === 'w' ? handlePointerDown : undefined}
-                onPointerMove={handlePointerMove}
-                onPointerUp={handlePointerUp}
-              >
-                <div class="jail-checker white" />
-                <div class={`jail-bars-overlay ${props.canMoveFromBar && props.turn === 'w' ? 'bars-opening' : ''}`}>
-                  <For each={Array.from({ length: BAR_COUNT }, (_, i) => i)}>
-                    {() => <div class="jail-bar-thick" />}
-                  </For>
-                </div>
-                {/* Crossbars */}
-                <div class={`jail-crossbar top ${props.canMoveFromBar && props.turn === 'w' ? 'bars-opening' : ''}`} />
-                <div class={`jail-crossbar bottom ${props.canMoveFromBar && props.turn === 'w' ? 'bars-opening' : ''}`} />
-              </div>
-            )}
+            {() => renderCell('w')}
           </For>
-
-          {/* Black jailed checkers */}
           <For each={Array.from({ length: props.blackCount }, (_, i) => i)}>
-            {() => (
-              <div
-                class={`jail-cell ${props.canMoveFromBar && props.turn === 'b' ? 'jail-can-play' : ''} ${props.isSelected && props.turn === 'b' ? 'jail-selected' : ''}`}
-                onClick={props.canMoveFromBar && props.turn === 'b' ? () => props.onBarClick() : undefined}
-                onPointerDown={props.canMoveFromBar && props.turn === 'b' ? handlePointerDown : undefined}
-                onPointerMove={handlePointerMove}
-                onPointerUp={handlePointerUp}
-              >
-                <div class="jail-checker black" />
-                <div class={`jail-bars-overlay ${props.canMoveFromBar && props.turn === 'b' ? 'bars-opening' : ''}`}>
-                  <For each={Array.from({ length: BAR_COUNT }, (_, i) => i)}>
-                    {() => <div class="jail-bar-thick" />}
-                  </For>
-                </div>
-                <div class={`jail-crossbar top ${props.canMoveFromBar && props.turn === 'b' ? 'bars-opening' : ''}`} />
-                <div class={`jail-crossbar bottom ${props.canMoveFromBar && props.turn === 'b' ? 'bars-opening' : ''}`} />
-              </div>
-            )}
+            {() => renderCell('b')}
           </For>
         </div>
 
-        {/* Floating drag ghost */}
-        <Show when={isDragging()}>
+        <Show when={isDragging() && didDrag()}>
           <div
             class="drag-ghost"
             style={{

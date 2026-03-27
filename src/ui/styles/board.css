@@ -206,6 +206,8 @@
 
 .jail-cell.jail-can-play {
   cursor: grab;
+  touch-action: none;
+  -webkit-touch-callout: none;
 }
 
 .jail-cell.jail-selected {
