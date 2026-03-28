@@ -210,17 +210,16 @@ const Board: Component<BoardProps> = (props) => {
             <g>
               <polygon points={triPoints} fill={fillColor} opacity={0.85} />
 
+              {/* Legal destination: green triangle outline + click target */}
               <Show when={pd.isDest}>
-                <circle
-                  cx={x}
-                  cy={pd.top ? MARGIN + CHECKER_R + 6 : BOARD_H - MARGIN - CHECKER_R - 6}
-                  r={CHECKER_R + 2}
-                  fill={COLORS.highlight}
-                  stroke={COLORS.highlightStroke}
-                  stroke-width={2}
+                <polygon
+                  points={triPoints}
+                  fill="none"
+                  stroke="#4caf50"
+                  stroke-width={2.5}
                   class="move-dest visible"
+                  style={{ cursor: 'pointer', filter: 'drop-shadow(0 0 4px rgba(76, 175, 80, 0.5))' }}
                   onClick={() => props.onPointClick(pd.point)}
-                  style={{ cursor: 'pointer' }}
                 />
               </Show>
 
@@ -332,12 +331,20 @@ const Board: Component<BoardProps> = (props) => {
           const x = pointX(col);
           const topPt = colToPoint(col, true, props.flipped, props.direction);
           const botPt = colToPoint(col, false, props.flipped, props.direction);
+          const topIsDest = props.legalDests.includes(topPt);
+          const botIsDest = props.legalDests.includes(botPt);
           return (
             <g>
-              <text x={x} y={MARGIN - 3} text-anchor="middle" font-size="9" fill="#555" style={{ "pointer-events": "none" }}>
+              <text x={x} y={MARGIN - 3} text-anchor="middle" font-size="9"
+                fill={topIsDest ? '#4caf50' : '#555'}
+                style={{ "pointer-events": "none", filter: topIsDest ? 'drop-shadow(0 0 3px rgba(76,175,80,0.7))' : 'none' }}
+              >
                 {topPt}
               </text>
-              <text x={x} y={BOARD_H - MARGIN + 13} text-anchor="middle" font-size="9" fill="#555" style={{ "pointer-events": "none" }}>
+              <text x={x} y={BOARD_H - MARGIN + 13} text-anchor="middle" font-size="9"
+                fill={botIsDest ? '#4caf50' : '#555'}
+                style={{ "pointer-events": "none", filter: botIsDest ? 'drop-shadow(0 0 3px rgba(76,175,80,0.7))' : 'none' }}
+              >
                 {botPt}
               </text>
             </g>

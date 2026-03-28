@@ -138,14 +138,16 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
           setHistoryIndex(null);
           setLuckHistory([]);
           break;
-        case 'state':
-          // Detect opponent's moves for animation
+        case 'state': {
           const prev = currentState();
-          if (msg.state.turn !== prev.turn && prev.phase === 'moving') {
-            // Turn changed — opponent finished their turn
+          // Compute luck when dice first appear (phase transitions to 'moving')
+          if (msg.state.phase === 'moving' && msg.state.dice && prev.phase !== 'moving') {
+            const luck = computeTurnLuck(msg.state);
+            setLuckHistory(h => [...h, { ply: msg.state.ply, player: msg.state.turn, luck }]);
           }
           setState(msg.state);
           break;
+        }
         case 'timeout':
           playTimeout();
           setState(msg.state);
@@ -1201,6 +1203,14 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
           <button class="btn btn-small" onClick={handleExit}>Exit</button>
         </div>
       </div>
+
+      {/* Connection indicator */}
+      <Show when={isOnline()}>
+        <div class="connection-indicator">
+          <div class={`connection-dot ${wsConnected() ? 'connected' : 'disconnected'}`} />
+          <span>{wsConnected() ? 'Connected' : 'Reconnecting...'}</span>
+        </div>
+      </Show>
 
       <Show when={gameResult() || (isOnline() && currentState().phase === 'gameOver')}>
         {() => {
