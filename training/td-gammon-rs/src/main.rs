@@ -629,7 +629,8 @@ fn choose_best_nn(net: &mut Network, board: &Board, dice: (u8, u8), white: bool,
 
         all_results.push((*result_board, wo, bo));
 
-        encode_board(result_board, wo, bo, white, &mut enc);
+        // After current player moves, it's the opponent's turn
+        encode_board(result_board, wo, bo, !white, &mut enc);
         let p_white = net.forward(&enc);
         let score = if white { p_white } else { 1.0 - p_white };
 
