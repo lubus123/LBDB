@@ -1043,6 +1043,11 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
           <Show when={timeRemaining() !== null}>
             <CountdownClock remaining={timeRemaining()!} total={timePerMove()!} />
           </Show>
+          <Show when={isOnline() && opponentDisconnected()}>
+            <div style={{ "font-size": "11px", color: "#f0ad4e", "margin-top": "4px" }}>
+              Opponent disconnected — waiting to reconnect...
+            </div>
+          </Show>
         </div>
 
         <div class="panel-section">
@@ -1207,8 +1212,13 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
       {/* Connection indicator */}
       <Show when={isOnline()}>
         <div class="connection-indicator">
-          <div class={`connection-dot ${wsConnected() ? 'connected' : 'disconnected'}`} />
-          <span>{wsConnected() ? 'Connected' : 'Reconnecting...'}</span>
+          <div class={`connection-dot ${wsConnected() ? (opponentDisconnected() ? 'disconnected' : 'connected') : 'disconnected'}`} />
+          <span>{
+            !wsConnected() ? 'Reconnecting...' :
+            waitingForOpponent() ? 'Waiting for opponent' :
+            opponentDisconnected() ? 'Opponent offline' :
+            'Online'
+          }</span>
         </div>
       </Show>
 
