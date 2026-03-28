@@ -28,6 +28,11 @@ function doConnect() {
   ws.onopen = () => {
     reconnectAttempts = 0;
     statusHandlers.forEach(h => h(true));
+    // Send auth token if available
+    const token = typeof localStorage !== 'undefined' ? localStorage.getItem('dg-token') : null;
+    if (token) {
+      ws!.send(JSON.stringify({ type: 'auth', token }));
+    }
     // Flush queued messages
     for (const msg of queue) {
       ws!.send(JSON.stringify(msg));

@@ -19,6 +19,8 @@ function serverRollDice(): [number, number] {
 interface Player {
   ws: WebSocket;
   color: Color;
+  userId?: number;
+  username?: string;
 }
 
 export class GameRoom {
@@ -27,10 +29,19 @@ export class GameRoom {
   players: Map<WebSocket, Player> = new Map();
   white: WebSocket | null = null;
   black: WebSocket | null = null;
+  whiteUserId: number | undefined;
+  blackUserId: number | undefined;
+  whiteUsername: string | undefined;
+  blackUsername: string | undefined;
   timeLimit: number | null;
   timer: ReturnType<typeof setTimeout> | null = null;
   rematchOffer: Color | null = null;
   disconnectTimer: Map<WebSocket, ReturnType<typeof setTimeout>> = new Map();
+  saved = false;
+  resultType: string | null = null;
+  moveHistory: any[] = [];
+  luckWhite = 0;
+  luckBlack = 0;
 
   constructor(id: string, timeLimit: number | null = 30) {
     this.id = id;
@@ -42,18 +53,22 @@ export class GameRoom {
     return this.white !== null && this.black !== null;
   }
 
-  addPlayer(ws: WebSocket): Color | null {
+  addPlayer(ws: WebSocket, userId?: number, username?: string): Color | null {
     if (this.white === null) {
       this.white = ws;
-      this.players.set(ws, { ws, color: 'w' });
+      this.whiteUserId = userId;
+      this.whiteUsername = username;
+      this.players.set(ws, { ws, color: 'w', userId, username });
       return 'w';
     }
     if (this.black === null) {
       this.black = ws;
-      this.players.set(ws, { ws, color: 'b' });
+      this.blackUserId = userId;
+      this.blackUsername = username;
+      this.players.set(ws, { ws, color: 'b', userId, username });
       return 'b';
     }
-    return null; // full
+    return null;
   }
 
   getColor(ws: WebSocket): Color | null {
@@ -73,8 +88,13 @@ export class GameRoom {
 
   startGame() {
     this.state = createInitialGameState(this.id);
-    if (this.white) this.send(this.white, { type: 'game_start', state: this.state, color: 'w' });
-    if (this.black) this.send(this.black, { type: 'game_start', state: this.state, color: 'b' });
+    this.saved = false;
+    this.moveHistory = [];
+    this.luckWhite = 0;
+    this.luckBlack = 0;
+    this.resultType = null;
+    if (this.white) this.send(this.white, { type: 'game_start', state: this.state, color: 'w', opponent: this.blackUsername });
+    if (this.black) this.send(this.black, { type: 'game_start', state: this.state, color: 'b', opponent: this.whiteUsername });
   }
 
   handleRoll(ws: WebSocket) {
@@ -204,6 +224,7 @@ export class GameRoom {
 
     const winner: Color = color === 'w' ? 'b' : 'w';
     this.state = { ...this.state, phase: 'gameOver' };
+    this.resultType = 'resign';
     this.clearTimer();
     this.broadcast({ type: 'resigned', winner });
   }

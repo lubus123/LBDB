@@ -17,6 +17,7 @@ import MoveAnimation, { triggerAnimation, triggerBunnyHop, clearAnimations, HOP_
 import OpponentArrows from '../board/OpponentArrows';
 import LuckMeter, { type LuckEntry } from '../board/LuckMeter';
 import CountdownClock from '../board/CountdownClock';
+import ChatPanel, { type ChatMessage } from '../board/ChatPanel';
 import { playDiceRoll, playCapture, playJailEscape, playVictory, playDefeat, playTimeout } from '../audio/sounds';
 import * as socket from '../net/socket';
 import type { ServerMessage } from '../../server/protocol';
@@ -106,6 +107,8 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
   const [opponentDisconnected, setOpponentDisconnected] = createSignal(false);
   const [rematchOffered, setRematchOffered] = createSignal(false);
   const [wsConnected, setWsConnected] = createSignal(false);
+  const [chatMessages, setChatMessages] = createSignal<ChatMessage[]>([]);
+  const [opponentName, setOpponentName] = createSignal<string>('Opponent');
   let initialBoard = [...initState.board];
   let initialWhiteOff = initState.whiteOff;
   let initialBlackOff = initState.blackOff;
@@ -153,6 +156,8 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
         case 'rematch_start':
           setMyColor(msg.color);
           setState(msg.state);
+          if ('opponent' in msg && msg.opponent) setOpponentName(msg.opponent);
+          setChatMessages([]);
           initialBoard = [...msg.state.board];
           initialWhiteOff = msg.state.whiteOff;
           initialBlackOff = msg.state.blackOff;
@@ -200,6 +205,9 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
           break;
         case 'rematch_offered':
           setRematchOffered(true);
+          break;
+        case 'chat':
+          setChatMessages(prev => [...prev, { from: msg.from, text: msg.text }]);
           break;
         case 'error':
           console.warn('[duckGammon]', msg.message);
@@ -999,6 +1007,14 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
 
   return (
     <div class="board-container">
+      {/* Chat panel — left side, online mode only */}
+      <Show when={isOnline() && !waitingForOpponent()}>
+        <ChatPanel
+          messages={chatMessages()}
+          onSend={(text) => socket.send({ type: 'chat', text })}
+        />
+      </Show>
+
       <div class="board-and-jail">
         <div class="board-wrapper">
           <Board
