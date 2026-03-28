@@ -66,6 +66,12 @@ export function playDefeat() {
   setTimeout(() => tone(294, 0.5, 0.06), 400); // D4
 }
 
+/** Time expired buzz */
+export function playTimeout() {
+  tone(150, 0.3, 0.15);
+  setTimeout(() => tone(100, 0.4, 0.1), 150);
+}
+
 /** Rising chime for jail escape */
 export function playJailEscape() {
   const c = getCtx();

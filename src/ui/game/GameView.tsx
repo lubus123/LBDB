@@ -15,7 +15,8 @@ import Jail from '../board/Jail';
 import MoveAnimation, { triggerAnimation, triggerBunnyHop, clearAnimations, HOP_DURATION, ANIM_DURATION } from '../board/MoveAnimation';
 import OpponentArrows from '../board/OpponentArrows';
 import LuckMeter, { type LuckEntry } from '../board/LuckMeter';
-import { playDiceRoll, playCapture, playJailEscape, playVictory, playDefeat } from '../audio/sounds';
+import CountdownClock from '../board/CountdownClock';
+import { playDiceRoll, playCapture, playJailEscape, playVictory, playDefeat, playTimeout } from '../audio/sounds';
 
 interface TurnRecord {
   ply: number;
@@ -63,14 +64,22 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
   const [arrowFading, setArrowFading] = createSignal(false);
   const [arrowsEnabled, setArrowsEnabled] = createSignal(false);
   const [historyIndex, setHistoryIndex] = createSignal<number | null>(null);
+  const [timePerMove, setTimePerMove] = createSignal<number | null>(
+    typeof localStorage !== 'undefined' ? (() => {
+      const v = localStorage.getItem('bg-time');
+      return v === 'none' ? null : Number(v) || 30;
+    })() : 30
+  );
+  const [timeRemaining, setTimeRemaining] = createSignal<number | null>(null);
   let initialBoard = [...initState.board];
   let initialWhiteOff = initState.whiteOff;
   let initialBlackOff = initState.blackOff;
 
-  // Persist direction
+  // Persist settings
   createEffect(() => {
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem('bg-direction', direction());
+      localStorage.setItem('bg-time', timePerMove() === null ? 'none' : String(timePerMove()));
     }
   });
 
@@ -726,6 +735,36 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
     }
   });
 
+  // Move timer — countdown during 'moving' phase
+  createEffect(() => {
+    const s = currentState();
+    const limit = timePerMove();
+    if (s.phase === 'moving' && !isAiTurn() && !isReviewing() && limit !== null) {
+      setTimeRemaining(limit);
+      const interval = setInterval(() => {
+        setTimeRemaining(prev => {
+          if (prev === null || prev <= 0) return 0;
+          return prev - 1;
+        });
+      }, 1000);
+      onCleanup(() => clearInterval(interval));
+    } else {
+      setTimeRemaining(null);
+    }
+  });
+
+  // Timeout — auto-confirm when time expires
+  createEffect(() => {
+    if (timeRemaining() === 0 && currentState().phase === 'moving' && !isAiTurn()) {
+      playTimeout();
+      const s = currentState();
+      const newState = confirmTurn(s);
+      recordTurn(s, newState);
+      setState(newState);
+      setSelectedPoint(null);
+    }
+  });
+
   // Scroll highlighted move into view
   createEffect(() => {
     const idx = historyIndex();
@@ -815,6 +854,9 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
               <span class="dot" />
               <span class="dot" />
             </div>
+          </Show>
+          <Show when={timeRemaining() !== null}>
+            <CountdownClock remaining={timeRemaining()!} total={timePerMove()!} />
           </Show>
         </div>
 
@@ -925,6 +967,21 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
             <button class="btn btn-small" onClick={() => setDirection(d => d === 'right' ? 'left' : 'right')}>
               {direction() === 'right' ? '\u2192' : '\u2190'} <span class="shortcut-hint">R</span>
             </button>
+          </label>
+          <label class="option-row">
+            <span>Move time</span>
+            <select
+              value={timePerMove() === null ? 'none' : String(timePerMove())}
+              onChange={(e) => {
+                const v = e.currentTarget.value;
+                setTimePerMove(v === 'none' ? null : Number(v));
+              }}
+            >
+              <option value="15">15s</option>
+              <option value="30">30s</option>
+              <option value="60">60s</option>
+              <option value="none">Untimed</option>
+            </select>
           </label>
         </div>
 
