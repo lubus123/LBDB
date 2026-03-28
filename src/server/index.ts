@@ -203,12 +203,11 @@ wss.on('connection', (ws: WebSocket) => {
       const from = user?.username || (room.getColor(ws) === 'w' ? 'White' : 'Black');
       // Relay to opponent
       const color = room.getColor(ws);
-      const opponent = color === 'w' ? room.black : room.white;
-      if (opponent?.readyState === WebSocket.OPEN) {
-        opponent.send(JSON.stringify({ type: 'chat', from, text: msg.text.slice(0, 200) }));
-      }
-      // Echo back to sender
-      ws.send(JSON.stringify({ type: 'chat', from, text: msg.text.slice(0, 200) }));
+      // Send to both players (sender sees their own message too)
+      const text = msg.text.slice(0, 200);
+      const chatMsg = JSON.stringify({ type: 'chat', from, text });
+      if (room.white?.readyState === WebSocket.OPEN) room.white.send(chatMsg);
+      if (room.black?.readyState === WebSocket.OPEN && room.black !== room.white) room.black.send(chatMsg);
       return;
     }
 
