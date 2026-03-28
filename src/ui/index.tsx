@@ -61,14 +61,16 @@ function App() {
           href="#"
           onClick={(e) => { e.preventDefault(); setPage('landing'); }}
         >
-          <svg viewBox="0 0 32 32" width="22" height="22" style={{ "vertical-align": "middle", "margin-right": "6px", "margin-top": "-2px" }}>
-            {/* Rubber duck outline — emoji style, side profile facing right */}
-            {/* Body: big round bottom sitting in water */}
-            <path d="M7 20 C7 16 9 13 13 12.5 C13 11 13 10 14 9 C14 7.5 15.5 6 17 6 C18.5 6 19.5 7 19.5 8.5 C19.5 9 19.3 9.5 19 10 L21 10 C22.5 10 24 10.8 24 12 C24 13 22.5 13.5 21 13.5 L19.5 13.5 C21 15 22 16.5 22 19 C22 22 20 25 16 25.5 C15 25.6 12 25.5 10 25 C8 24.5 7 22.5 7 20 Z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
-            {/* Eye */}
-            <circle cx="17.5" cy="8.5" r="0.9" fill="currentColor"/>
-          </svg>
           duck<span>Gammon</span>
+          <svg viewBox="0 0 80 64" width="26" height="21" style={{ "vertical-align": "middle", "margin-left": "7px", "margin-top": "-1px" }}>
+            <path d="M12 38 C12 32 16 26 24 24 L36 22 C42 22 48 26 50 32 C52 38 48 44 42 44 L20 44 C16 44 12 42 12 38 Z" fill="#555"/>
+            <path d="M34 22 C34 16 36 11 40 9 C43 7 47 8 49 11 C51 14 50 19 48 22" fill="#2d6a2d"/>
+            <path d="M49 12 L55 11 C57 10.5 58 12.5 58 14.5 C58 16 57 17 55 16.5 L49 16" fill="#c49a3c"/>
+            <path d="M46 21.5 L49 21.5" stroke="#e8dcc8" stroke-width="1.5" stroke-linecap="round"/>
+            <circle cx="47" cy="12" r="1.3" fill="#1a1a2e"/>
+            <path d="M18 34 C24 30 34 28 42 31" fill="none" stroke="#666" stroke-width="1.2" stroke-linecap="round"/>
+            <path d="M30 44 L30 49 M30 49 L26 51 M30 49 L30 52 M30 49 L34 51" stroke="#c49a3c" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
         </a>
         <Show when={page() === 'game'}>
           <span class="header-mode">
