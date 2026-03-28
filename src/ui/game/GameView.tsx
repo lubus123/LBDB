@@ -843,6 +843,7 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
       case 'r': setDirection(d => d === 'right' ? 'left' : 'right'); break;
       case 'ArrowLeft':
         e.preventDefault();
+        clearAnimations();
         setHistoryIndex(prev => {
           const h = history();
           if (h.length === 0) return null;
@@ -852,6 +853,7 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
         break;
       case 'ArrowRight':
         e.preventDefault();
+        clearAnimations();
         setHistoryIndex(prev => {
           if (prev === null) return null;
           const h = history();
@@ -1149,7 +1151,7 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
               <div
                 class={`move-entry ${historyIndex() === i ? 'active' : ''}`}
                 data-idx={i}
-                onClick={() => setHistoryIndex(historyIndex() === i ? null : i)}
+                onClick={() => { clearAnimations(); setHistoryIndex(historyIndex() === i ? null : i); }}
                 style={{ cursor: 'pointer' }}
               >
                 <span class="ply">{h.ply + 1}.</span>
