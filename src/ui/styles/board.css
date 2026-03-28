@@ -312,18 +312,12 @@
 }
 
 .move-dest.visible {
-  animation: dest-pulse 400ms ease-out forwards;
+  opacity: 1;
   cursor: pointer;
 }
 
 .move-dest:hover {
   opacity: 1;
-}
-
-@keyframes dest-pulse {
-  0% { opacity: 0; transform: scale(0.8); }
-  60% { opacity: 0.9; transform: scale(1.05); }
-  100% { opacity: 1; transform: scale(1); }
 }
 
 /* Point hover */
