@@ -225,14 +225,13 @@ const Board: Component<BoardProps> = (props) => {
                 />
               </Show>
 
-              {/* Moveable checker: green triangle outline */}
+              {/* Moveable checker: green triangle outline — no animation */}
               <Show when={pd.isMoveable && !pd.isSelected}>
                 <polygon
                   points={triPoints}
                   fill="none"
                   stroke="#4caf50"
                   stroke-width={2}
-                  class="move-dest visible"
                   style={{ filter: 'drop-shadow(0 0 3px rgba(76, 175, 80, 0.4))' }}
                 />
               </Show>
