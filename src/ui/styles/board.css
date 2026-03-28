@@ -143,6 +143,7 @@
 .checker.movable {
   filter: brightness(1.1);
   cursor: grab;
+  touch-action: none;
 }
 
 .checker.movable:hover {
@@ -307,16 +308,22 @@
 /* Move destination highlights */
 .move-dest {
   opacity: 0;
-  transition: opacity var(--transition-fast);
+  cursor: pointer;
 }
 
 .move-dest.visible {
-  opacity: 1;
+  animation: dest-pulse 400ms ease-out forwards;
   cursor: pointer;
 }
 
 .move-dest:hover {
   opacity: 1;
+}
+
+@keyframes dest-pulse {
+  0% { opacity: 0; transform: scale(0.8); }
+  60% { opacity: 0.9; transform: scale(1.05); }
+  100% { opacity: 1; transform: scale(1); }
 }
 
 /* Point hover */
@@ -720,4 +727,155 @@
   background: rgba(255,255,255,0.06);
   padding: 2px 8px;
   border-radius: 3px;
+}
+
+/* ─── Checker movement animation overlay ─── */
+.checker-anim {
+  pointer-events: none;
+  will-change: transform;
+}
+
+@keyframes checker-leap {
+  0% { transform: translate(var(--from-x), var(--from-y)); }
+  50% { transform: translate(var(--mid-x), calc(var(--mid-y) - 30px)); }
+  100% { transform: translate(var(--to-x), var(--to-y)); }
+}
+
+/* ─── Dice swap button ─── */
+.dice-swap-btn {
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 150ms ease;
+}
+
+.dice-swap-btn:hover {
+  opacity: 1;
+}
+
+/* ─── Dice roll animation ─── */
+.die-rolling {
+  animation: die-tumble 500ms ease-out;
+}
+
+@keyframes die-tumble {
+  0% { transform: rotate(0deg) scale(0.6); opacity: 0.3; }
+  20% { transform: rotate(180deg) scale(1.1); opacity: 1; }
+  50% { transform: rotate(400deg) scale(0.95); }
+  75% { transform: rotate(680deg) scale(1.02); }
+  100% { transform: rotate(720deg) scale(1); }
+}
+
+/* ─── Luck Meter ─── */
+.luck-meter {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.luck-current {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.luck-bar-track {
+  flex: 1;
+  height: 6px;
+  background: var(--bg-tertiary);
+  border-radius: 3px;
+  position: relative;
+  overflow: hidden;
+}
+
+.luck-bar-fill {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  border-radius: 3px;
+  transition: width 300ms ease-out;
+}
+
+.luck-bar-fill.positive {
+  left: 50%;
+  background: #4caf50;
+}
+
+.luck-bar-fill.negative {
+  right: 50%;
+  background: #e53935;
+}
+
+.luck-value {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  min-width: 40px;
+  text-align: right;
+}
+
+.luck-value.positive { color: #4caf50; }
+.luck-value.negative { color: #e53935; }
+
+.luck-totals {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.luck-totals .luck-player {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.luck-sparkline {
+  width: 100%;
+  height: 50px;
+}
+
+.luck-sparkline polyline {
+  fill: none;
+  stroke-width: 1.5;
+}
+
+.luck-line-white { stroke: var(--checker-white); opacity: 0.8; }
+.luck-line-black { stroke: #666; }
+
+/* ─── Opponent move arrows ─── */
+/* ─── Options panel ─── */
+.option-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 2px 0;
+}
+
+.option-row input[type="checkbox"] {
+  accent-color: var(--highlight);
+  cursor: pointer;
+}
+
+.option-row .shortcut-hint {
+  margin-left: auto;
+}
+
+/* ─── Active move in history ─── */
+.move-entry.active {
+  background: rgba(74, 158, 255, 0.12);
+  border-left: 2px solid var(--highlight);
+  padding-left: 4px;
+}
+
+.opponent-arrows {
+  opacity: 1;
+  transition: opacity 500ms ease;
+}
+
+.opponent-arrows.fading {
+  opacity: 0;
 }
