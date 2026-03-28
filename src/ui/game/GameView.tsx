@@ -601,7 +601,7 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
     setSelectedPoint(null);
 
     if (newState.phase === 'waiting' || newState.phase === 'gameOver') {
-      recordTurn(s, newState);
+      recordTurn(s, newState, move);
     }
   }
 
@@ -746,13 +746,14 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
     }
   }
 
-  function recordTurn(before: GameState, _after: GameState) {
+  function recordTurn(before: GameState, _after: GameState, extraMove?: CheckerMove) {
     if (before.dice) {
+      const moves = extraMove ? [...before.turnMoves, extraMove] : before.turnMoves;
       setHistory(prev => [...prev, {
         ply: before.ply,
         player: before.turn,
         dice: before.dice!,
-        moves: before.turnMoves,
+        moves,
       }]);
     }
   }
