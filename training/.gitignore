@@ -1,0 +1,5 @@
+.venv/
+checkpoints/
+__pycache__/
+training_log.csv
+*.npz

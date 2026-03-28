@@ -105,7 +105,7 @@ export function evaluatePosition(board: BoardArray, color: Color, colorOff: numb
 }
 
 /** Apply a full turn's moves to a board and return the new board + off counts */
-function applyTurnMoves(
+export function applyTurnMoves(
   board: BoardArray,
   moves: CheckerMove[],
   color: Color,

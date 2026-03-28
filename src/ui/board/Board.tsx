@@ -30,6 +30,15 @@ const COLORS = {
   bearOff: '#2a1810',
 };
 
+/** Reverse lookup: board point number → {col, top} for pixel position calculation */
+export function pointToCol(point: number, flipped: boolean, direction: 'left' | 'right' = 'right'): { col: number; top: boolean } {
+  for (let col = 0; col < 12; col++) {
+    if (colToPoint(col, true, flipped, direction) === point) return { col, top: true };
+    if (colToPoint(col, false, flipped, direction) === point) return { col, top: false };
+  }
+  return { col: 0, top: true };
+}
+
 export interface BoardProps {
   board: BoardArray;
   turn: Color;
@@ -41,27 +50,33 @@ export interface BoardProps {
   onPointClick: (point: number) => void;
   onBearOffClick: () => void;
   flipped: boolean;
-  /** Called when a checker is dropped on a point via drag */
-  onDropOnPoint?: (point: number) => void;
+  direction: 'left' | 'right';
+  hiddenDests?: Set<number>;
+  onDragStart?: (point: number) => void;
+  onDragEnd?: (clientX: number, clientY: number) => void;
+  onDragMove?: (clientX: number, clientY: number) => void;
 }
 
 // Export these so the Jail component can calculate drop targets
 export const BOARD_VIEWBOX = { w: BOARD_W, h: BOARD_H };
 
-export function colToPoint(col: number, top: boolean, flipped: boolean): number {
-  if (flipped) {
-    return top ? col + 1 : 24 - col;
+export function colToPoint(col: number, top: boolean, flipped: boolean, direction: 'left' | 'right' = 'right'): number {
+  if (direction === 'left') {
+    if (flipped) return top ? col + 1 : 24 - col;
+    return top ? 24 - col : col + 1;
   }
-  return top ? 24 - col : col + 1;
+  // direction === 'right': white home (1-6) at bottom-right
+  if (flipped) return top ? 12 - col : col + 13;
+  return top ? col + 13 : 12 - col;
 }
 
 export function pointX(col: number): number {
   const halfCol = col < HALF_POINTS ? col : col + 1;
-  const leftEdge = MARGIN + BEAR_OFF_W + 6;
+  const leftEdge = MARGIN + 6;
   return leftEdge + halfCol * POINT_W + POINT_W / 2 + (col >= HALF_POINTS ? BAR_W : 0);
 }
 
-function checkerY(index: number, top: boolean): number {
+export function checkerY(index: number, top: boolean): number {
   const edge = top ? MARGIN + 6 : BOARD_H - MARGIN - 6;
   const dir = top ? 1 : -1;
   const maxNormal = 5;
@@ -69,7 +84,42 @@ function checkerY(index: number, top: boolean): number {
   return edge + dir * (CHECKER_R + index * spacing);
 }
 
+const DRAG_THRESHOLD = 8;
+
 const Board: Component<BoardProps> = (props) => {
+  let dragState: { point: number; startX: number; startY: number; dragging: boolean } | null = null;
+
+  function handlePointerDown(point: number, e: PointerEvent) {
+    if (!props.onDragStart) return;
+    const target = e.currentTarget as Element;
+    target.setPointerCapture(e.pointerId);
+    dragState = { point, startX: e.clientX, startY: e.clientY, dragging: false };
+  }
+
+  function handlePointerMove(e: PointerEvent) {
+    if (!dragState) return;
+    const dx = e.clientX - dragState.startX;
+    const dy = e.clientY - dragState.startY;
+    if (!dragState.dragging && Math.hypot(dx, dy) > DRAG_THRESHOLD) {
+      dragState.dragging = true;
+      props.onDragStart?.(dragState.point);
+    }
+    if (dragState.dragging) {
+      props.onDragMove?.(e.clientX, e.clientY);
+    }
+  }
+
+  function handlePointerUp(e: PointerEvent) {
+    if (!dragState) return;
+    if (dragState.dragging) {
+      props.onDragEnd?.(e.clientX, e.clientY);
+    } else {
+      // Tap — use click handler
+      props.onPointClick(dragState.point);
+    }
+    dragState = null;
+  }
+
   const pointsData = createMemo(() => {
     const data: Array<{
       point: number;
@@ -85,7 +135,7 @@ const Board: Component<BoardProps> = (props) => {
 
     for (let col = 0; col < 12; col++) {
       for (const top of [true, false]) {
-        const point = colToPoint(col, top, props.flipped);
+        const point = colToPoint(col, top, props.flipped, props.direction);
         const val = props.board[point];
         const color: Color | null = val > 0 ? 'w' : val < 0 ? 'b' : null;
         const checkers = Math.abs(val);
@@ -102,7 +152,7 @@ const Board: Component<BoardProps> = (props) => {
     return data;
   });
 
-  const barX = MARGIN + BEAR_OFF_W + 6 + HALF_POINTS * POINT_W + BAR_W / 2;
+  const barX = MARGIN + 6 + HALF_POINTS * POINT_W + BAR_W / 2;
 
   const isBearOffDest = createMemo(() => {
     return props.legalDests.includes(0) || props.legalDests.includes(25);
@@ -116,22 +166,29 @@ const Board: Component<BoardProps> = (props) => {
     >
       <defs>
         <linearGradient id="barGrad" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stop-color="#1a0e06" />
-          <stop offset="50%" stop-color="#241408" />
-          <stop offset="100%" stop-color="#1a0e06" />
+          <stop offset="0%" stop-color="#2a1a10" />
+          <stop offset="15%" stop-color="#3d2817" />
+          <stop offset="50%" stop-color="#4a3020" />
+          <stop offset="85%" stop-color="#3d2817" />
+          <stop offset="100%" stop-color="#2a1a10" />
         </linearGradient>
       </defs>
 
-      {/* Board frame */}
+      {/* Board frame + background */}
       <rect x={0} y={0} width={BOARD_W} height={BOARD_H} rx={6} fill={COLORS.boardFrame} />
       <rect x={MARGIN} y={MARGIN} width={BOARD_W - MARGIN * 2} height={BOARD_H - MARGIN * 2} fill={COLORS.boardBg} />
 
-      {/* Bar divider */}
+      {/* Bar divider — raised center strip */}
       <rect
         x={barX - BAR_W / 2} y={MARGIN}
         width={BAR_W} height={BOARD_H - MARGIN * 2}
         fill="url(#barGrad)"
       />
+      {/* Bar edge lines for definition */}
+      <line x1={barX - BAR_W / 2} y1={MARGIN} x2={barX - BAR_W / 2} y2={BOARD_H - MARGIN}
+        stroke="#4a3525" stroke-width={1.5} />
+      <line x1={barX + BAR_W / 2} y1={MARGIN} x2={barX + BAR_W / 2} y2={BOARD_H - MARGIN}
+        stroke="#4a3525" stroke-width={1.5} />
 
       {/* Points (triangles) */}
       <For each={pointsData()}>
@@ -154,6 +211,7 @@ const Board: Component<BoardProps> = (props) => {
             <g>
               <polygon points={triPoints} fill={fillColor} opacity={0.85} />
 
+              {/* Legal destination: blue circle highlight */}
               <Show when={pd.isDest}>
                 <circle
                   cx={x}
@@ -168,19 +226,21 @@ const Board: Component<BoardProps> = (props) => {
                 />
               </Show>
 
+              {/* Moveable checker: green triangle outline — no animation */}
               <Show when={pd.isMoveable && !pd.isSelected}>
-                <rect
-                  x={x - POINT_W / 2 + 2}
-                  y={pd.top ? MARGIN : BOARD_H / 2}
-                  width={POINT_W - 4}
-                  height={(BOARD_H - MARGIN * 2) / 2}
-                  fill={COLORS.moveableGlow}
-                  rx={2}
+                <polygon
+                  points={triPoints}
+                  fill="none"
+                  stroke="#4caf50"
+                  stroke-width={2}
+                  style={{ filter: 'drop-shadow(0 0 3px rgba(76, 175, 80, 0.4))' }}
                 />
               </Show>
 
               <For each={Array.from({ length: pd.checkers }, (_, i) => i)}>
                 {(i) => {
+                  // Hide top checker at destination while animation is in flight
+                  const isTopAndHidden = () => i === pd.checkers - 1 && props.hiddenDests?.has(pd.point);
                   const cy = checkerY(i, pd.top);
                   const fill = pd.color === 'w' ? COLORS.checkerWhite : COLORS.checkerBlack;
                   const stroke = pd.color === 'w' ? COLORS.checkerWhiteBorder : COLORS.checkerBlackBorder;
@@ -193,8 +253,12 @@ const Board: Component<BoardProps> = (props) => {
                         fill={fill}
                         stroke={pd.isSelected && i === pd.checkers - 1 ? COLORS.highlightStroke : stroke}
                         stroke-width={pd.isSelected && i === pd.checkers - 1 ? 3 : 1.5}
+                        opacity={isTopAndHidden() ? 0 : 1}
                         class={`checker ${isClickable ? 'movable' : ''} ${pd.isSelected && i === pd.checkers - 1 ? 'selected' : ''}`}
-                        onClick={isClickable ? () => props.onPointClick(pd.point) : undefined}
+                        onClick={isClickable && !props.onDragStart ? () => props.onPointClick(pd.point) : undefined}
+                        onPointerDown={isClickable ? (e: PointerEvent) => handlePointerDown(pd.point, e) : undefined}
+                        onPointerMove={isClickable ? handlePointerMove : undefined}
+                        onPointerUp={isClickable ? handlePointerUp : undefined}
                       />
                       <Show when={pd.checkers > 5 && i === pd.checkers - 1}>
                         <text
@@ -223,78 +287,70 @@ const Board: Component<BoardProps> = (props) => {
         }}
       </For>
 
-      {/* Bear off tray — Right (White) */}
-      <g>
-        <rect
-          x={BOARD_W - MARGIN - BEAR_OFF_W} y={MARGIN}
-          width={BEAR_OFF_W} height={BOARD_H - MARGIN * 2}
-          fill={COLORS.bearOff} rx={3}
-          stroke={isBearOffDest() ? COLORS.highlightStroke : 'none'}
-          stroke-width={2}
-          onClick={isBearOffDest() ? () => props.onBearOffClick() : undefined}
-          style={{ cursor: isBearOffDest() ? 'pointer' : 'default' }}
-        />
-        <Show when={props.whiteOff > 0}>
-          <text
-            x={BOARD_W - MARGIN - BEAR_OFF_W / 2} y={BOARD_H / 2 + 40}
-            text-anchor="middle" font-size="15" font-weight="700"
-            fill={COLORS.checkerWhite}
-            style={{ "pointer-events": "none" }}
-          >{props.whiteOff}</text>
-          <For each={Array.from({ length: Math.min(props.whiteOff, 15) }, (_, i) => i)}>
-            {(i) => (
-              <rect
-                x={BOARD_W - MARGIN - BEAR_OFF_W + 3}
-                y={BOARD_H - MARGIN - 6 - i * 13}
-                width={BEAR_OFF_W - 6} height={9} rx={2}
-                fill={COLORS.checkerWhite} opacity={0.8}
-                style={{ "pointer-events": "none" }}
-              />
-            )}
-          </For>
-        </Show>
-      </g>
+      {/* Bear-off zone highlight — shows when bear-off is a legal destination */}
+      <Show when={isBearOffDest()}>
+        {(() => {
+          const whiteRight = props.direction === 'right';
+          const bearX = (props.turn === 'w' ? whiteRight : !whiteRight)
+            ? BOARD_W - MARGIN - 24 : MARGIN;
+          return (
+            <rect
+              x={bearX} y={MARGIN}
+              width={24} height={BOARD_H - MARGIN * 2}
+              fill={COLORS.highlight} rx={3}
+              stroke={COLORS.highlightStroke} stroke-width={2}
+              onClick={() => props.onBearOffClick()}
+              style={{ cursor: 'pointer' }}
+            />
+          );
+        })()}
+      </Show>
 
-      {/* Bear off tray — Left (Black) */}
-      <g>
-        <rect
-          x={MARGIN} y={MARGIN}
-          width={BEAR_OFF_W} height={BOARD_H - MARGIN * 2}
-          fill={COLORS.bearOff} rx={3}
-        />
-        <Show when={props.blackOff > 0}>
-          <text
-            x={MARGIN + BEAR_OFF_W / 2} y={BOARD_H / 2 - 30}
-            text-anchor="middle" font-size="15" font-weight="700"
-            fill="#888"
-            style={{ "pointer-events": "none" }}
-          >{props.blackOff}</text>
-          <For each={Array.from({ length: Math.min(props.blackOff, 15) }, (_, i) => i)}>
-            {(i) => (
-              <rect
-                x={MARGIN + 3}
-                y={MARGIN + 6 + i * 13}
-                width={BEAR_OFF_W - 6} height={9} rx={2}
-                fill={COLORS.checkerBlack} opacity={0.8}
-                style={{ "pointer-events": "none" }}
-              />
-            )}
-          </For>
-        </Show>
-      </g>
+      {/* Borne-off counters — small indicators at board edge */}
+      {(() => {
+        const whiteRight = props.direction === 'right';
+        const whiteX = whiteRight ? BOARD_W - MARGIN / 2 : MARGIN / 2;
+        const blackX = whiteRight ? MARGIN / 2 : BOARD_W - MARGIN / 2;
+        return (<>
+          <Show when={props.whiteOff > 0}>
+            <text
+              x={whiteX} y={BOARD_H / 2 + 5}
+              text-anchor="middle" font-size="13" font-weight="700"
+              fill={COLORS.checkerWhite} opacity={0.7}
+              style={{ "pointer-events": "none" }}
+            >{props.whiteOff}</text>
+          </Show>
+          <Show when={props.blackOff > 0}>
+            <text
+              x={blackX} y={BOARD_H / 2 + 5}
+              text-anchor="middle" font-size="13" font-weight="700"
+              fill="#888" opacity={0.7}
+              style={{ "pointer-events": "none" }}
+            >{props.blackOff}</text>
+          </Show>
+        </>);
+      })()}
 
       {/* Point numbers */}
       <For each={Array.from({ length: 12 }, (_, i) => i)}>
         {(col) => {
           const x = pointX(col);
-          const topPt = colToPoint(col, true, props.flipped);
-          const botPt = colToPoint(col, false, props.flipped);
+          const topPt = colToPoint(col, true, props.flipped, props.direction);
+          const botPt = colToPoint(col, false, props.flipped, props.direction);
+          const topMoveable = props.moveablePoints.includes(topPt);
+          const botMoveable = props.moveablePoints.includes(botPt);
           return (
             <g>
-              <text x={x} y={MARGIN - 3} text-anchor="middle" font-size="9" fill="#555" style={{ "pointer-events": "none" }}>
+              <text x={x} y={MARGIN - 3} text-anchor="middle" font-size="9"
+                fill={topMoveable ? '#4caf50' : '#555'}
+                style={{ "pointer-events": "none", filter: topMoveable ? 'drop-shadow(0 0 3px rgba(76,175,80,0.7))' : 'none' }}
+              >
                 {topPt}
               </text>
-              <text x={x} y={BOARD_H - MARGIN + 13} text-anchor="middle" font-size="9" fill="#555" style={{ "pointer-events": "none" }}>
+              <text x={x} y={BOARD_H - MARGIN + 13} text-anchor="middle" font-size="9"
+                fill={botMoveable ? '#4caf50' : '#555'}
+                style={{ "pointer-events": "none", filter: botMoveable ? 'drop-shadow(0 0 3px rgba(76,175,80,0.7))' : 'none' }}
+              >
                 {botPt}
               </text>
             </g>

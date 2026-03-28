@@ -1,8 +1,8 @@
-# LibreGammon - Codebase Summary
+# duckGammon - Codebase Summary
 
 ## What is this?
 
-LibreGammon is a lichess-inspired, minimalist backgammon web app. Browser-first, with plans for Android/iOS. Built for speed: ~14KB gzipped total, zero backend required for single-player.
+duckGammon is a lichess-inspired, minimalist backgammon web app. Browser-first, with plans for Android/iOS. Built for speed: ~20KB gzipped total, zero backend required for single-player.
 
 ## Tech Stack
 
@@ -10,7 +10,9 @@ LibreGammon is a lichess-inspired, minimalist backgammon web app. Browser-first,
 - **TypeScript** - Full type safety across engine + UI
 - **Vite** - Build tool (instant HMR, optimized production builds)
 - **SVG** - Board rendering (native DOM events, CSS transitions, resolution-independent)
+- **Web Audio API** - Procedural sound synthesis (no audio files)
 - **Vitest** - Test runner
+- **Playwright** - Visual regression tests
 
 ## Project Structure
 
@@ -30,68 +32,66 @@ src/
     match.ts        # Match play, Crawford rule, scoring
     pip.ts          # Pip count calculation
     ai.ts           # Heuristic AI opponent (position evaluation + best-turn search)
+    luck.ts         # Per-turn luck calculation (actual vs expected equity)
     test/
-      engine.test.ts  # 48 test cases covering all rule edge cases
+      engine.test.ts  # 53 test cases covering all rule edge cases
 
   ui/               # Solid.js client application
-    index.tsx       # Entry point, router, landing page
+    index.tsx       # Entry point, router, landing page, dev mode presets
+    audio/
+      sounds.ts     # Web Audio API: dice roll, capture, jail escape, victory/defeat
     board/
-      Board.tsx     # Main SVG board component (points, checkers, bar, bear-off)
-      Dice.tsx      # Dice display with dot patterns + used-die dimming
+      Board.tsx     # Main SVG board component (points, checkers, bar)
+      Dice.tsx      # Dice display with roll animation, swap button
+      MoveAnimation.tsx  # Checker movement: slide mode + bunny hop mode
+      OpponentArrows.tsx # AI move path arrows (3s display, toggleable)
+      LuckMeter.tsx # Luck display: per-turn bar, cumulative sparkline
+      Jail.tsx      # Bar/jail strip with prison bar visuals, drag-to-play
     game/
-      GameView.tsx  # Full game view: board + side panel, AI mode, keyboard shortcuts
+      GameView.tsx  # Full game view: board + side panel, AI mode, all controls
     styles/
       variables.css # CSS custom properties (dark theme)
       layout.css    # Global layout, header
-      board.css     # Board, panel, controls, landing page styles
+      board.css     # Board, panel, controls, animations, landing page styles
 ```
 
 ## Design Philosophy: Feel is the Feature
 
-LibreGammon's core differentiator is **tactile feel**. Every interaction should have weight, consequence, and personality. The board is not a static UI — it's a living space where pieces have emotions. This is what separates us from every other backgammon app.
+duckGammon's core differentiator is **tactile feel**. Every interaction should have weight, consequence, and personality. The board is not a static UI — it's a living space where pieces have emotions.
 
-### Animation Principles (MUST follow for all features)
+### Core Principles
 
-1. **Every state change has a physical animation.** No teleporting. Checkers slide, dice tumble, the cube rotates. If something moved, the user sees it move.
+1. **Nothing teleports.** Every state change has a physical animation. Checkers hop, dice tumble, highlights pulse in. If something moved, the user sees it move.
 
-2. **Captures ("hits") are dramatic.** When a checker is sent to the bar:
-   - The hitting checker lands with impact (slight overshoot + settle)
-   - The hit checker animates to the bar with a "knocked away" trajectory
-   - Prison bars visually close/appear around the captured checker on the bar
-   - Sound: a satisfying *clack* of checker hitting checker
+2. **Sound reinforces action.** Dice land with a thump. Captures clack. Jail escapes chime. Victory plays a fanfare. Sounds are synthesized (Web Audio API, zero files) — subtle enough to not annoy, present enough to feel real.
 
-3. **Bar entry ("jail escape") is celebratory.** When a checker re-enters from the bar:
-   - Prison bars animate open (swing outward or fade)
-   - The checker slides out onto the board with momentum
-   - Subtle flash/glow on the destination point
-   - The feel is: freedom, relief, re-joining the fight
+3. **The opponent's moves are legible.** AI moves play sequentially with bunny-hop animation so you can follow each checker. Optional gold path arrows trace moves for 3 seconds. The game is a conversation, not a black box.
 
-4. **Dice have physics.** Rolling dice should feel like rolling real dice:
-   - Tumble animation with rotation and bounce
-   - Brief randomized spin before settling on final values
-   - Dice land with weight — slight shadow expansion on impact
-   - Doubles get a special visual emphasis (glow, pulse)
+4. **Controls are discoverable but not noisy.** Keyboard shortcuts exist for everything (Enter/Z/S/F/B/R/A/D) but the UI never shows more than what's needed. Options live in a panel, not cluttering the board.
 
-5. **Bearing off is satisfying.** Each checker borne off:
-   - Slides smoothly into the bear-off tray
-   - Tray fills up visually (stacked checker bars)
-   - Final checker (game-winning) gets a special flourish
+5. **The board is the star.** Clean brown frame, no visual clutter. The bear-off zone only appears when relevant. Borne-off counts are subtle numbers in the frame margin. The center bar has defined edges for clear half-separation.
 
-6. **Micro-interactions everywhere:**
-   - Hovering a movable checker: subtle lift/glow
-   - Selecting a checker: pulse on legal destinations
-   - Invalid move attempt: shake feedback
-   - Turn transition: subtle board-wide fade/pulse
+### Animation Inventory
+
+| Event | Animation | Duration | Sound |
+|-------|-----------|----------|-------|
+| Checker move | Bunny hop (pip-by-pip arc) or slide | 130ms/hop or 550ms | - |
+| Dice roll | Face cycling + rotation + settle | 550ms | Low thump |
+| Capture/hit | - | - | Percussive clack |
+| Jail escape | Prison bars open | 800ms | Rising chime |
+| Legal destinations | Pulse fade-in | 400ms | - |
+| Game over (win) | Modal overlay | - | Ascending triad |
+| Game over (lose) | Modal overlay | - | Descending minor |
+| AI move arrows | Gold path traces | 3s + 500ms fade | - |
 
 ### Animation Technical Approach
 
-- **CSS transitions** for checker movement (`transform`, `cx`/`cy` on SVG)
-- **CSS @keyframes** for dice tumble, prison bars, celebration effects
-- **Solid.js `createEffect`** to trigger animations on state changes
-- **`requestAnimationFrame`** for physics-based animations (dice bounce)
-- Keep all animations GPU-accelerated (`transform`, `opacity` only)
-- Animation durations: moves 200ms, dice 500ms, hits 400ms, bar entry 350ms
-- All animations must be non-blocking — game state updates immediately, visuals catch up
+- **CSS transitions** for slide-mode checker movement (`cx`/`cy` on SVG circles)
+- **`requestAnimationFrame`** for bunny-hop mode (manual interpolation with sin arc)
+- **CSS @keyframes** for dice tumble, prison bars, destination pulse
+- **Web Audio API** oscillators + noise buffers for all sounds
+- All animations are **non-blocking** — game state updates immediately, visuals catch up
+- Exported `HOP_DURATION` (130ms) and `ANIM_DURATION` (550ms) constants drive timing
 
 ### The Rule
 
@@ -102,14 +102,23 @@ LibreGammon's core differentiator is **tactile feel**. Every interaction should 
 ### Board Representation
 26-element number array. Index 0 = white bar, 1-24 = points, 25 = black bar. Positive = white, negative = black. Compact, fast to clone and compare.
 
+### Board Direction
+`colToPoint(col, top, flipped, direction)` maps SVG columns to board points. Default direction is `'right'` — white escapes toward bottom-right. Togglable with `R` key, persisted in localStorage.
+
 ### Move Generation
 Full-sequence DFS in `moves.ts`. Backgammon requires considering all move orderings because legality of move B depends on whether move A was made first. Filters by: max dice usage, higher-die-first rule, and deduplicates by final board state.
 
 ### AI
 `ai.ts` uses heuristic position evaluation (pip count, point control, blot exposure, prime detection, home board coverage). Evaluates all legal turns and picks the best. Small random noise for variety.
 
+### Luck Meter
+`luck.ts` computes per-turn luck: equity of actual roll vs average equity across all 21 possible rolls. Uses the same `evaluatePosition` function as the AI. Displayed as a bar + cumulative sparkline.
+
 ### Game Flow
-Three-phase turns: (1) doubling offer, (2) dice roll, (3) checker moves. GameView manages this via Solid.js signals. In AI mode, `createEffect` watches for black's turn and auto-plays with staggered delays.
+Three-phase turns: (1) doubling offer, (2) dice roll, (3) checker moves. GameView manages this via Solid.js signals. In AI mode, `createEffect` watches for black's turn and auto-plays with dynamically-timed delays (based on hop animation duration).
+
+### Move History Replay
+Arrow keys or clicking move entries reconstructs the board state at that point by replaying moves from the initial position. Board displays the historical state; game actions snap back to live.
 
 ### Shared Engine
 The engine module (`src/engine/`) is pure TypeScript with zero DOM dependencies. Used by both the UI (for instant move validation, legal highlights) and future server (authoritative validation).
@@ -119,11 +128,26 @@ The engine module (`src/engine/`) is pure TypeScript with zero DOM dependencies.
 ```bash
 npm run dev        # Start dev server (hot reload)
 npm run build      # Production build -> dist/
-npm test           # Run all tests
+npm test           # Run all tests (53 tests)
 npm run test:watch # Watch mode
 npm run screenshots # Build + run Playwright screenshot tests
 npx playwright test # Run visual tests (expects build + preview running)
 ```
+
+## Keyboard Shortcuts
+
+| Key | Action |
+|-----|--------|
+| Enter | Roll dice / Confirm turn |
+| Z | Undo last move |
+| S | Swap dice order |
+| D | Offer double |
+| F | Flip board perspective |
+| B | Toggle bunny hop animation |
+| R | Toggle board direction (left/right) |
+| A | Toggle AI move arrows |
+| Left/Right | Navigate move history |
+| Escape | Deselect |
 
 ## Deployment Pipeline
 
@@ -139,7 +163,7 @@ Every change that touches UI or game logic MUST follow this pipeline:
 
 ```
 1. Make changes
-2. npm test                    # Unit tests must pass (48+ tests)
+2. npm test                    # Unit tests must pass (53+ tests)
 3. npm run build               # Production build must succeed
 4. npm run screenshots         # Playwright screenshot tests must pass
 5. Review screenshots in screenshots/ directory
@@ -148,7 +172,7 @@ Every change that touches UI or game logic MUST follow this pipeline:
 
 ### Screenshot Validation (REQUIRED for all UI changes)
 
-**Playwright visual tests** run against 3 viewports and capture screenshots at key game states. These tests are NOT optional — they are a gate before pushing.
+**Playwright visual tests** run against 3 viewports and capture screenshots at key game states.
 
 **Viewports tested:**
 - `desktop-chrome` — 1280x720
@@ -162,16 +186,13 @@ Every change that touches UI or game logic MUST follow this pipeline:
 - `04-after-ai-turn` — After AI completes its turn
 - `05-board-flipped` — Board flipped with F key
 - `06-local-mode` — Local 2-player mode
+- `07-ai-move-arrows` — AI move arrows visible after turn
 
 **What the tests assert:**
 - **Zero scroll** — the entire game fits in viewport, no scrollbar
 - **Board visible** — SVG board has meaningful width/height, not clipped by header
 - **Controls accessible** — Roll, Flip, New, Exit buttons are visible and clickable
 - **Board below header** — board top edge >= header bottom edge
-
-**When to run:** After ANY change to CSS, layout, board rendering, game controls, or component structure. When in doubt, run them.
-
-**Updating baselines:** `npx playwright test --update-snapshots`
 
 ### Config files
 
@@ -194,28 +215,43 @@ Every change that touches UI or game logic MUST follow this pipeline:
 - Keyboard shortcuts (Enter/Z/D/F/Esc)
 - Netlify deployment configuration
 
-### Phase 3: WebSocket Multiplayer (NEXT)
+### Phase 3: Feel + Polish (DONE)
+- Bunny hop animation (pip-by-pip checker movement with arc)
+- Dice roll animation (tumble + settle)
+- Dice order swap (S key)
+- Drag and drop on board checkers
+- Sound effects (Web Audio API: dice, capture, jail escape, victory/defeat)
+- Luck meter (per-turn + cumulative sparkline)
+- AI move arrows (gold path traces, toggleable)
+- Board direction control (escape left/right, persisted)
+- Move history replay (arrow keys + click)
+- Options panel (hop, arrows, direction toggles)
+- Developer mode (bear-off race + mid-game presets)
+- Legal destination pulse animation
+- Clean board frame (no bear-off tray clutter)
+- Center bar definition lines
+
+### Phase 4: WebSocket Multiplayer (NEXT)
 - Node.js backend with `ws` library
 - Game rooms, server-side validation, crypto dice
 - Lobby with seek/challenge system
 - Server-enforced clocks
 - Reconnection handling
 
-### Phase 4: Users + Persistence
+### Phase 5: Users + Persistence
 - PostgreSQL with Drizzle ORM
 - Registration, login, JWT auth
 - Glicko-2 rating system
 - Game history, profiles
 
-### Phase 5: Analysis + Polish
-- Post-game replay/analysis board
+### Phase 6: Analysis + Polish
+- Post-game replay/analysis board (board state reconstruction exists)
 - Match play with Crawford rule (engine ready)
-- Sound effects
 - Spectator support
 - Mobile-responsive board
 - Direct challenges
 
-### Phase 6: Mobile Apps
+### Phase 7: Mobile Apps
 - Capacitor or React Native wrapper
 - Native-feel touch interactions
 - Push notifications for game invites

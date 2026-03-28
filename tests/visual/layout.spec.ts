@@ -1,5 +1,5 @@
 /**
- * Visual layout tests for LibreGammon.
+ * Visual layout tests for duckGammon.
  *
  * Run: npx playwright test
  * Update baselines: npx playwright test --update-snapshots
@@ -153,9 +153,9 @@ test.describe('Game view - after roll', () => {
     await page.waitForSelector('.board-svg');
     await page.waitForTimeout(300);
 
-    // Click Roll
+    // Click Roll (wait for dice animation to complete: 550ms)
     await page.click('button:has-text("Roll")');
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(800);
 
     await page.screenshot({
       path: screenshotPath('03-after-roll', testInfo.project.name),
@@ -183,11 +183,30 @@ test.describe('Game view - AI turn', () => {
     await page.waitForSelector('.board-svg');
     await page.waitForTimeout(300);
 
-    // Roll, then let AI take its turn
+    // Roll, then make moves to complete the turn
     await page.click('button:has-text("Roll")');
+    await page.waitForTimeout(800);
 
-    // Wait for AI to finish (roll delay + move delays)
-    await page.waitForTimeout(3000);
+    // Make moves by clicking moveable checkers then destinations (force to bypass overlays)
+    for (let attempt = 0; attempt < 4; attempt++) {
+      const moveable = page.locator('.checker.movable').first();
+      if (await moveable.count() === 0) break;
+      await moveable.click({ force: true });
+      await page.waitForTimeout(300);
+      const dest = page.locator('.move-dest.visible').first();
+      if (await dest.count() === 0) break;
+      await dest.click({ force: true });
+      await page.waitForTimeout(600);
+    }
+
+    // Confirm if needed (forced pass or all dice used)
+    const confirmBtn = page.locator('button:has-text("Confirm")');
+    if (await confirmBtn.count() > 0) {
+      await confirmBtn.click();
+    }
+
+    // Wait for AI roll animation + AI moves + arrows
+    await page.waitForTimeout(6000);
 
     await page.screenshot({
       path: screenshotPath('04-after-ai-turn', testInfo.project.name),
@@ -196,6 +215,46 @@ test.describe('Game view - AI turn', () => {
 
     await assertBoardVisible(page);
     await assertNoScroll(page);
+  });
+
+  test('AI move arrows are visible', async ({ page }, testInfo) => {
+    await page.goto('/');
+    await page.click('button:has-text("Play vs AI")');
+    await page.waitForSelector('.board-svg');
+    await page.waitForTimeout(300);
+
+    // Roll dice
+    await page.click('button:has-text("Roll")');
+    await page.waitForTimeout(800);
+
+    // Make moves to complete the turn (force click to bypass SVG overlays)
+    for (let attempt = 0; attempt < 4; attempt++) {
+      const moveable = page.locator('.checker.movable').first();
+      if (await moveable.count() === 0) break;
+      await moveable.click({ force: true });
+      await page.waitForTimeout(300);
+      const dest = page.locator('.move-dest.visible').first();
+      if (await dest.count() === 0) break;
+      await dest.click({ force: true });
+      await page.waitForTimeout(600);
+    }
+
+    // Confirm if needed
+    const confirmBtn = page.locator('button:has-text("Confirm")');
+    if (await confirmBtn.count() > 0) {
+      await confirmBtn.click();
+    }
+
+    // Wait for AI to finish playing (dice anim + moves) — arrows appear after
+    await page.waitForTimeout(5000);
+
+    // Capture while arrows should still be visible (within 3s window)
+    await page.screenshot({
+      path: screenshotPath('07-ai-move-arrows', testInfo.project.name),
+      fullPage: false,
+    });
+
+    await assertBoardVisible(page);
   });
 });
 

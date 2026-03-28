@@ -1,4 +1,4 @@
-import type { GameState, Color, CheckerMove, GameResult, GameResultType } from '../shared/types';
+import type { GameState, Color, CheckerMove, GameResult, GameResultType, BoardArray } from '../shared/types';
 import { createInitialGameState, CHECKERS_PER_PLAYER } from '../shared/constants';
 import { cloneBoard, applyMove, countCheckers, checkersAt } from './board';
 import { rollDice, diceToMoves } from './dice';
@@ -8,6 +8,25 @@ import { canDouble, offerDouble, acceptDouble } from './cube';
 /** Create a fresh game */
 export function newGame(gameId: string = 'local'): GameState {
   return createInitialGameState(gameId);
+}
+
+/** Create a game from a custom board position */
+export function newGameFromPosition(
+  board: BoardArray, whiteOff = 0, blackOff = 0
+): GameState {
+  return {
+    board: [...board],
+    turn: 'w',
+    dice: null,
+    movesLeft: [],
+    cube: { value: 1, owner: 'center', offered: false },
+    whiteOff,
+    blackOff,
+    phase: 'waiting',
+    gameId: 'dev',
+    ply: 0,
+    turnMoves: [],
+  };
 }
 
 /** Roll dice for the current player */
