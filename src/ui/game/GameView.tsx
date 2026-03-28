@@ -17,6 +17,8 @@ import OpponentArrows from '../board/OpponentArrows';
 import LuckMeter, { type LuckEntry } from '../board/LuckMeter';
 import CountdownClock from '../board/CountdownClock';
 import { playDiceRoll, playCapture, playJailEscape, playVictory, playDefeat, playTimeout } from '../audio/sounds';
+import * as socket from '../net/socket';
+import type { ServerMessage } from '../../server/protocol';
 
 interface TurnRecord {
   ply: number;
@@ -25,7 +27,7 @@ interface TurnRecord {
   moves: CheckerMove[];
 }
 
-export type GameMode = 'local' | 'ai';
+export type GameMode = 'local' | 'ai' | 'online';
 
 const AI_ROLL_DELAY = 600;
 const AI_MOVE_DELAY = 650;
@@ -35,7 +37,9 @@ const MARGIN = 16;
 
 interface DevPreset { board: number[]; whiteOff: number; blackOff: number; }
 
-const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevPreset }> = (props) => {
+const WS_URL = import.meta.env.VITE_WS_URL || `ws://${window.location.hostname}:3001`;
+
+const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevPreset; onlineGameId?: string }> = (props) => {
   const initState = props.devPreset
     ? {
         board: [...props.devPreset.board],
@@ -72,6 +76,12 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
   );
   const [timeRemaining, setTimeRemaining] = createSignal<number | null>(null);
   const [timeLocked, setTimeLocked] = createSignal(false);
+  const [myColor, setMyColor] = createSignal<Color>('w');
+  const [onlineGameId, setOnlineGameId] = createSignal<string | null>(null);
+  const [waitingForOpponent, setWaitingForOpponent] = createSignal(false);
+  const [opponentDisconnected, setOpponentDisconnected] = createSignal(false);
+  const [rematchOffered, setRematchOffered] = createSignal(false);
+  const [wsConnected, setWsConnected] = createSignal(false);
   let initialBoard = [...initState.board];
   let initialWhiteOff = initState.whiteOff;
   let initialBlackOff = initState.blackOff;
@@ -98,14 +108,105 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
   const currentState = () => state();
   const isAiMode = () => props.mode === 'ai';
   const isAiTurn = () => isAiMode() && currentState().turn === 'b';
+  const isOnline = () => props.mode === 'online';
+  const isMyTurn = () => {
+    if (isOnline()) return currentState().turn === myColor();
+    if (isAiMode()) return currentState().turn === 'w';
+    return true; // local mode, always your turn
+  };
+
+  // ─── WebSocket setup for online mode ───
+  if (isOnline()) {
+    socket.connect(WS_URL);
+    socket.onStatus(setWsConnected);
+    socket.onMessage((msg: ServerMessage) => {
+      switch (msg.type) {
+        case 'game_created':
+          setOnlineGameId(msg.gameId);
+          setWaitingForOpponent(true);
+          break;
+        case 'game_start':
+        case 'rematch_start':
+          setMyColor(msg.color);
+          setState(msg.state);
+          initialBoard = [...msg.state.board];
+          initialWhiteOff = msg.state.whiteOff;
+          initialBlackOff = msg.state.blackOff;
+          setWaitingForOpponent(false);
+          setRematchOffered(false);
+          setHistory([]);
+          setHistoryIndex(null);
+          setLuckHistory([]);
+          break;
+        case 'state':
+          // Detect opponent's moves for animation
+          const prev = currentState();
+          if (msg.state.turn !== prev.turn && prev.phase === 'moving') {
+            // Turn changed — opponent finished their turn
+          }
+          setState(msg.state);
+          break;
+        case 'timeout':
+          playTimeout();
+          setState(msg.state);
+          break;
+        case 'game_over':
+          if (msg.result.winner === myColor()) playVictory();
+          else playDefeat();
+          break;
+        case 'resigned': {
+          const s = currentState();
+          setState({ ...s, phase: 'gameOver' });
+          if (msg.winner === myColor()) playVictory();
+          else playDefeat();
+          break;
+        }
+        case 'opponent_disconnected':
+          setOpponentDisconnected(true);
+          break;
+        case 'opponent_reconnected':
+          setOpponentDisconnected(false);
+          break;
+        case 'rematch_offered':
+          setRematchOffered(true);
+          break;
+        case 'error':
+          console.warn('[duckGammon]', msg.message);
+          break;
+      }
+    });
+
+    // Create or join game
+    if (props.onlineGameId) {
+      // Joining via invite link
+      const joinWait = setInterval(() => {
+        if (wsConnected()) {
+          socket.send({ type: 'join', gameId: props.onlineGameId! });
+          clearInterval(joinWait);
+        }
+      }, 100);
+    } else {
+      // Creating a new game
+      const createWait = setInterval(() => {
+        if (wsConnected()) {
+          socket.send({ type: 'create', timeLimit: timePerMove() });
+          clearInterval(createWait);
+        }
+      }, 100);
+    }
+
+    onCleanup(() => socket.disconnect());
+  }
 
   const isReviewing = () => historyIndex() !== null;
 
   const moveablePoints = createMemo(() => {
     if (isReviewing()) return [];
+    if (waitingForOpponent()) return [];
     const s = currentState();
     if (s.phase !== 'moving') return [];
     if (isAiTurn()) return [];
+    if (isOnline() && !isMyTurn()) return [];
     if (isRolling()) return [];
     return movableCheckers(s.board, s.movesLeft, s.turn);
   });
@@ -394,6 +495,11 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
     const s = currentState();
     if (s.phase !== 'waiting') return;
     if (isAiTurn()) return;
+    if (isOnline() && !isMyTurn()) return;
+    if (isOnline()) {
+      socket.send({ type: 'roll' });
+      return;
+    }
     rollWithAnimation(() => doRoll(s));
   }
 
@@ -401,14 +507,17 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
     const s = currentState();
     if (s.phase !== 'waiting') return;
     if (isAiTurn()) return;
+    if (isOnline()) { socket.send({ type: 'double' }); return; }
     setState(doDouble(s));
   }
 
   function handleAcceptDouble() {
+    if (isOnline()) { socket.send({ type: 'accept_double' }); return; }
     setState(doAcceptDouble(currentState()));
   }
 
   function handleDropDouble() {
+    if (isOnline()) { socket.send({ type: 'drop_double' }); return; }
     setState(doDropDouble(currentState()));
   }
 
@@ -424,6 +533,7 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
     setHistoryIndex(null);
     const s = currentState();
     if (s.phase !== 'moving' || isAiTurn()) return;
+    if (isOnline() && !isMyTurn()) return;
 
     const ord = diceOrder();
     const orderedDice = s.dice ? [s.dice[ord[0]], s.dice[ord[1]]] : [];
@@ -473,6 +583,16 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
     animateMove(from, to, s.turn, s.board);
     if (move.hit) playCapture();
     if (from === W_BAR || from === B_BAR) playJailEscape();
+
+    if (isOnline()) {
+      // Send to server — server will broadcast authoritative state
+      socket.send({ type: 'move', move });
+      // Optimistic local update for responsiveness
+      const newState = doMove(s, move);
+      setState(newState);
+      setSelectedPoint(null);
+      return;
+    }
 
     const newState = doMove(s, move);
     setState(newState);
@@ -600,6 +720,10 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
 
   function handleUndo() {
     if (isAiTurn()) return;
+    if (isOnline()) {
+      socket.send({ type: 'undo' });
+      return;
+    }
     clearAnimations();
     setState(undoMove(currentState()));
     setSelectedPoint(null);
@@ -608,6 +732,10 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
   function handleConfirm() {
     const s = currentState();
     if (s.phase !== 'moving' || isAiTurn()) return;
+    if (isOnline()) {
+      socket.send({ type: 'confirm' });
+      return;
+    }
     if (!hasAnyMoves(s.board, s.movesLeft, s.turn)) {
       const newState = confirmTurn(s);
       recordTurn(s, newState);
@@ -649,8 +777,20 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
     setLuckHistory([]);
   }
 
+  function handleResign() {
+    if (!isOnline()) return;
+    if (currentState().phase === 'gameOver') return;
+    socket.send({ type: 'resign' });
+  }
+
+  function handleRematch() {
+    if (!isOnline()) return;
+    socket.send({ type: 'rematch' });
+  }
+
   function handleExit() {
     clearAiTimeouts();
+    if (isOnline()) socket.disconnect();
     props.onExit();
   }
 
@@ -667,11 +807,16 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
   });
 
   const turnLabel = () => {
+    if (waitingForOpponent()) return 'Waiting for opponent...';
     const idx = historyIndex();
     if (idx !== null) return `Move ${idx + 1} of ${history().length}`;
     const s = currentState();
     if (s.phase === 'gameOver') return '';
     if (isRolling()) return 'Rolling...';
+    if (isOnline()) {
+      if (opponentDisconnected()) return 'Opponent disconnected...';
+      return isMyTurn() ? 'Your turn' : "Opponent's turn";
+    }
     if (isAiMode()) {
       if (s.turn === 'w') return "Your turn";
       return "AI thinking...";
@@ -931,7 +1076,26 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
         <div class="panel-section">
           <div class="panel-title">Actions</div>
           <div class="controls">
-            <Show when={currentState().phase === 'waiting' && !isAiTurn()}>
+            <Show when={waitingForOpponent()}>
+              <div style={{ "font-size": "12px", "text-align": "center" }}>
+                <p style={{ margin: "0 0 8px", color: "var(--text-secondary)" }}>Share this link to invite:</p>
+                <input
+                  type="text"
+                  readonly
+                  value={`${window.location.origin}?game=${onlineGameId()}`}
+                  style={{
+                    width: "100%", background: "var(--bg-tertiary)", color: "var(--text-primary)",
+                    border: "1px solid rgba(255,255,255,0.1)", "border-radius": "4px",
+                    padding: "6px 8px", "font-size": "11px", "font-family": "var(--font-mono)",
+                  }}
+                  onClick={(e) => (e.target as HTMLInputElement).select()}
+                />
+                <button class="btn btn-small" style={{ "margin-top": "6px" }}
+                  onClick={() => navigator.clipboard?.writeText(`${window.location.origin}?game=${onlineGameId()}`)}
+                >Copy Link</button>
+              </div>
+            </Show>
+            <Show when={currentState().phase === 'waiting' && !isAiTurn() && !waitingForOpponent() && isMyTurn()}>
               <button class="btn btn-primary" onClick={handleRoll} disabled={isRolling()}>
                 Roll <span class="shortcut-hint">Enter</span>
               </button>
@@ -1028,27 +1192,47 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
           <button class="btn btn-small" onClick={() => setFlipped(f => !f)}>
             Flip <span class="shortcut-hint">F</span>
           </button>
-          <button class="btn btn-small" onClick={handleNewGame}>New</button>
+          <Show when={isOnline() && currentState().phase !== 'gameOver'}>
+            <button class="btn btn-small" style={{ color: '#e53935' }} onClick={handleResign}>Resign</button>
+          </Show>
+          <Show when={!isOnline()}>
+            <button class="btn btn-small" onClick={handleNewGame}>New</button>
+          </Show>
           <button class="btn btn-small" onClick={handleExit}>Exit</button>
         </div>
       </div>
 
-      <Show when={gameResult()}>
-        {(result) => {
+      <Show when={gameResult() || (isOnline() && currentState().phase === 'gameOver')}>
+        {() => {
+          const result = gameResult();
           const winnerLabel = () => {
-            if (isAiMode()) return result().winner === 'w' ? 'You Win!' : 'AI Wins!';
-            return (result().winner === 'w' ? 'White' : 'Black') + ' Wins!';
+            if (!result) return 'Game Over';
+            if (isOnline()) return result.winner === myColor() ? 'You Win!' : 'You Lose';
+            if (isAiMode()) return result.winner === 'w' ? 'You Win!' : 'AI Wins!';
+            return (result.winner === 'w' ? 'White' : 'Black') + ' Wins!';
           };
           return (
-            <div class="game-over-overlay" onClick={handleNewGame}>
+            <div class="game-over-overlay" onClick={isOnline() ? undefined : handleNewGame}>
               <div class="game-over-modal" onClick={(e) => e.stopPropagation()}>
                 <h2>{winnerLabel()}</h2>
-                <div class="result-type">
-                  {result().type === 'backgammon' ? 'Backgammon!' :
-                    result().type === 'gammon' ? 'Gammon!' : 'Single game'}
+                <Show when={result}>
+                  <div class="result-type">
+                    {result!.type === 'backgammon' ? 'Backgammon!' :
+                      result!.type === 'gammon' ? 'Gammon!' : 'Single game'}
+                  </div>
+                  <div class="points">{result!.points} pts</div>
+                </Show>
+                <div style={{ display: 'flex', gap: '8px', "justify-content": 'center', "margin-top": '12px' }}>
+                  <Show when={isOnline()}>
+                    <button class="btn btn-primary" onClick={handleRematch}>
+                      {rematchOffered() ? 'Accept Rematch' : 'Rematch'}
+                    </button>
+                  </Show>
+                  <Show when={!isOnline()}>
+                    <button class="btn btn-primary" onClick={handleNewGame}>New Game</button>
+                  </Show>
+                  <button class="btn" onClick={handleExit}>Exit</button>
                 </div>
-                <div class="points">{result().points} pts</div>
-                <button class="btn btn-primary" onClick={handleNewGame}>New Game</button>
               </div>
             </div>
           );
