@@ -233,6 +233,7 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
     const board = cloneBoard(initialBoard);
     let wOff = initialWhiteOff;
     let bOff = initialBlackOff;
+    if (idx === -1) return { board, whiteOff: wOff, blackOff: bOff }; // starting position
     for (let i = 0; i <= idx && i < h.length; i++) {
       const turn = h[i];
       for (const move of turn.moves) {
@@ -812,6 +813,7 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
   const turnLabel = () => {
     if (waitingForOpponent()) return 'Waiting for opponent...';
     const idx = historyIndex();
+    if (idx === -1) return 'Starting position';
     if (idx !== null) return `Move ${idx + 1} of ${history().length}`;
     const s = currentState();
     if (s.phase === 'gameOver') return '';
@@ -849,7 +851,7 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
           const h = history();
           if (h.length === 0) return null;
           if (prev === null) return h.length - 1;
-          return Math.max(0, prev - 1);
+          return Math.max(-1, prev - 1); // -1 = starting position
         });
         break;
       case 'ArrowRight':
