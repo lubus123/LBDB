@@ -12,7 +12,7 @@ import { formatTurn, formatDice } from '../../shared/notation';
 import Board, { BOARD_VIEWBOX, colToPoint, pointX, pointToCol, checkerY } from '../board/Board';
 import Dice from '../board/Dice';
 import Jail from '../board/Jail';
-import MoveAnimation, { triggerAnimation, triggerBunnyHop, clearAnimations, HOP_DURATION, ANIM_DURATION } from '../board/MoveAnimation';
+import MoveAnimation, { triggerAnimation, triggerBunnyHop, clearAnimations, HOP_DURATION, ANIM_DURATION, getHiddenDests } from '../board/MoveAnimation';
 import OpponentArrows from '../board/OpponentArrows';
 import LuckMeter, { type LuckEntry } from '../board/LuckMeter';
 import CountdownClock from '../board/CountdownClock';
@@ -334,14 +334,14 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
     if (bunnyHop()) {
       const wp = computeHopWaypoints(from, to, color, board);
       if (wp && wp.length >= 2) {
-        return triggerBunnyHop(wp, color);
+        return triggerBunnyHop(wp, color, to);
       }
     }
     // Fallback to slide
     const fromPos = getCheckerPixel(from, board);
     const toPos = getDestPixel(to, board);
     if (fromPos && toPos) {
-      triggerAnimation(fromPos.x, fromPos.y, toPos.x, toPos.y, color);
+      triggerAnimation(fromPos.x, fromPos.y, toPos.x, toPos.y, color, to);
     }
     return ANIM_DURATION;
   }
@@ -974,6 +974,7 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
             onBearOffClick={handleBearOffClick}
             flipped={flipped()}
             direction={direction()}
+            hiddenDests={getHiddenDests()}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
             onDragMove={handleDragMove}

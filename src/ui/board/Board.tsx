@@ -51,6 +51,7 @@ export interface BoardProps {
   onBearOffClick: () => void;
   flipped: boolean;
   direction: 'left' | 'right';
+  hiddenDests?: Set<number>;
   onDragStart?: (point: number) => void;
   onDragEnd?: (clientX: number, clientY: number) => void;
   onDragMove?: (clientX: number, clientY: number) => void;
@@ -238,6 +239,8 @@ const Board: Component<BoardProps> = (props) => {
 
               <For each={Array.from({ length: pd.checkers }, (_, i) => i)}>
                 {(i) => {
+                  // Hide top checker at destination while animation is in flight
+                  const isTopAndHidden = () => i === pd.checkers - 1 && props.hiddenDests?.has(pd.point);
                   const cy = checkerY(i, pd.top);
                   const fill = pd.color === 'w' ? COLORS.checkerWhite : COLORS.checkerBlack;
                   const stroke = pd.color === 'w' ? COLORS.checkerWhiteBorder : COLORS.checkerBlackBorder;
@@ -250,6 +253,7 @@ const Board: Component<BoardProps> = (props) => {
                         fill={fill}
                         stroke={pd.isSelected && i === pd.checkers - 1 ? COLORS.highlightStroke : stroke}
                         stroke-width={pd.isSelected && i === pd.checkers - 1 ? 3 : 1.5}
+                        opacity={isTopAndHidden() ? 0 : 1}
                         class={`checker ${isClickable ? 'movable' : ''} ${pd.isSelected && i === pd.checkers - 1 ? 'selected' : ''}`}
                         onClick={isClickable && !props.onDragStart ? () => props.onPointClick(pd.point) : undefined}
                         onPointerDown={isClickable ? (e: PointerEvent) => handlePointerDown(pd.point, e) : undefined}

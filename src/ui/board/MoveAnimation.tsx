@@ -34,11 +34,32 @@ let nextId = 0;
 
 const [animations, setAnimations] = createSignal<AnimatingChecker[]>([]);
 
+// Points where a checker just landed — hide the top checker there until animation ends
+const [hiddenDests, setHiddenDests] = createSignal<Set<number>>(new Set());
+
+export function getHiddenDests(): Set<number> {
+  return hiddenDests();
+}
+
+function addHiddenDest(point: number, duration: number) {
+  setHiddenDests(prev => new Set([...prev, point]));
+  setTimeout(() => {
+    setHiddenDests(prev => {
+      const next = new Set(prev);
+      next.delete(point);
+      return next;
+    });
+  }, duration);
+}
+
 export function triggerAnimation(
   fromX: number, fromY: number,
   toX: number, toY: number,
   color: Color,
+  destPoint?: number,
 ) {
+  if (destPoint !== undefined) addHiddenDest(destPoint, ANIM_DURATION);
+
   const id = nextId++;
   const anim: AnimatingChecker = {
     id, color, mode: 'slide',
@@ -59,9 +80,11 @@ export function triggerAnimation(
 export function triggerBunnyHop(
   waypoints: { x: number; y: number }[],
   color: Color,
+  destPoint?: number,
 ): number {
   const id = nextId++;
   const totalDuration = (waypoints.length - 1) * HOP_DURATION;
+  if (destPoint !== undefined) addHiddenDest(destPoint, totalDuration);
   const startTime = performance.now();
 
   const anim: AnimatingChecker = {
