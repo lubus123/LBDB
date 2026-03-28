@@ -61,6 +61,10 @@ function App() {
           href="#"
           onClick={(e) => { e.preventDefault(); setPage('landing'); }}
         >
+          <svg viewBox="0 0 32 32" width="22" height="22" style={{ "vertical-align": "middle", "margin-right": "6px", "margin-top": "-2px" }}>
+            <path d="M10 22 C10 22 9 20 9 18 C9 16 10 14 12 13 L12 11 C12 9 13 7 15 7 C16 7 17 8 17 9 L18 9 C19 9 20 9.5 20 10.5 C20 11.5 19 12 18 12 L17 12 C17 13 18 14 19 15 C21 17 22 19 22 21 C22 23 21 24 19 24 L13 24 C11 24 10 23 10 22 Z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>
+            <circle cx="15.5" cy="9" r="0.8" fill="currentColor"/>
+          </svg>
           duck<span>Gammon</span>
         </a>
         <Show when={page() === 'game'}>
