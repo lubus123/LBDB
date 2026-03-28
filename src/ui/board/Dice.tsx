@@ -69,14 +69,14 @@ const Dice: Component<DiceProps> = (props) => {
       <g class="dice-group">
         <SingleDie
           value={props.dice![0]}
-          x={420}
-          y={280}
+          x={350}
+          y={320}
           used={dieUsed(0)}
         />
         <SingleDie
           value={props.dice![1]}
-          x={500}
-          y={280}
+          x={430}
+          y={320}
           used={dieUsed(1)}
         />
       </g>

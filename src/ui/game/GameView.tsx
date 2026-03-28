@@ -1,14 +1,16 @@
 import { Component, Show, createSignal, createMemo, createEffect, onCleanup } from 'solid-js';
 import type { GameState, Color, CheckerMove, GameResult } from '../../shared/types';
 import { W_BAR, B_BAR } from '../../shared/constants';
+import { checkersAt } from '../../engine/board';
 import { newGame, doRoll, doMove, doDouble, doAcceptDouble, doDropDouble, undoMove, confirmTurn, getGameResult } from '../../engine/game';
 import { legalDestinations, movableCheckers, hasAnyMoves } from '../../engine/moves';
 import { canDouble } from '../../engine/cube';
 import { pipCount } from '../../engine/pip';
 import { chooseBestTurn } from '../../engine/ai';
 import { formatTurn, formatDice } from '../../shared/notation';
-import Board from '../board/Board';
+import Board, { BOARD_VIEWBOX, colToPoint, pointX } from '../board/Board';
 import Dice from '../board/Dice';
+import Jail from '../board/Jail';
 
 interface TurnRecord {
   ply: number;
@@ -30,6 +32,7 @@ const GameView: Component<{ onExit: () => void; mode: GameMode }> = (props) => {
   const [aiThinking, setAiThinking] = createSignal(false);
 
   let aiTimeouts: number[] = [];
+  let boardSvgRef: SVGSVGElement | undefined;
 
   onCleanup(() => {
     aiTimeouts.forEach(t => clearTimeout(t));
@@ -43,12 +46,11 @@ const GameView: Component<{ onExit: () => void; mode: GameMode }> = (props) => {
   const currentState = () => state();
   const isAiMode = () => props.mode === 'ai';
   const isAiTurn = () => isAiMode() && currentState().turn === 'b';
-  const playerColor = (): Color => 'w';
 
   const moveablePoints = createMemo(() => {
     const s = currentState();
     if (s.phase !== 'moving') return [];
-    if (isAiTurn()) return []; // Don't show highlights during AI turn
+    if (isAiTurn()) return [];
     return movableCheckers(s.board, s.movesLeft, s.turn);
   });
 
@@ -62,8 +64,23 @@ const GameView: Component<{ onExit: () => void; mode: GameMode }> = (props) => {
 
   const whitePips = createMemo(() => pipCount(currentState().board, 'w'));
   const blackPips = createMemo(() => pipCount(currentState().board, 'b'));
-
   const gameResult = createMemo(() => getGameResult(currentState()));
+
+  // Jail-related memos
+  const whiteBarCount = createMemo(() => checkersAt(currentState().board, W_BAR, 'w'));
+  const blackBarCount = createMemo(() => checkersAt(currentState().board, B_BAR, 'b'));
+  const canMoveFromBar = createMemo(() => {
+    const s = currentState();
+    if (s.phase !== 'moving' || isAiTurn()) return false;
+    const bar = s.turn === 'w' ? W_BAR : B_BAR;
+    return moveablePoints().includes(bar);
+  });
+  const isBarSelected = createMemo(() => {
+    const sel = selectedPoint();
+    const s = currentState();
+    if (s.turn === 'w') return sel === W_BAR;
+    return sel === B_BAR;
+  });
 
   // AI auto-play effect
   createEffect(() => {
@@ -73,7 +90,6 @@ const GameView: Component<{ onExit: () => void; mode: GameMode }> = (props) => {
     if (s.turn !== 'b') return;
 
     if (s.phase === 'cubeOffered') {
-      // AI always accepts doubles (simple strategy)
       const t = window.setTimeout(() => {
         setState(prev => {
           if (prev.phase !== 'cubeOffered') return prev;
@@ -101,7 +117,6 @@ const GameView: Component<{ onExit: () => void; mode: GameMode }> = (props) => {
       const aiResult = chooseBestTurn(s);
 
       if (aiResult.moves.length === 0) {
-        // No moves - confirm turn
         const t = window.setTimeout(() => {
           setState(prev => {
             if (prev.phase !== 'moving' || prev.turn !== 'b') return prev;
@@ -114,7 +129,6 @@ const GameView: Component<{ onExit: () => void; mode: GameMode }> = (props) => {
         return;
       }
 
-      // Apply AI moves one by one with delays for animation feel
       let currentDelay = AI_MOVE_DELAY;
       const savedDice = s.dice;
 
@@ -128,7 +142,6 @@ const GameView: Component<{ onExit: () => void; mode: GameMode }> = (props) => {
             const next = doMove(prev, move);
 
             if (isLast || next.phase === 'waiting' || next.phase === 'gameOver') {
-              // Turn ended
               setHistory(h => [...h, {
                 ply: prev.ply,
                 player: 'b',
@@ -150,8 +163,7 @@ const GameView: Component<{ onExit: () => void; mode: GameMode }> = (props) => {
     const s = currentState();
     if (s.phase !== 'waiting') return;
     if (isAiTurn()) return;
-    const newState = doRoll(s);
-    setState(newState);
+    setState(doRoll(s));
   }
 
   function handleDouble() {
@@ -169,6 +181,49 @@ const GameView: Component<{ onExit: () => void; mode: GameMode }> = (props) => {
     setState(doDropDouble(currentState()));
   }
 
+  function executeMove(from: number, to: number) {
+    const s = currentState();
+    if (s.phase !== 'moving' || isAiTurn()) return;
+
+    const uniqueDice = [...new Set(s.movesLeft)];
+    let usedDie = 0;
+    for (const die of uniqueDice) {
+      // Bar entry: white from 0 goes to 25-die, black from 25 goes to die
+      let dest: number;
+      if (from === W_BAR && s.turn === 'w') {
+        dest = 25 - die;
+      } else if (from === B_BAR && s.turn === 'b') {
+        dest = die;
+      } else {
+        dest = s.turn === 'w' ? from - die : from + die;
+      }
+      if (s.turn === 'w' && dest <= 0 && to === 0) { usedDie = die; break; }
+      if (s.turn === 'b' && dest >= 25 && to === 25) { usedDie = die; break; }
+      if (dest === to) { usedDie = die; break; }
+    }
+
+    if (usedDie === 0) return;
+
+    const isHit = s.turn === 'w'
+      ? s.board[to] < 0 && s.board[to] >= -1
+      : s.board[to] > 0 && s.board[to] <= 1;
+
+    const move: CheckerMove = {
+      from,
+      to,
+      die: usedDie,
+      hit: isHit && to > 0 && to < 25,
+    };
+
+    const newState = doMove(s, move);
+    setState(newState);
+    setSelectedPoint(null);
+
+    if (newState.phase === 'waiting' || newState.phase === 'gameOver') {
+      recordTurn(s, newState);
+    }
+  }
+
   function handlePointClick(point: number) {
     const s = currentState();
     if (s.phase !== 'moving') return;
@@ -176,52 +231,13 @@ const GameView: Component<{ onExit: () => void; mode: GameMode }> = (props) => {
 
     const sel = selectedPoint();
 
-    // If clicking a destination
+    // If clicking a destination while something is selected
     if (sel !== null && legalDests().includes(point)) {
-      const dests = legalDestinations(s.board, sel, s.movesLeft, s.turn);
-      if (dests.includes(point)) {
-        const uniqueDice = [...new Set(s.movesLeft)];
-        let usedDie = 0;
-        for (const die of uniqueDice) {
-          const dest = s.turn === 'w' ? sel - die : sel + die;
-          if (s.turn === 'w' && dest <= 0 && (point === 0)) {
-            usedDie = die;
-            break;
-          }
-          if (s.turn === 'b' && dest >= 25 && (point === 25)) {
-            usedDie = die;
-            break;
-          }
-          if (dest === point) {
-            usedDie = die;
-            break;
-          }
-        }
-
-        if (usedDie === 0) return;
-
-        const isHit = s.turn === 'w'
-          ? s.board[point] < 0 && s.board[point] >= -1
-          : s.board[point] > 0 && s.board[point] <= 1;
-
-        const move: CheckerMove = {
-          from: sel,
-          to: point,
-          die: usedDie,
-          hit: isHit && point > 0 && point < 25,
-        };
-
-        const newState = doMove(s, move);
-        setState(newState);
-        setSelectedPoint(null);
-
-        if (newState.phase === 'waiting' || newState.phase === 'gameOver') {
-          recordTurn(s, newState);
-        }
-        return;
-      }
+      executeMove(sel, point);
+      return;
     }
 
+    // If clicking a moveable checker
     if (moveablePoints().includes(point)) {
       setSelectedPoint(sel === point ? null : point);
       return;
@@ -235,23 +251,72 @@ const GameView: Component<{ onExit: () => void; mode: GameMode }> = (props) => {
     const sel = selectedPoint();
     if (sel === null || s.phase !== 'moving') return;
     if (isAiTurn()) return;
-
     const bearOffPoint = s.turn === 'w' ? 0 : 25;
     handlePointClick(bearOffPoint);
   }
 
+  function handleBarClick() {
+    const s = currentState();
+    if (s.phase !== 'moving' || isAiTurn()) return;
+    const bar = s.turn === 'w' ? W_BAR : B_BAR;
+    if (moveablePoints().includes(bar)) {
+      setSelectedPoint(selectedPoint() === bar ? null : bar);
+    }
+  }
+
+  /** Convert client coordinates to a board point number (for drag-drop) */
+  function clientCoordsToPoint(clientX: number, clientY: number): number | null {
+    const svg = document.querySelector('.board-svg') as SVGSVGElement | null;
+    if (!svg) return null;
+
+    const rect = svg.getBoundingClientRect();
+    // Convert client coords to SVG viewBox coords
+    const svgX = ((clientX - rect.left) / rect.width) * BOARD_VIEWBOX.w;
+    const svgY = ((clientY - rect.top) / rect.height) * BOARD_VIEWBOX.h;
+
+    // Check if within board bounds
+    if (svgX < 0 || svgX > BOARD_VIEWBOX.w || svgY < 0 || svgY > BOARD_VIEWBOX.h) return null;
+
+    const isTop = svgY < BOARD_VIEWBOX.h / 2;
+
+    // Find closest point column
+    let bestCol = -1;
+    let bestDist = Infinity;
+    for (let col = 0; col < 12; col++) {
+      const px = pointX(col);
+      const dist = Math.abs(svgX - px);
+      if (dist < bestDist) {
+        bestDist = dist;
+        bestCol = col;
+      }
+    }
+
+    if (bestCol < 0 || bestDist > 40) return null;
+
+    return colToPoint(bestCol, isTop, flipped());
+  }
+
+  function handleJailDragEnd(clientX: number, clientY: number) {
+    const point = clientCoordsToPoint(clientX, clientY);
+    if (point === null) return;
+
+    const s = currentState();
+    const bar = s.turn === 'w' ? W_BAR : B_BAR;
+    const dests = legalDestinations(s.board, bar, s.movesLeft, s.turn);
+    if (dests.includes(point)) {
+      executeMove(bar, point);
+    }
+  }
+
   function handleUndo() {
     if (isAiTurn()) return;
-    const newState = undoMove(currentState());
-    setState(newState);
+    setState(undoMove(currentState()));
     setSelectedPoint(null);
   }
 
   function handleConfirm() {
     const s = currentState();
-    if (s.phase !== 'moving') return;
-    if (isAiTurn()) return;
-
+    if (s.phase !== 'moving' || isAiTurn()) return;
     if (!hasAnyMoves(s.board, s.movesLeft, s.turn)) {
       const newState = confirmTurn(s);
       recordTurn(s, newState);
@@ -306,29 +371,17 @@ const GameView: Component<{ onExit: () => void; mode: GameMode }> = (props) => {
     return s.turn === 'w' ? "White's turn" : "Black's turn";
   };
 
-  // Keyboard shortcuts
   function handleKeyDown(e: KeyboardEvent) {
     if (e.target instanceof HTMLInputElement) return;
     switch (e.key) {
-      case 'f':
-        setFlipped(f => !f);
-        break;
-      case 'z':
-        handleUndo();
-        break;
+      case 'f': setFlipped(f => !f); break;
+      case 'z': handleUndo(); break;
       case 'Enter':
-        if (currentState().phase === 'waiting' && !isAiTurn()) {
-          handleRoll();
-        } else if (canConfirmTurn()) {
-          handleConfirm();
-        }
+        if (currentState().phase === 'waiting' && !isAiTurn()) handleRoll();
+        else if (canConfirmTurn()) handleConfirm();
         break;
-      case 'd':
-        handleDouble();
-        break;
-      case 'Escape':
-        setSelectedPoint(null);
-        break;
+      case 'd': handleDouble(); break;
+      case 'Escape': setSelectedPoint(null); break;
     }
   }
 
@@ -339,33 +392,44 @@ const GameView: Component<{ onExit: () => void; mode: GameMode }> = (props) => {
 
   return (
     <div class="board-container">
-      <div class="board-wrapper">
-        <Board
-          board={currentState().board}
+      <div class="board-and-jail">
+        <div class="board-wrapper">
+          <Board
+            board={currentState().board}
+            turn={currentState().turn}
+            whiteOff={currentState().whiteOff}
+            blackOff={currentState().blackOff}
+            selectedPoint={selectedPoint()}
+            moveablePoints={moveablePoints()}
+            legalDests={legalDests()}
+            onPointClick={handlePointClick}
+            onBearOffClick={handleBearOffClick}
+            flipped={flipped()}
+          />
+          {/* Dice overlay */}
+          <svg
+            style={{
+              position: 'absolute',
+              top: 0, left: 0,
+              width: '100%', height: '100%',
+              "pointer-events": 'none',
+            }}
+            viewBox="0 0 780 640"
+          >
+            <Dice dice={currentState().dice} movesLeft={currentState().movesLeft} />
+          </svg>
+        </div>
+
+        {/* Jail strip below the board */}
+        <Jail
+          whiteCount={whiteBarCount()}
+          blackCount={blackBarCount()}
           turn={currentState().turn}
-          whiteOff={currentState().whiteOff}
-          blackOff={currentState().blackOff}
-          selectedPoint={selectedPoint()}
-          moveablePoints={moveablePoints()}
-          legalDests={legalDests()}
-          onPointClick={handlePointClick}
-          onBearOffClick={handleBearOffClick}
-          flipped={flipped()}
+          canMoveFromBar={canMoveFromBar()}
+          isSelected={isBarSelected()}
+          onBarClick={handleBarClick}
+          onDragEnd={handleJailDragEnd}
         />
-        {/* Dice overlay on board */}
-        <svg
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            "pointer-events": 'none',
-          }}
-          viewBox="0 0 920 560"
-        >
-          <Dice dice={currentState().dice} movesLeft={currentState().movesLeft} />
-        </svg>
       </div>
 
       <div class="side-panel">
@@ -439,11 +503,7 @@ const GameView: Component<{ onExit: () => void; mode: GameMode }> = (props) => {
                   ? `Move (${currentState().movesLeft.join(', ')} left)`
                   : 'All dice used'}
               </span>
-              <button
-                class="btn btn-small"
-                onClick={handleUndo}
-                disabled={!canUndo()}
-              >
+              <button class="btn btn-small" onClick={handleUndo} disabled={!canUndo()}>
                 Undo <span class="shortcut-hint">Z</span>
               </button>
               <Show when={canConfirmTurn()}>
@@ -470,7 +530,7 @@ const GameView: Component<{ onExit: () => void; mode: GameMode }> = (props) => {
           </div>
         </div>
 
-        {/* Misc controls */}
+        {/* Bottom controls */}
         <div class="controls bottom-controls">
           <button class="btn btn-small" onClick={() => setFlipped(f => !f)}>
             Flip <span class="shortcut-hint">F</span>
@@ -484,12 +544,9 @@ const GameView: Component<{ onExit: () => void; mode: GameMode }> = (props) => {
       <Show when={gameResult()}>
         {(result) => {
           const winnerLabel = () => {
-            if (isAiMode()) {
-              return result().winner === 'w' ? 'You Win!' : 'AI Wins!';
-            }
+            if (isAiMode()) return result().winner === 'w' ? 'You Win!' : 'AI Wins!';
             return (result().winner === 'w' ? 'White' : 'Black') + ' Wins!';
           };
-
           return (
             <div class="game-over-overlay" onClick={handleNewGame}>
               <div class="game-over-modal" onClick={(e) => e.stopPropagation()}>
