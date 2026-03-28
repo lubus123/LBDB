@@ -62,8 +62,11 @@ function App() {
           onClick={(e) => { e.preventDefault(); setPage('landing'); }}
         >
           <svg viewBox="0 0 32 32" width="22" height="22" style={{ "vertical-align": "middle", "margin-right": "6px", "margin-top": "-2px" }}>
-            <path d="M10 22 C10 22 9 20 9 18 C9 16 10 14 12 13 L12 11 C12 9 13 7 15 7 C16 7 17 8 17 9 L18 9 C19 9 20 9.5 20 10.5 C20 11.5 19 12 18 12 L17 12 C17 13 18 14 19 15 C21 17 22 19 22 21 C22 23 21 24 19 24 L13 24 C11 24 10 23 10 22 Z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>
-            <circle cx="15.5" cy="9" r="0.8" fill="currentColor"/>
+            {/* Rubber duck outline — emoji style, side profile facing right */}
+            {/* Body: big round bottom sitting in water */}
+            <path d="M7 20 C7 16 9 13 13 12.5 C13 11 13 10 14 9 C14 7.5 15.5 6 17 6 C18.5 6 19.5 7 19.5 8.5 C19.5 9 19.3 9.5 19 10 L21 10 C22.5 10 24 10.8 24 12 C24 13 22.5 13.5 21 13.5 L19.5 13.5 C21 15 22 16.5 22 19 C22 22 20 25 16 25.5 C15 25.6 12 25.5 10 25 C8 24.5 7 22.5 7 20 Z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+            {/* Eye */}
+            <circle cx="17.5" cy="8.5" r="0.9" fill="currentColor"/>
           </svg>
           duck<span>Gammon</span>
         </a>
