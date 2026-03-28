@@ -3,3 +3,8 @@ checkpoints/
 __pycache__/
 training_log.csv
 *.npz
+td-gammon-rs/target/
+td-gammon-rs/training_log.csv
+td-gammon-rs/training_status.txt
+td-gammon-rs/checkpoint_*.json
+td-gammon-rs/model.json

@@ -156,3 +156,8 @@ export function isModelLoaded(): boolean {
 export function getWeights(): NNWeights | null {
   return loadedWeights;
 }
+
+/** Set weights directly (for programmatic use, e.g. different difficulty models). */
+export function setWeights(weights: NNWeights): void {
+  loadedWeights = weights;
+}

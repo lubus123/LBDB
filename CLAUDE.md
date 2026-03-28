@@ -123,7 +123,13 @@ duckGammon's core differentiator is **tactile feel**. Every interaction has weig
 Full-sequence DFS in `moves.ts`. Considers all move orderings. Filters by: max dice usage, higher-die-first rule. Deduplicates by final board state.
 
 ### AI
-Heuristic position evaluation: pip count, point control, blot exposure, prime detection, home board coverage. Evaluates all legal turns, picks best. Small random noise for variety.
+Two AI engines, selectable via difficulty picker on landing page:
+
+- **Expert (default)**: TD-Gammon neural network (198→80→1 MLP, sigmoid activations). Trained via TD(lambda=0.7) self-play for 200K games in Rust. Outputs P(white wins). Beats the heuristic ~85% of the time. Model weights in `public/model.json` (188KB), loaded lazily on first AI game. Inference is pure TypeScript matrix math in `nn.ts` (~0.03ms per position).
+
+- **Strong**: Heuristic position evaluation — pip count, point control, blot exposure, prime detection, home board coverage. Small random noise for variety.
+
+Both conform to `PositionEvaluator` type in `ai.ts`. `chooseBestTurn(state, evaluator?)` accepts either. Training infrastructure lives in `training/td-gammon-rs/` (Rust).
 
 ### Server Architecture
 Single Node.js process serves both static frontend (from `dist/`) and WebSocket game server on the same port. Server is authoritative — rolls dice with `crypto.randomInt`, validates all moves with shared engine functions.
@@ -135,7 +141,7 @@ Typed JSON messages over WebSocket. Client sends actions (`roll`, `move`, `confi
 Per-turn countdown (default 30s, configurable). Doubles get +50% time bonus. Analogue Countdown clock in UI. On timeout: random legal moves played for remaining dice. Server enforces time in online mode.
 
 ### Luck Meter
-`luck.ts` computes per-turn luck: equity of actual roll vs average equity across all 21 possible rolls. Displayed as a bar + cumulative sparkline.
+`luck.ts` computes per-turn luck: equity of actual roll vs average equity across all 21 possible rolls. Uses the same evaluator as the AI (NN when available, heuristic fallback). Click the luck bar to reveal a 6x6 dice heatmap showing equity for every possible roll (red=bad, green=good, star=your roll). Displayed as a bar + rank + cumulative sparkline.
 
 ### Move History Replay
 Arrow keys or clicking move entries reconstructs the board state at that point by replaying moves from the initial position. Index -1 shows starting position.

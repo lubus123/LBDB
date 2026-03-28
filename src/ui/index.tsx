@@ -1,7 +1,7 @@
 import { render } from 'solid-js/web';
 import { createSignal, Show, onMount } from 'solid-js';
 import GameView from './game/GameView';
-import type { GameMode } from './game/GameView';
+import type { GameMode, AiDifficulty } from './game/GameView';
 import './styles/variables.css';
 import './styles/layout.css';
 import './styles/board.css';
@@ -36,6 +36,7 @@ function App() {
   const [devPreset, setDevPreset] = createSignal<DevPreset | undefined>(undefined);
   const [showDev, setShowDev] = createSignal(false);
   const [onlineGameId, setOnlineGameId] = createSignal<string | undefined>(undefined);
+  const [aiDifficulty, setAiDifficulty] = createSignal<AiDifficulty>('expert');
 
   // Check URL for ?game=XXXX (join invite link)
   onMount(() => {
@@ -83,7 +84,7 @@ function App() {
         </a>
         <Show when={page() === 'game'}>
           <span class="header-mode">
-            {gameMode() === 'online' ? 'Online' : gameMode() === 'ai' ? 'vs AI' : 'Local'}
+            {gameMode() === 'online' ? 'Online' : gameMode() === 'ai' ? `vs AI (${aiDifficulty() === 'expert' ? 'Expert' : 'Strong'})` : 'Local'}
           </span>
         </Show>
       </header>
@@ -97,9 +98,21 @@ function App() {
               <button class="btn btn-primary play-btn" onClick={() => startGame('online')}>
                 Play Online
               </button>
-              <button class="btn play-btn play-btn-secondary" onClick={() => startGame('ai')}>
-                Play vs AI
-              </button>
+              <div class="ai-play-group">
+                <button class="btn play-btn play-btn-secondary" onClick={() => startGame('ai')}>
+                  Play vs AI
+                </button>
+                <div class="difficulty-selector">
+                  <button
+                    class={`diff-btn ${aiDifficulty() === 'strong' ? 'active' : ''}`}
+                    onClick={() => setAiDifficulty('strong')}
+                  >Strong</button>
+                  <button
+                    class={`diff-btn ${aiDifficulty() === 'expert' ? 'active' : ''}`}
+                    onClick={() => setAiDifficulty('expert')}
+                  >Expert</button>
+                </div>
+              </div>
               <button class="btn play-btn play-btn-secondary" onClick={() => startGame('local')}>
                 Local 2-Player
               </button>
@@ -140,6 +153,7 @@ function App() {
             mode={gameMode()}
             devPreset={devPreset()}
             onlineGameId={onlineGameId()}
+            aiDifficulty={aiDifficulty()}
           />
         </Show>
       </div>

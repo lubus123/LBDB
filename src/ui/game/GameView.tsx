@@ -6,8 +6,9 @@ import { newGame, doRoll, doMove, doDouble, doAcceptDouble, doDropDouble, undoMo
 import { legalDestinations, movableCheckers, hasAnyMoves } from '../../engine/moves';
 import { canDouble } from '../../engine/cube';
 import { pipCount } from '../../engine/pip';
-import { chooseBestTurn } from '../../engine/ai';
-import { computeTurnLuck } from '../../engine/luck';
+import { chooseBestTurn, evaluatePosition, type PositionEvaluator } from '../../engine/ai';
+import { computeTurnLuckFull } from '../../engine/luck';
+import { loadModel, isModelLoaded, evaluatePositionNN } from '../../engine/nn';
 import { formatTurn, formatDice } from '../../shared/notation';
 import Board, { BOARD_VIEWBOX, colToPoint, pointX, pointToCol, checkerY } from '../board/Board';
 import Dice from '../board/Dice';
@@ -28,6 +29,7 @@ interface TurnRecord {
 }
 
 export type GameMode = 'local' | 'ai' | 'online';
+export type AiDifficulty = 'strong' | 'expert';
 
 const AI_ROLL_DELAY = 600;
 const AI_MOVE_DELAY = 650;
@@ -42,7 +44,7 @@ const WS_URL = import.meta.env.VITE_WS_URL ||
     ? `ws://${window.location.hostname}:3001`
     : `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}`);
 
-const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevPreset; onlineGameId?: string }> = (props) => {
+const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevPreset; onlineGameId?: string; aiDifficulty?: AiDifficulty }> = (props) => {
   const initState = props.devPreset
     ? {
         board: [...props.devPreset.board],
@@ -80,6 +82,25 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
   const [timeRemaining, setTimeRemaining] = createSignal<number | null>(null);
   const [timeLocked, setTimeLocked] = createSignal(false);
   const [myColor, setMyColor] = createSignal<Color>('w');
+  const [nnReady, setNnReady] = createSignal(false);
+
+  // Load NN model for expert difficulty
+  if (props.mode === 'ai' && props.aiDifficulty === 'expert') {
+    if (isModelLoaded()) {
+      setNnReady(true);
+    } else {
+      loadModel('/model.json').then(() => setNnReady(true)).catch(() => {
+        console.warn('Failed to load NN model, falling back to heuristic AI');
+      });
+    }
+  }
+
+  /** Get the position evaluator based on difficulty setting and model availability. */
+  const getEvaluator = (): PositionEvaluator | undefined => {
+    if (props.aiDifficulty === 'expert' && nnReady()) return evaluatePositionNN;
+    // 'strong' or model not loaded: use heuristic (undefined = default)
+    return undefined;
+  };
   const [onlineGameId, setOnlineGameId] = createSignal<string | null>(null);
   const [waitingForOpponent, setWaitingForOpponent] = createSignal(false);
   const [opponentDisconnected, setOpponentDisconnected] = createSignal(false);
@@ -145,8 +166,13 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
           const prev = currentState();
           // Compute luck when dice first appear (phase transitions to 'moving')
           if (msg.state.phase === 'moving' && msg.state.dice && prev.phase !== 'moving') {
-            const luck = computeTurnLuck(msg.state);
-            setLuckHistory(h => [...h, { ply: msg.state.ply, player: msg.state.turn, luck }]);
+            const analysis = computeTurnLuckFull(msg.state, getEvaluator());
+            const dice = msg.state.dice;
+            const actualDice: [number, number] = dice[0] <= dice[1] ? [dice[0], dice[1]] : [dice[1], dice[0]];
+            setLuckHistory(h => [...h, {
+              ply: msg.state.ply, player: msg.state.turn, luck: analysis.luck,
+              rolls: analysis.rolls, actualDice, rank: analysis.rank,
+            }]);
           }
           setState(msg.state);
           break;
@@ -386,8 +412,13 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
       setDiceOrder([0, 1]);
 
       if (next.dice && next.phase === 'moving') {
-        const luck = computeTurnLuck(next);
-        setLuckHistory(h => [...h, { ply: next.ply, player: next.turn, luck }]);
+        const analysis = computeTurnLuckFull(next, getEvaluator());
+        const dice = next.dice;
+        const actualDice: [number, number] = dice[0] <= dice[1] ? [dice[0], dice[1]] : [dice[1], dice[0]];
+        setLuckHistory(h => [...h, {
+          ply: next.ply, player: next.turn, luck: analysis.luck,
+          rolls: analysis.rolls, actualDice, rank: analysis.rank,
+        }]);
       }
 
       afterRoll?.(next);
@@ -442,7 +473,7 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
   });
 
   function doAiMoves(s: GameState) {
-    const aiResult = chooseBestTurn(s);
+    const aiResult = chooseBestTurn(s, getEvaluator());
 
     if (aiResult.moves.length === 0) {
       const t = window.setTimeout(() => {
