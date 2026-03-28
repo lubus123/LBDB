@@ -1,24 +1,65 @@
 import { createServer } from 'http';
+import { readFileSync, existsSync, statSync } from 'fs';
+import { join, extname } from 'path';
 import { WebSocketServer, WebSocket } from 'ws';
 import { GameRoom } from './GameRoom';
 import type { ClientMessage } from './protocol';
 
 const PORT = Number(process.env.PORT) || 3001;
+const DIST = join(process.cwd(), 'dist');
+const SERVE_STATIC = existsSync(DIST);
+
+const MIME_TYPES: Record<string, string> = {
+  '.html': 'text/html',
+  '.js': 'application/javascript',
+  '.css': 'text/css',
+  '.svg': 'image/svg+xml',
+  '.png': 'image/png',
+  '.ico': 'image/x-icon',
+  '.json': 'application/json',
+  '.woff': 'font/woff',
+  '.woff2': 'font/woff2',
+};
 
 const server = createServer((req, res) => {
-  // Health check endpoint
-  if (req.url === '/health') {
+  const url = req.url?.split('?')[0] || '/';
+
+  // Health check
+  if (url === '/health') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ ok: true, rooms: rooms.size }));
     return;
   }
+
+  // Serve static files from dist/
+  if (SERVE_STATIC) {
+    let filePath = join(DIST, url === '/' ? 'index.html' : url);
+
+    // SPA fallback: if file doesn't exist, serve index.html
+    if (!existsSync(filePath) || statSync(filePath).isDirectory()) {
+      filePath = join(DIST, 'index.html');
+    }
+
+    try {
+      const data = readFileSync(filePath);
+      const ext = extname(filePath);
+      const mime = MIME_TYPES[ext] || 'application/octet-stream';
+      const cacheControl = ext === '.html' ? 'no-cache' : 'public, max-age=31536000, immutable';
+      res.writeHead(200, { 'Content-Type': mime, 'Cache-Control': cacheControl });
+      res.end(data);
+      return;
+    } catch {
+      // fall through to 404
+    }
+  }
+
   res.writeHead(404);
-  res.end();
+  res.end('Not found');
 });
 
 const wss = new WebSocketServer({ server });
 const rooms = new Map<string, GameRoom>();
-const playerRooms = new Map<WebSocket, string>(); // ws → gameId
+const playerRooms = new Map<WebSocket, string>();
 
 function generateId(): string {
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -110,7 +151,6 @@ wss.on('connection', (ws: WebSocket) => {
       const room = rooms.get(gameId);
       if (room) {
         room.handleDisconnect(ws);
-        // Clean up room after both players disconnect + grace period
         setTimeout(() => {
           if (room.state.phase === 'gameOver') {
             let allDisconnected = true;
@@ -132,4 +172,5 @@ wss.on('connection', (ws: WebSocket) => {
 
 server.listen(PORT, () => {
   console.log(`duckGammon server listening on port ${PORT}`);
+  if (SERVE_STATIC) console.log(`Serving static files from ${DIST}`);
 });

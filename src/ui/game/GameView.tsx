@@ -37,7 +37,10 @@ const MARGIN = 16;
 
 interface DevPreset { board: number[]; whiteOff: number; blackOff: number; }
 
-const WS_URL = import.meta.env.VITE_WS_URL || `ws://${window.location.hostname}:3001`;
+const WS_URL = import.meta.env.VITE_WS_URL ||
+  (window.location.hostname === 'localhost'
+    ? `ws://${window.location.hostname}:3001`
+    : `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}`);
 
 const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevPreset; onlineGameId?: string }> = (props) => {
   const initState = props.devPreset
