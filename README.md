@@ -10,32 +10,31 @@ Lichess-inspired backgammon. Fast, free, open-source. Play online or vs AI.
 ```bash
 npm install
 
-# 1. Start Postgres (if not running)
-sudo pg_ctlcluster 15 main start
-# Or: brew services start postgresql   (macOS)
+# 1. Start Postgres (first time setup)
+sudo pg_ctlcluster 15 main start           # Linux
+# Or: brew services start postgresql        # macOS
 # Or: docker run -p 5432:5432 -e POSTGRES_PASSWORD=duck123 postgres:15
 
 # 2. Create DB (first time only)
 sudo -u postgres psql -c "CREATE USER duckgammon WITH PASSWORD 'duck123';"
 sudo -u postgres psql -c "CREATE DATABASE duckgammon OWNER duckgammon;"
 
-# 3. Build frontend + start server (single port, everything included)
-npm run build
-DATABASE_URL="postgresql://duckgammon:duck123@localhost:5432/duckgammon" npm start
+# 3. Build + run (kills old server, builds frontend, starts fresh)
+DATABASE_URL="postgresql://duckgammon:duck123@localhost:5432/duckgammon" npm run dev:full
 ```
 
 Open `http://localhost:3001` — serves frontend, API, and WebSocket on one port.
-Tables are auto-created on first boot.
+Tables are auto-created on first boot. Re-run `npm run dev:full` after changes — it kills the old process automatically.
 
-**Without Postgres** (game features work, auth/friends/history disabled):
+**Without Postgres** (games work, auth/friends/history disabled):
 ```bash
-npm run build && npm start
+npm run dev:full
 ```
 
-**Vite dev server** (hot reload, needs separate game server):
+**Vite hot-reload dev** (for frontend changes, needs separate server):
 ```bash
-npm run dev                    # Frontend on port 5173 (proxies /api and /ws to 3001)
 DATABASE_URL="..." npm run dev:server   # Game server on port 3001
+npm run dev                             # Vite on port 5173 (proxies /api + /ws to 3001)
 ```
 
 ## Features

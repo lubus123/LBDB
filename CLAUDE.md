@@ -149,26 +149,30 @@ Arrow keys or clicking move entries reconstructs the board state at that point b
 ## Commands
 
 ```bash
-# Full stack dev (build + serve everything on one port)
-npm run build
-DATABASE_URL="postgresql://duckgammon:duck123@localhost:5432/duckgammon" npm start
+# Full stack dev (kills old server, builds frontend, starts fresh on port 3001)
+DATABASE_URL="postgresql://duckgammon:duck123@localhost:5432/duckgammon" npm run dev:full
 # Open http://localhost:3001
+# Re-run after every change — it kills the old process automatically
 
-# Vite hot reload (needs separate game server)
-npm run dev                             # Frontend on 5173 (proxies /api + /ws to 3001)
+# Vite hot reload (for frontend changes, needs separate server)
 DATABASE_URL="..." npm run dev:server   # Server on 3001
+npm run dev                             # Vite on 5173 (proxies /api + /ws to 3001)
 
 # Without Postgres (games work, auth/friends/history disabled)
-npm run build && npm start
+npm run dev:full
 
 # Tests
 npm test             # 63 unit tests
 npm run screenshots  # Playwright visual regression
+
+# IMPORTANT: Always kill old server before starting new one.
+# npm run dev:full does this automatically. If starting manually:
+#   pkill -f 'tsx src/server' 2>/dev/null
 ```
 
 ### Local Postgres Setup (first time)
 ```bash
-sudo pg_ctlcluster 15 main start
+sudo pg_ctlcluster 15 main start                                          # Linux
 sudo -u postgres psql -c "CREATE USER duckgammon WITH PASSWORD 'duck123';"
 sudo -u postgres psql -c "CREATE DATABASE duckgammon OWNER duckgammon;"
 # Tables auto-created on first server boot

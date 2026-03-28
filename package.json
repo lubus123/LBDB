@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "dev:server": "tsx src/server/index.ts",
+    "dev:full": "npm run build && pkill -f 'tsx src/server' 2>/dev/null; sleep 0.5 && tsx src/server/index.ts",
     "start": "node --import tsx src/server/index.ts",
     "build": "vite build",
     "preview": "vite preview",
