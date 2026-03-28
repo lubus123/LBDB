@@ -2,28 +2,29 @@
 
 ## What is this?
 
-duckGammon is a lichess-inspired, minimalist backgammon web app. Browser-first, with plans for Android/iOS. Built for speed: ~20KB gzipped total, zero backend required for single-player.
+duckGammon is a lichess-inspired backgammon web app. Free forever, open-source. Plays locally vs AI, local 2-player, or online via WebSocket. Deployed on Railway as a single Node.js process serving both the frontend and game server.
 
 ## Tech Stack
 
 - **Solid.js** - Reactive UI framework (no virtual DOM, lichess-like performance)
-- **TypeScript** - Full type safety across engine + UI
+- **TypeScript** - Full type safety across engine, server, and UI
 - **Vite** - Build tool (instant HMR, optimized production builds)
 - **SVG** - Board rendering (native DOM events, CSS transitions, resolution-independent)
 - **Web Audio API** - Procedural sound synthesis (no audio files)
-- **Vitest** - Test runner
-- **Playwright** - Visual regression tests
+- **Node.js + ws** - WebSocket game server (authoritative, crypto-secure dice)
+- **Vitest** - Test runner (63 tests)
+- **Playwright** - Visual regression tests (3 viewports)
 
 ## Project Structure
 
 ```
 src/
-  shared/           # Shared types, constants, notation formatting
+  shared/           # Shared types, constants (used by server + client)
     types.ts        # Core types: BoardArray, GameState, CheckerMove, etc.
     constants.ts    # Board setup, initial state factory
     notation.ts     # Move notation formatting (8/5, bar/20, 6/off)
 
-  engine/           # Pure game logic (zero DOM dependencies)
+  engine/           # Pure game logic (zero DOM deps, used by server + client)
     board.ts        # Board state: clone, query checkers, apply moves
     moves.ts        # Legal move generation (DFS over full turn sequences)
     dice.ts         # Dice rolling, doubles handling
@@ -33,43 +34,63 @@ src/
     pip.ts          # Pip count calculation
     ai.ts           # Heuristic AI opponent (position evaluation + best-turn search)
     luck.ts         # Per-turn luck calculation (actual vs expected equity)
+    nn.ts           # Neural network position evaluator (TD-Gammon style)
     test/
-      engine.test.ts  # 53 test cases covering all rule edge cases
+      engine.test.ts  # 53 engine test cases
+      nn.test.ts      # 10 neural network tests
+
+  server/           # Node.js WebSocket game server
+    index.ts        # HTTP + WS server, static file serving, room management
+    GameRoom.ts     # Game room: state, players, timer, validation, rematch
+    protocol.ts     # Typed JSON messages (client ↔ server)
 
   ui/               # Solid.js client application
-    index.tsx       # Entry point, router, landing page, dev mode presets
+    index.tsx       # Entry point, routing, landing page, dev mode presets
+    net/
+      socket.ts     # WebSocket client with auto-reconnect
     audio/
-      sounds.ts     # Web Audio API: dice roll, capture, jail escape, victory/defeat
+      sounds.ts     # Procedural sounds: dice, capture, jail, victory, defeat, timeout
     board/
-      Board.tsx     # Main SVG board component (points, checkers, bar)
+      Board.tsx     # Main SVG board component (points, checkers, direction)
       Dice.tsx      # Dice display with roll animation, swap button
-      MoveAnimation.tsx  # Checker movement: slide mode + bunny hop mode
+      MoveAnimation.tsx  # Checker movement: slide + bunny hop modes
       OpponentArrows.tsx # AI move path arrows (3s display, toggleable)
       LuckMeter.tsx # Luck display: per-turn bar, cumulative sparkline
+      CountdownClock.tsx # Analogue countdown clock (UK Countdown style)
       Jail.tsx      # Bar/jail strip with prison bar visuals, drag-to-play
     game/
-      GameView.tsx  # Full game view: board + side panel, AI mode, all controls
+      GameView.tsx  # Full game view: board + side panel, all modes
     styles/
       variables.css # CSS custom properties (dark theme)
       layout.css    # Global layout, header
-      board.css     # Board, panel, controls, animations, landing page styles
+      board.css     # Board, panel, controls, animations, styles
 ```
+
+## Game Modes
+
+| Mode | Description |
+|------|-------------|
+| **Play Online** | WebSocket multiplayer. Creates game room, share invite link. Server-authoritative with crypto-secure dice. |
+| **Play vs AI** | Local AI opponent. Heuristic position evaluation, all legal turns explored. |
+| **Local 2-Player** | Hot-seat mode, same device. |
+| **Dev: Bear-off Race** | Both players bearing off with checkers on bar. |
+| **Dev: Mid-game** | Contested mid-game position for testing. |
 
 ## Design Philosophy: Feel is the Feature
 
-duckGammon's core differentiator is **tactile feel**. Every interaction should have weight, consequence, and personality. The board is not a static UI — it's a living space where pieces have emotions.
+duckGammon's core differentiator is **tactile feel**. Every interaction has weight, consequence, and personality. The board is not a static UI — it's a living space where pieces have emotions.
 
 ### Core Principles
 
-1. **Nothing teleports.** Every state change has a physical animation. Checkers hop, dice tumble, highlights pulse in. If something moved, the user sees it move.
+1. **Nothing teleports.** Every state change has a physical animation. Checkers hop pip-by-pip, dice tumble, highlights appear instantly without distracting animation.
 
-2. **Sound reinforces action.** Dice land with a thump. Captures clack. Jail escapes chime. Victory plays a fanfare. Sounds are synthesized (Web Audio API, zero files) — subtle enough to not annoy, present enough to feel real.
+2. **Sound reinforces action.** Dice thump. Captures clack. Jail escapes chime. Victory plays a fanfare, defeat a descending minor. All synthesized via Web Audio API — zero audio files.
 
-3. **The opponent's moves are legible.** AI moves play sequentially with bunny-hop animation so you can follow each checker. Optional gold path arrows trace moves for 3 seconds. The game is a conversation, not a black box.
+3. **The opponent's moves are legible.** AI moves play sequentially with bunny-hop animation. Optional gold path arrows trace moves for 3 seconds.
 
-4. **Controls are discoverable but not noisy.** Keyboard shortcuts exist for everything (Enter/Z/S/F/B/R/A/D) but the UI never shows more than what's needed. Options live in a panel, not cluttering the board.
+4. **Controls are discoverable but not noisy.** Keyboard shortcuts for everything. Options live in a panel. The board is the star.
 
-5. **The board is the star.** Clean brown frame, no visual clutter. The bear-off zone only appears when relevant. Borne-off counts are subtle numbers in the frame margin. The center bar has defined edges for clear half-separation.
+5. **Green outlines on moveable points.** When it's your turn after rolling, triangles with moveable checkers get a green outline and glowing point numbers. Destinations shown as blue circles.
 
 ### Animation Inventory
 
@@ -79,59 +100,55 @@ duckGammon's core differentiator is **tactile feel**. Every interaction should h
 | Dice roll | Face cycling + rotation + settle | 550ms | Low thump |
 | Capture/hit | - | - | Percussive clack |
 | Jail escape | Prison bars open | 800ms | Rising chime |
-| Legal destinations | Pulse fade-in | 400ms | - |
+| Moveable points | Green triangle outlines (instant) | - | - |
+| Legal destinations | Blue circles (instant) | - | - |
 | Game over (win) | Modal overlay | - | Ascending triad |
 | Game over (lose) | Modal overlay | - | Descending minor |
 | AI move arrows | Gold path traces | 3s + 500ms fade | - |
-
-### Animation Technical Approach
-
-- **CSS transitions** for slide-mode checker movement (`cx`/`cy` on SVG circles)
-- **`requestAnimationFrame`** for bunny-hop mode (manual interpolation with sin arc)
-- **CSS @keyframes** for dice tumble, prison bars, destination pulse
-- **Web Audio API** oscillators + noise buffers for all sounds
-- All animations are **non-blocking** — game state updates immediately, visuals catch up
-- Exported `HOP_DURATION` (130ms) and `ANIM_DURATION` (550ms) constants drive timing
+| Time expired | Auto-play random moves | - | Descending buzz |
 
 ### The Rule
 
-**If a feature doesn't feel good to use, it's not done.** Correct game logic with no animation is a bug. Every future feature (multiplayer, analysis, spectating) must include animation design as part of the implementation spec.
+**If a feature doesn't feel good to use, it's not done.** Correct game logic with no animation is a bug.
 
 ## Key Architecture Decisions
 
 ### Board Representation
-26-element number array. Index 0 = white bar, 1-24 = points, 25 = black bar. Positive = white, negative = black. Compact, fast to clone and compare.
+26-element number array. Index 0 = white bar, 1-24 = points, 25 = black bar. Positive = white, negative = black.
 
 ### Board Direction
-`colToPoint(col, top, flipped, direction)` maps SVG columns to board points. Default direction is `'right'` — white escapes toward bottom-right. Togglable with `R` key, persisted in localStorage.
+`colToPoint(col, top, flipped, direction)` maps SVG columns to board points. Default direction `'right'` — white escapes toward bottom-right. Togglable with `R` key, persisted in localStorage.
 
 ### Move Generation
-Full-sequence DFS in `moves.ts`. Backgammon requires considering all move orderings because legality of move B depends on whether move A was made first. Filters by: max dice usage, higher-die-first rule, and deduplicates by final board state.
+Full-sequence DFS in `moves.ts`. Considers all move orderings. Filters by: max dice usage, higher-die-first rule. Deduplicates by final board state.
 
 ### AI
-`ai.ts` uses heuristic position evaluation (pip count, point control, blot exposure, prime detection, home board coverage). Evaluates all legal turns and picks the best. Small random noise for variety.
+Heuristic position evaluation: pip count, point control, blot exposure, prime detection, home board coverage. Evaluates all legal turns, picks best. Small random noise for variety.
+
+### Server Architecture
+Single Node.js process serves both static frontend (from `dist/`) and WebSocket game server on the same port. Server is authoritative — rolls dice with `crypto.randomInt`, validates all moves with shared engine functions.
+
+### Online Protocol
+Typed JSON messages over WebSocket. Client sends actions (`roll`, `move`, `confirm`, `resign`, `rematch`). Server broadcasts authoritative state to both players. 60-second disconnect grace period with auto-resign.
+
+### Time Control
+Per-turn countdown (default 30s, configurable). Doubles get +50% time bonus. Analogue Countdown clock in UI. On timeout: random legal moves played for remaining dice. Server enforces time in online mode.
 
 ### Luck Meter
-`luck.ts` computes per-turn luck: equity of actual roll vs average equity across all 21 possible rolls. Uses the same `evaluatePosition` function as the AI. Displayed as a bar + cumulative sparkline.
-
-### Game Flow
-Three-phase turns: (1) doubling offer, (2) dice roll, (3) checker moves. GameView manages this via Solid.js signals. In AI mode, `createEffect` watches for black's turn and auto-plays with dynamically-timed delays (based on hop animation duration).
+`luck.ts` computes per-turn luck: equity of actual roll vs average equity across all 21 possible rolls. Displayed as a bar + cumulative sparkline.
 
 ### Move History Replay
-Arrow keys or clicking move entries reconstructs the board state at that point by replaying moves from the initial position. Board displays the historical state; game actions snap back to live.
-
-### Shared Engine
-The engine module (`src/engine/`) is pure TypeScript with zero DOM dependencies. Used by both the UI (for instant move validation, legal highlights) and future server (authoritative validation).
+Arrow keys or clicking move entries reconstructs the board state at that point by replaying moves from the initial position. Index -1 shows starting position.
 
 ## Commands
 
 ```bash
-npm run dev        # Start dev server (hot reload)
-npm run build      # Production build -> dist/
-npm test           # Run all tests (53 tests)
-npm run test:watch # Watch mode
-npm run screenshots # Build + run Playwright screenshot tests
-npx playwright test # Run visual tests (expects build + preview running)
+npm run dev          # Vite dev server (hot reload)
+npm run dev:server   # WebSocket server (port 3001)
+npm start            # Production: serves frontend + WS on same port
+npm run build        # Production build -> dist/
+npm test             # Run all tests (63 tests)
+npm run screenshots  # Build + Playwright screenshot tests
 ```
 
 ## Keyboard Shortcuts
@@ -149,107 +166,65 @@ npx playwright test # Run visual tests (expects build + preview running)
 | Left/Right | Navigate move history |
 | Escape | Deselect |
 
-## Deployment Pipeline
+## Deployment
 
-### Build & Deploy
+### Production: Railway
+- Single service: Node.js process serves `dist/` + WebSocket on same port
+- `railway.json` configures Nixpacks build with Node 23
+- `npm run build` builds frontend, `npm start` runs server
+- Health check at `/health`
+- WebSocket auto-detects `wss://` in production, `ws://localhost:3001` in dev
 
-1. **Netlify** auto-deploys from the active branch
-2. `netlify.toml` configures: `npm ci && npm run build`, publish dir `dist/`
-3. Node 20 is specified in `[build.environment]`
-
-### Development Workflow (MANDATORY)
-
-Every change that touches UI or game logic MUST follow this pipeline:
-
-```
-1. Make changes
-2. npm test                    # Unit tests must pass (53+ tests)
-3. npm run build               # Production build must succeed
-4. npm run screenshots         # Playwright screenshot tests must pass
-5. Review screenshots in screenshots/ directory
-6. git commit + push
-```
-
-### Screenshot Validation (REQUIRED for all UI changes)
-
-**Playwright visual tests** run against 3 viewports and capture screenshots at key game states.
-
-**Viewports tested:**
-- `desktop-chrome` — 1280x720
-- `android-portrait` — Pixel 7 (412x915)
-- `android-small` — Pixel 5 (393x851)
-
-**Key states captured (screenshots/ directory):**
-- `01-landing` — Landing page
-- `02-game-initial` — Game board, initial position, Roll button visible
-- `03-after-roll` — After rolling dice, board + dice visible
-- `04-after-ai-turn` — After AI completes its turn
-- `05-board-flipped` — Board flipped with F key
-- `06-local-mode` — Local 2-player mode
-- `07-ai-move-arrows` — AI move arrows visible after turn
-
-**What the tests assert:**
-- **Zero scroll** — the entire game fits in viewport, no scrollbar
-- **Board visible** — SVG board has meaningful width/height, not clipped by header
-- **Controls accessible** — Roll, Flip, New, Exit buttons are visible and clickable
-- **Board below header** — board top edge >= header bottom edge
-
-### Config files
-
-- `playwright.config.ts` — Viewport definitions, web server config
-- `tests/visual/layout.spec.ts` — All screenshot test cases
-- `screenshots/` — Output directory (per-viewport subdirectories)
+### Development
+- Frontend: `npm run dev` (Vite on port 5173, proxies WS to 3001)
+- Server: `npm run dev:server` (port 3001)
+- Both needed for online play testing
 
 ## Implementation Phases
 
 ### Phase 1: Engine + Local Play (DONE)
-- Full backgammon rules engine with 48 tests
+- Full backgammon rules engine with 53+ tests
 - SVG board with click-to-move and legal move highlighting
 - Doubling cube, pip count, move history, undo
 - Dark theme inspired by lichess
 
-### Phase 2: AI + Netlify Deploy (DONE)
-- Heuristic AI opponent (evaluates all legal turns)
+### Phase 2: AI + Deploy (DONE)
+- Heuristic AI opponent
 - Play vs AI mode with animated AI moves
 - Landing page with game mode selection
-- Keyboard shortcuts (Enter/Z/D/F/Esc)
-- Netlify deployment configuration
+- Keyboard shortcuts
 
 ### Phase 3: Feel + Polish (DONE)
-- Bunny hop animation (pip-by-pip checker movement with arc)
-- Dice roll animation (tumble + settle)
-- Dice order swap (S key)
-- Drag and drop on board checkers
-- Sound effects (Web Audio API: dice, capture, jail escape, victory/defeat)
-- Luck meter (per-turn + cumulative sparkline)
-- AI move arrows (gold path traces, toggleable)
-- Board direction control (escape left/right, persisted)
-- Move history replay (arrow keys + click)
-- Options panel (hop, arrows, direction toggles)
-- Developer mode (bear-off race + mid-game presets)
-- Legal destination pulse animation
-- Clean board frame (no bear-off tray clutter)
-- Center bar definition lines
+- Bunny hop animation, dice roll animation, dice swap
+- Drag and drop, sound effects, luck meter
+- AI move arrows, board direction control
+- Move history replay, options panel, developer mode
+- Countdown clock with time control
+- Green triangle outlines for moveable points
+- Mallard duck logo and branding (duckGammon)
 
-### Phase 4: WebSocket Multiplayer (NEXT)
-- Node.js backend with `ws` library
-- Game rooms, server-side validation, crypto dice
-- Lobby with seek/challenge system
-- Server-enforced clocks
-- Reconnection handling
+### Phase 4: WebSocket Multiplayer (DONE)
+- Node.js + ws server, authoritative game logic
+- Invite-link based matchmaking (?game=XXXX)
+- Resign, rematch (colors swap), disconnect grace period
+- Server-side time control with random move timeout
+- Connection indicator (green/yellow dot)
+- Single-port deployment (frontend + WS on Railway)
 
-### Phase 5: Users + Persistence
-- PostgreSQL with Drizzle ORM
-- Registration, login, JWT auth
+### Phase 5: User Accounts + Persistence (NEXT)
+- PostgreSQL + Drizzle ORM
+- Registration, login, session tokens
 - Glicko-2 rating system
-- Game history, profiles
+- Friends list + friend challenges
+- Game history + stats
+- Hosted on Railway (~$5-10/month)
 
 ### Phase 6: Analysis + Polish
-- Post-game replay/analysis board (board state reconstruction exists)
+- Post-game replay/analysis board
 - Match play with Crawford rule (engine ready)
 - Spectator support
-- Mobile-responsive board
-- Direct challenges
+- Leaderboard
+- Matchmaking queue (ranked)
 
 ### Phase 7: Mobile Apps
 - Capacitor or React Native wrapper

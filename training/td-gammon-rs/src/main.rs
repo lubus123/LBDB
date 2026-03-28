@@ -241,14 +241,12 @@ fn generate_all_turns(board: &Board, dice: (u8, u8), white: bool) -> Vec<(Vec<Ch
         }
     }
 
-    // Deduplicate by board state + move sequence
+    // Deduplicate by final board state only — transpositions (A then B vs B then A)
+    // produce identical boards but different move sequences, so only hash the board
     let mut seen = std::collections::HashSet::new();
     let mut unique = Vec::new();
     for (moves, brd, _) in filtered {
-        let mut key = Vec::with_capacity(26 + moves.len() * 2);
-        for &v in brd.iter() { key.push(v as i64); }
-        for m in &moves { key.push(m.from as i64); key.push(m.to as i64); }
-        if seen.insert(key) {
+        if seen.insert(brd) {
             unique.push((moves, brd));
         }
     }
@@ -271,18 +269,23 @@ fn apply_turn_moves(board: &Board, moves: &[CheckerMove], white: bool, w_off: i3
 
 // ── Encoding ───────────────────────────────────────────────────────
 
+/// Always encode from WHITE's perspective. Output = P(white wins).
+/// This is the original TD-Gammon approach. No perspective flipping.
+/// Features: white checkers, then black checkers per point, plus bar/off/turn.
 fn encode_board(board: &Board, white_off: i32, black_off: i32, white_turn: bool, out: &mut [f32; INPUT_SIZE]) {
     *out = [0.0; INPUT_SIZE];
     let mut idx = 0;
 
     for point in 1..=24 {
         let val = board[point];
+        // White checkers
         let w = if val > 0 { val } else { 0 };
         if w >= 1 { out[idx] = 1.0; }
         if w >= 2 { out[idx + 1] = 1.0; }
         if w >= 3 { out[idx + 2] = 1.0; out[idx + 3] = (w - 3) as f32 * 0.5; }
         idx += 4;
 
+        // Black checkers
         let b = if val < 0 { -val } else { 0 };
         if b >= 1 { out[idx] = 1.0; }
         if b >= 2 { out[idx + 1] = 1.0; }
@@ -297,7 +300,7 @@ fn encode_board(board: &Board, white_off: i32, black_off: i32, white_turn: bool,
     out[194] = white_off as f32 / 15.0;
     out[195] = black_off as f32 / 15.0;
     out[196] = if white_turn { 1.0 } else { 0.0 };
-    out[197] = 1.0;
+    out[197] = 1.0; // bias
 }
 
 // ── Neural Network ─────────────────────────────────────────────────
@@ -399,8 +402,9 @@ struct TDTrainer {
     trace_b1: Vec<f32>,
     trace_w2: Vec<f32>,
     trace_b2: f32,
-    /// Indices of non-zero inputs (reused across calls to avoid allocation)
+    /// Reusable buffers to avoid heap allocation in hot loop
     nonzero_inputs: Vec<usize>,
+    d_hidden: Vec<f32>,
 }
 
 impl TDTrainer {
@@ -412,6 +416,7 @@ impl TDTrainer {
             trace_w2: vec![0.0; net.w2.len()],
             trace_b2: 0.0,
             nonzero_inputs: Vec::with_capacity(64),
+            d_hidden: vec![0.0; net.hidden_size],
         }
     }
 
@@ -431,7 +436,15 @@ impl TDTrainer {
 
         let hs = net.hidden_size;
 
-        // Output layer: w2 += alpha * delta * hidden * d_out
+        // Compute hidden gradients BEFORE updating w2
+        // d_hidden[j] = d_out * w2[j] * h[j] * (1 - h[j])
+        self.trace_b1.resize(hs, 0.0); // reuse as temp d_hidden
+        for j in 0..hs {
+            let hj = net.hidden_cache[j];
+            self.trace_b1[j] = d_out * net.w2[j] * hj * (1.0 - hj);
+        }
+
+        // Now update output layer
         for j in 0..hs {
             net.w2[j] += alpha_delta * net.hidden_cache[j] * d_out;
         }
@@ -445,14 +458,11 @@ impl TDTrainer {
             }
         }
 
-        // Hidden layer: only update W1 rows for non-zero inputs
+        // Update hidden layer using pre-computed d_hidden
         for j in 0..hs {
-            let hj = net.hidden_cache[j];
-            let d_hidden_j = d_out * net.w2[j] * hj * (1.0 - hj);
-
+            let d_hidden_j = self.trace_b1[j];
             net.b1[j] += alpha_delta * d_hidden_j;
 
-            // Only update rows where input != 0
             for &i in &self.nonzero_inputs {
                 let idx = i * hs + j;
                 net.w1[idx] += alpha_delta * net.input_cache[i] * d_hidden_j;
@@ -470,6 +480,12 @@ impl TDTrainer {
         let hs = net.hidden_size;
         let is = net.input_size;
 
+        // Compute hidden gradients BEFORE updating any weights
+        for j in 0..hs {
+            let hj = net.hidden_cache[j];
+            self.d_hidden[j] = d_out * net.w2[j] * hj * (1.0 - hj);
+        }
+
         // Output layer
         for j in 0..hs {
             let grad = net.hidden_cache[j] * d_out;
@@ -479,10 +495,9 @@ impl TDTrainer {
         self.trace_b2 = lam * self.trace_b2 + d_out;
         net.b2 += alpha_delta * self.trace_b2;
 
-        // Hidden layer
+        // Hidden layer using pre-computed d_hidden
         for j in 0..hs {
-            let hj = net.hidden_cache[j];
-            let d_hidden_j = d_out * net.w2[j] * hj * (1.0 - hj);
+            let d_hidden_j = self.d_hidden[j];
 
             self.trace_b1[j] = lam * self.trace_b1[j] + d_hidden_j;
             net.b1[j] += alpha_delta * self.trace_b1[j];
@@ -629,9 +644,11 @@ fn choose_best_nn(net: &mut Network, board: &Board, dice: (u8, u8), white: bool,
 
         all_results.push((*result_board, wo, bo));
 
-        // After current player moves, it's the opponent's turn
+        // Evaluate resulting position (it's now opponent's turn)
+        // Network outputs P(white wins) regardless of whose turn
         encode_board(result_board, wo, bo, !white, &mut enc);
         let p_white = net.forward(&enc);
+        // White wants to maximize P(white wins), black wants to minimize it
         let score = if white { p_white } else { 1.0 - p_white };
 
         if score > best_score { best_score = score; best_idx = i; }
@@ -651,41 +668,66 @@ fn play_training_game(net: &mut Network, trainer: &mut TDTrainer, rng: &mut impl
 
     trainer.reset_traces();
 
+    // V(s) = P(white wins) always. Simple Tesauro-style TD.
     let mut enc = [0.0f32; INPUT_SIZE];
     encode_board(&board, w_off, b_off, white_turn, &mut enc);
     let mut v_prev = net.forward(&enc);
 
+    // Track the state that produced v_prev so we can restore the cache
+    let mut prev_board = board;
+    let mut prev_w_off = w_off;
+    let mut prev_b_off = b_off;
+    let mut prev_turn = white_turn;
+
     for _ in 0..500 {
         let dice = roll_dice(rng);
+        // choose_best_nn calls net.forward() many times, clobbering the cache
         let (_, new_board, new_wo, new_bo) = choose_best_nn(net, &board, dice, white_turn, w_off, b_off);
+        num_moves += 1;
 
+        // Check game over
+        if new_wo == CHECKERS_PER_PLAYER || new_bo == CHECKERS_PER_PLAYER {
+            let (final_v, white_won) = if new_wo == CHECKERS_PER_PLAYER { (1.0, true) } else { (0.0, false) };
+
+            // RESTORE cache for s_t before backprop
+            encode_board(&prev_board, prev_w_off, prev_b_off, prev_turn, &mut enc);
+            net.forward(&enc);
+
+            trainer.update(net, v_prev, final_v);
+            total_td_error += (final_v - v_prev).abs();
+            return (white_won, total_td_error, num_moves);
+        }
+
+        // Advance state
         board = new_board;
         w_off = new_wo;
         b_off = new_bo;
-        num_moves += 1;
-
-        if w_off == CHECKERS_PER_PLAYER {
-            trainer.update(net, v_prev, 1.0);
-            total_td_error += (1.0 - v_prev).abs();
-            return (true, total_td_error, num_moves);
-        }
-        if b_off == CHECKERS_PER_PLAYER {
-            trainer.update(net, v_prev, 0.0);
-            total_td_error += v_prev.abs();
-            return (false, total_td_error, num_moves);
-        }
-
         white_turn = !white_turn;
+
         encode_board(&board, w_off, b_off, white_turn, &mut enc);
         let v_next = net.forward(&enc);
 
+        // RESTORE cache for s_t before backprop — the gradient must be for v_prev's position
+        let mut prev_enc = [0.0f32; INPUT_SIZE];
+        encode_board(&prev_board, prev_w_off, prev_b_off, prev_turn, &mut prev_enc);
+        net.forward(&prev_enc);
+
+        // TD update with correct gradients
         trainer.update(net, v_prev, v_next);
         total_td_error += (v_next - v_prev).abs();
+
+        // Prepare for next iteration
         v_prev = v_next;
+        prev_board = board;
+        prev_w_off = w_off;
+        prev_b_off = b_off;
+        prev_turn = white_turn;
     }
 
     let winner_white = w_off > b_off;
     let final_v = if winner_white { 1.0 } else { 0.0 };
+    encode_board(&prev_board, prev_w_off, prev_b_off, prev_turn, &mut enc);
+    net.forward(&enc);
     trainer.update(net, v_prev, final_v);
     (winner_white, total_td_error, num_moves)
 }
@@ -816,6 +858,10 @@ fn main() {
     let mut batch_white = 0u32;
     let mut batch_count = 0u32;
 
+    // Live status file - updates every 100 games so you can: watch -n1 cat training_status.txt
+    let mut last_wr_h: f32 = 0.0;
+    let mut last_wr_r: f32 = 0.0;
+
     for game in 0..num_games {
         let progress = game as f32 / (num_games - 1).max(1) as f32;
         trainer.alpha = alpha_start + (alpha_end - alpha_start) * progress;
@@ -825,6 +871,46 @@ fn main() {
         batch_len += n_moves as u64;
         batch_white += if white_won { 1 } else { 0 };
         batch_count += 1;
+
+        // Write live status every 100 games
+        if (game + 1) % 100 == 0 {
+            let elapsed = t_start.elapsed().as_secs_f64();
+            let avg_td = batch_td / batch_count as f32;
+            let avg_len = batch_len as f64 / batch_count as f64;
+            let speed = (game + 1) as f64 / elapsed;
+            let eta = (num_games as f64 - (game + 1) as f64) / speed;
+            let pct = (game + 1) as f64 / num_games as f64 * 100.0;
+
+            let bar_width = 30;
+            let filled = (pct / 100.0 * bar_width as f64) as usize;
+            let bar: String = format!("[{}{}]",
+                "=".repeat(filled),
+                " ".repeat(bar_width - filled));
+
+            let status = format!(
+                "\x1b[2J\x1b[H\
+                 ╔══════════════════════════════════════════╗\n\
+                 ║       TD-GAMMON TRAINING (Rust)          ║\n\
+                 ╠══════════════════════════════════════════╣\n\
+                 ║  Game: {:>7} / {:<7}  {:.1}%          ║\n\
+                 ║  {}               ║\n\
+                 ║  Speed: {:.0} games/s | ETA: {:.0}m        ║\n\
+                 ╠══════════════════════════════════════════╣\n\
+                 ║  TD Error:      {:<8.4}                ║\n\
+                 ║  Avg Game Len:  {:<8.0}                ║\n\
+                 ║  Alpha (lr):    {:<8.4}                ║\n\
+                 ╠══════════════════════════════════════════╣\n\
+                 ║  vs Heuristic:  {:<6.1}%                 ║\n\
+                 ║  vs Random:     {:<6.1}%                 ║\n\
+                 ╚══════════════════════════════════════════╝\n",
+                game + 1, num_games, pct,
+                bar,
+                speed, eta / 60.0,
+                avg_td, avg_len, trainer.alpha,
+                last_wr_h * 100.0, last_wr_r * 100.0,
+            );
+            let _ = fs::write("training_status.txt", &status);
+        }
 
         if (game + 1) % eval_interval == 0 {
             let elapsed = t_start.elapsed().as_secs_f64();
@@ -837,6 +923,8 @@ fn main() {
 
             let wr_h = benchmark_vs_heuristic(&mut net, eval_games, &mut rng);
             let wr_r = benchmark_vs_random(&mut net, eval_games, &mut rng);
+            last_wr_h = wr_h;
+            last_wr_r = wr_r;
 
             println!("done");
             println!("  alpha={:.4} | td_err={:.4} | game_len={:.0} | white={:.1}%",
