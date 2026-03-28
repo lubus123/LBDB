@@ -61,7 +61,7 @@ function App() {
           href="#"
           onClick={(e) => { e.preventDefault(); setPage('landing'); }}
         >
-          Libre<span>Gammon</span>
+          duck<span>Gammon</span>
         </a>
         <Show when={page() === 'game'}>
           <span class="header-mode">
@@ -73,7 +73,7 @@ function App() {
       <div class="main-content">
         <Show when={page() === 'landing'}>
           <div class="landing">
-            <h1>Libre<span>Gammon</span></h1>
+            <h1>duck<span>Gammon</span></h1>
             <p class="tagline">Fast, free, open-source backgammon</p>
             <div class="landing-buttons">
               <button

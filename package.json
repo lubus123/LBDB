@@ -1,5 +1,5 @@
 {
-  "name": "libregammon",
+  "name": "duckgammon",
   "version": "0.1.0",
   "description": "Lichess-inspired backgammon app",
   "type": "module",

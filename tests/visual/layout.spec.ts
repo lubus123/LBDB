@@ -1,5 +1,5 @@
 /**
- * Visual layout tests for LibreGammon.
+ * Visual layout tests for duckGammon.
  *
  * Run: npx playwright test
  * Update baselines: npx playwright test --update-snapshots

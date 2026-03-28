@@ -1,8 +1,8 @@
-# LibreGammon - Codebase Summary
+# duckGammon - Codebase Summary
 
 ## What is this?
 
-LibreGammon is a lichess-inspired, minimalist backgammon web app. Browser-first, with plans for Android/iOS. Built for speed: ~20KB gzipped total, zero backend required for single-player.
+duckGammon is a lichess-inspired, minimalist backgammon web app. Browser-first, with plans for Android/iOS. Built for speed: ~20KB gzipped total, zero backend required for single-player.
 
 ## Tech Stack
 
@@ -57,7 +57,7 @@ src/
 
 ## Design Philosophy: Feel is the Feature
 
-LibreGammon's core differentiator is **tactile feel**. Every interaction should have weight, consequence, and personality. The board is not a static UI — it's a living space where pieces have emotions.
+duckGammon's core differentiator is **tactile feel**. Every interaction should have weight, consequence, and personality. The board is not a static UI — it's a living space where pieces have emotions.
 
 ### Core Principles
 
