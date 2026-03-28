@@ -149,12 +149,29 @@ Arrow keys or clicking move entries reconstructs the board state at that point b
 ## Commands
 
 ```bash
-npm run dev          # Vite dev server (hot reload)
-npm run dev:server   # WebSocket server (port 3001)
-npm start            # Production: serves frontend + WS on same port
-npm run build        # Production build -> dist/
-npm test             # Run all tests (63 tests)
-npm run screenshots  # Build + Playwright screenshot tests
+# Full stack dev (build + serve everything on one port)
+npm run build
+DATABASE_URL="postgresql://duckgammon:duck123@localhost:5432/duckgammon" npm start
+# Open http://localhost:3001
+
+# Vite hot reload (needs separate game server)
+npm run dev                             # Frontend on 5173 (proxies /api + /ws to 3001)
+DATABASE_URL="..." npm run dev:server   # Server on 3001
+
+# Without Postgres (games work, auth/friends/history disabled)
+npm run build && npm start
+
+# Tests
+npm test             # 63 unit tests
+npm run screenshots  # Playwright visual regression
+```
+
+### Local Postgres Setup (first time)
+```bash
+sudo pg_ctlcluster 15 main start
+sudo -u postgres psql -c "CREATE USER duckgammon WITH PASSWORD 'duck123';"
+sudo -u postgres psql -c "CREATE DATABASE duckgammon OWNER duckgammon;"
+# Tables auto-created on first server boot
 ```
 
 ## Keyboard Shortcuts

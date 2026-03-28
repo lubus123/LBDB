@@ -6,14 +6,37 @@ Lichess-inspired backgammon. Fast, free, open-source. Play online or vs AI.
 
 **Online**: Visit the deployed site and click **Play Online** — share the invite link with a friend.
 
-**Locally**:
+**Local development (full stack with Postgres)**:
 ```bash
 npm install
-npm run dev          # Frontend (port 5173)
-npm run dev:server   # Game server (port 3001)
+
+# 1. Start Postgres (if not running)
+sudo pg_ctlcluster 15 main start
+# Or: brew services start postgresql   (macOS)
+# Or: docker run -p 5432:5432 -e POSTGRES_PASSWORD=duck123 postgres:15
+
+# 2. Create DB (first time only)
+sudo -u postgres psql -c "CREATE USER duckgammon WITH PASSWORD 'duck123';"
+sudo -u postgres psql -c "CREATE DATABASE duckgammon OWNER duckgammon;"
+
+# 3. Build frontend + start server (single port, everything included)
+npm run build
+DATABASE_URL="postgresql://duckgammon:duck123@localhost:5432/duckgammon" npm start
 ```
 
-Open `http://localhost:5173` and play.
+Open `http://localhost:3001` — serves frontend, API, and WebSocket on one port.
+Tables are auto-created on first boot.
+
+**Without Postgres** (game features work, auth/friends/history disabled):
+```bash
+npm run build && npm start
+```
+
+**Vite dev server** (hot reload, needs separate game server):
+```bash
+npm run dev                    # Frontend on port 5173 (proxies /api and /ws to 3001)
+DATABASE_URL="..." npm run dev:server   # Game server on port 3001
+```
 
 ## Features
 
