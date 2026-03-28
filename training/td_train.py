@@ -52,7 +52,9 @@ def choose_best_turn_nn(network: Network, board: Board, dice: Tuple[int, int],
             return turn_moves, result_board, w_off, b_off
 
         results.append((turn_moves, result_board, w_off, b_off))
-        encodings.append(encode_board(result_board, w_off, b_off, turn))
+        # After current player moves, it's the opponent's turn
+        opp = 'b' if turn == 'w' else 'w'
+        encodings.append(encode_board(result_board, w_off, b_off, opp))
 
     # Batch evaluate all positions at once
     X = np.array(encodings, dtype=np.float32)
