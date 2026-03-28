@@ -71,6 +71,7 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
     })() : 30
   );
   const [timeRemaining, setTimeRemaining] = createSignal<number | null>(null);
+  const [timeLocked, setTimeLocked] = createSignal(false);
   let initialBoard = [...initState.board];
   let initialWhiteOff = initState.whiteOff;
   let initialBlackOff = initState.blackOff;
@@ -643,6 +644,7 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
     setSelectedPoint(null);
     setHistory([]);
     setHistoryIndex(null);
+    setTimeLocked(false);
     setDiceOrder([0, 1]);
     setLuckHistory([]);
   }
@@ -735,12 +737,18 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
     }
   });
 
-  // Move timer — countdown during 'moving' phase
+  // Move timer — countdown for the entire turn (not per individual move)
+  // Doubles get +50% time bonus
   createEffect(() => {
     const s = currentState();
     const limit = timePerMove();
     if (s.phase === 'moving' && !isAiTurn() && !isReviewing() && limit !== null) {
-      setTimeRemaining(limit);
+      // Lock time setting once a timed game has started
+      if (!timeLocked()) setTimeLocked(true);
+      // Doubles bonus: +50% time
+      const isDoubles = s.dice && s.dice[0] === s.dice[1];
+      const turnTime = isDoubles ? Math.floor(limit * 1.5) : limit;
+      setTimeRemaining(turnTime);
       const interval = setInterval(() => {
         setTimeRemaining(prev => {
           if (prev === null || prev <= 0) return 0;
@@ -753,14 +761,44 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
     }
   });
 
-  // Timeout — auto-confirm when time expires
+  // Timeout — play random legal moves for remaining dice, then confirm
   createEffect(() => {
     if (timeRemaining() === 0 && currentState().phase === 'moving' && !isAiTurn()) {
       playTimeout();
-      const s = currentState();
-      const newState = confirmTurn(s);
-      recordTurn(s, newState);
-      setState(newState);
+      let s = currentState();
+
+      // Play random moves for each remaining die
+      while (s.phase === 'moving' && s.movesLeft.length > 0) {
+        const moveable = movableCheckers(s.board, s.movesLeft, s.turn);
+        if (moveable.length === 0) break;
+        const from = moveable[Math.floor(Math.random() * moveable.length)];
+        const dests = legalDestinations(s.board, from, s.movesLeft, s.turn);
+        if (dests.length === 0) break;
+        const to = dests[Math.floor(Math.random() * dests.length)];
+        // Find which die this uses
+        const uniqueDice = [...new Set(s.movesLeft)];
+        let usedDie = 0;
+        for (const die of uniqueDice) {
+          let dest: number;
+          if (from === 0 && s.turn === 'w') dest = 25 - die;
+          else if (from === 25 && s.turn === 'b') dest = die;
+          else dest = s.turn === 'w' ? from - die : from + die;
+          if ((s.turn === 'w' && dest <= 0 && to === 0) || (s.turn === 'b' && dest >= 25 && to === 25) || dest === to) {
+            usedDie = die; break;
+          }
+        }
+        if (usedDie === 0) break;
+        const isHit = s.turn === 'w' ? s.board[to] < 0 && s.board[to] >= -1 : s.board[to] > 0 && s.board[to] <= 1;
+        s = doMove(s, { from, to, die: usedDie, hit: isHit && to > 0 && to < 25 });
+      }
+
+      if (s.phase === 'moving') {
+        recordTurn(s, s);
+        s = confirmTurn(s);
+      } else if (s.phase === 'waiting' || s.phase === 'gameOver') {
+        recordTurn(currentState(), s);
+      }
+      setState(s);
       setSelectedPoint(null);
     }
   });
@@ -969,9 +1007,10 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
             </button>
           </label>
           <label class="option-row">
-            <span>Move time</span>
+            <span>Turn time</span>
             <select
               value={timePerMove() === null ? 'none' : String(timePerMove())}
+              disabled={timeLocked()}
               onChange={(e) => {
                 const v = e.currentTarget.value;
                 setTimePerMove(v === 'none' ? null : Number(v));
