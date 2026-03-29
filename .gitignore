@@ -6,3 +6,4 @@ screenshots/results
 test-results
 playwright-report
 training/td-gammon-rs/target/
+.superpowers/
