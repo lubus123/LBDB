@@ -556,36 +556,48 @@
   color: var(--text-muted);
 }
 
-/* Player info */
-.player-info {
+/* Opponent box */
+.opponent-box {
+  padding: 10px 12px;
+}
+
+.player-row {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 0;
+  padding: 4px 6px;
+  border-radius: 4px;
+  transition: background 200ms;
 }
 
-.player-info .color-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-}
-
-.player-info .color-dot.white {
-  background: var(--checker-white);
-}
-
-.player-info .color-dot.black {
-  background: var(--checker-black);
-  border: 1px solid var(--text-muted);
-}
-
-.player-info.active {
+.player-row.active-turn {
+  background: rgba(74, 158, 255, 0.1);
   color: var(--text-primary);
   font-weight: 600;
 }
 
-.player-info:not(.active) {
+.player-row:not(.active-turn) {
   color: var(--text-secondary);
+}
+
+.player-name { flex: 1; font-size: 13px; }
+
+.player-row .color-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.player-row .color-dot.white { background: var(--checker-white); }
+.player-row .color-dot.black { background: var(--checker-black); border: 1px solid var(--text-muted); }
+
+.vs-divider {
+  text-align: center;
+  font-size: 10px;
+  color: var(--text-muted);
+  padding: 1px 0;
+  letter-spacing: 1px;
 }
 
 /* Cube display in panel */

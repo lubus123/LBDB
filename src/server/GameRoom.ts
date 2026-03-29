@@ -97,6 +97,11 @@ export class GameRoom {
     if (this.black) this.send(this.black, { type: 'game_start', state: this.state, color: 'b', opponent: this.whiteUsername });
   }
 
+  /** Record a completed turn in move history */
+  private recordTurn(player: Color, dice: [number, number], moves: CheckerMove[]) {
+    this.moveHistory.push({ ply: this.state.ply, player, dice, moves });
+  }
+
   handleRoll(ws: WebSocket) {
     const color = this.getColor(ws);
     if (!color || color !== this.state.turn) return this.send(ws, { type: 'error', message: 'Not your turn' });
@@ -116,6 +121,7 @@ export class GameRoom {
 
     // If no moves possible, auto-pass
     if (this.state.phase === 'waiting') {
+      this.recordTurn(this.state.turn, dice, []);
       this.state = {
         ...this.state,
         dice: null,
@@ -140,12 +146,17 @@ export class GameRoom {
       return this.send(ws, { type: 'error', message: 'Illegal move' });
     }
 
+    const prevTurn = this.state.turn;
+    const prevDice = this.state.dice!;
+    const prevMoves = [...this.state.turnMoves, move];
+
     this.state = doMove(this.state, move);
     this.broadcast({ type: 'state', state: this.state });
 
     // Check game over
     const result = getGameResult(this.state);
     if (result) {
+      this.recordTurn(prevTurn, prevDice, prevMoves);
       this.clearTimer();
       this.broadcast({ type: 'game_over', result });
       return;
@@ -153,6 +164,7 @@ export class GameRoom {
 
     // Auto-ended turn (all dice used or no more moves)
     if (this.state.phase === 'waiting') {
+      this.recordTurn(prevTurn, prevDice, prevMoves);
       this.clearTimer();
       this.startTurnTimer();
     }
@@ -164,6 +176,7 @@ export class GameRoom {
     if (this.state.phase !== 'moving') return this.send(ws, { type: 'error', message: 'Cannot confirm now' });
 
     if (!hasAnyMoves(this.state.board, this.state.movesLeft, this.state.turn)) {
+      if (this.state.dice) this.recordTurn(this.state.turn, this.state.dice, this.state.turnMoves);
       this.state = confirmTurn(this.state);
       this.clearTimer();
       this.broadcast({ type: 'state', state: this.state });

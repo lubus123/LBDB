@@ -1105,6 +1105,22 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
       </div>
 
       <div class="side-panel">
+        {/* Opponent box */}
+        <div class="panel-section opponent-box">
+          <div class={`player-row ${currentState().turn === 'b' ? 'active-turn' : ''}`}>
+            <div class="color-dot black" />
+            <span class="player-name">{isAiMode() ? 'AI' : isOnline() ? (myColor() === 'b' ? 'You' : opponentName()) : 'Black'}</span>
+            <span class="pip-inline">{blackPips()} pips</span>
+          </div>
+          <div class="vs-divider">vs</div>
+          <div class={`player-row ${currentState().turn === 'w' ? 'active-turn' : ''}`}>
+            <div class="color-dot white" />
+            <span class="player-name">{isAiMode() ? 'You' : isOnline() ? (myColor() === 'w' ? 'You' : opponentName()) : 'White'}</span>
+            <span class="pip-inline">{whitePips()} pips</span>
+          </div>
+        </div>
+
+        {/* Turn indicator */}
         <div class="panel-section turn-indicator">
           <div class="turn-label">{turnLabel()}</div>
           <Show when={aiThinking()}>
@@ -1119,22 +1135,9 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
           </Show>
           <Show when={isOnline() && opponentDisconnected()}>
             <div style={{ "font-size": "11px", color: "#f0ad4e", "margin-top": "4px" }}>
-              Opponent disconnected — waiting to reconnect...
+              {opponentName()} disconnected — waiting...
             </div>
           </Show>
-        </div>
-
-        <div class="panel-section">
-          <div class={`player-info ${currentState().turn === 'b' ? 'active' : ''}`}>
-            <div class="color-dot black" />
-            <span>{isAiMode() ? 'AI' : isOnline() ? (myColor() === 'b' ? 'You' : opponentName()) : 'Black'}</span>
-            <span class="pip-inline">{blackPips()} pips</span>
-          </div>
-          <div class={`player-info ${currentState().turn === 'w' ? 'active' : ''}`}>
-            <div class="color-dot white" />
-            <span>{isAiMode() ? 'You' : isOnline() ? (myColor() === 'w' ? 'You' : opponentName()) : 'White'}</span>
-            <span class="pip-inline">{whitePips()} pips</span>
-          </div>
         </div>
 
         <div class="panel-section">
