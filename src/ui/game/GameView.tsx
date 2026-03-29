@@ -31,6 +31,7 @@ interface TurnRecord {
 
 export type GameMode = 'local' | 'ai' | 'online';
 export type AiDifficulty = 'strong' | 'expert';
+// AI difficulty now managed internally in GameView's Options panel
 
 const AI_ROLL_DELAY = 600;
 const AI_MOVE_DELAY = 650;
@@ -45,7 +46,7 @@ const WS_URL = import.meta.env.VITE_WS_URL ||
     ? `ws://${window.location.hostname}:${window.location.port || '3001'}`
     : `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}`);
 
-const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevPreset; onlineGameId?: string; aiDifficulty?: AiDifficulty }> = (props) => {
+const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevPreset; onlineGameId?: string }> = (props) => {
   const initState = props.devPreset
     ? {
         board: [...props.devPreset.board],
@@ -62,6 +63,7 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
     (typeof localStorage !== 'undefined' && localStorage.getItem('bg-direction') as 'left' | 'right') || 'right'
   );
   const [bunnyHop, setBunnyHop] = createSignal(true);
+  const [aiDifficulty, setAiDifficulty] = createSignal<AiDifficulty>('expert');
   const [history, setHistory] = createSignal<TurnRecord[]>([]);
   const [aiThinking, setAiThinking] = createSignal(false);
   const [isRolling, setIsRolling] = createSignal(false);
@@ -86,7 +88,7 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
   const [nnReady, setNnReady] = createSignal(false);
 
   // Load NN model for expert difficulty
-  if (props.mode === 'ai' && props.aiDifficulty === 'expert') {
+  if (props.mode === 'ai' && aiDifficulty() === 'expert') {
     if (isModelLoaded()) {
       setNnReady(true);
     } else {
@@ -98,7 +100,7 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
 
   /** Get the position evaluator based on difficulty setting and model availability. */
   const getEvaluator = (): PositionEvaluator | undefined => {
-    if (props.aiDifficulty === 'expert' && nnReady()) return evaluatePositionNN;
+    if (aiDifficulty() === 'expert' && nnReady()) return evaluatePositionNN;
     // 'strong' or model not loaded: use heuristic (undefined = default)
     return undefined;
   };
@@ -1236,6 +1238,15 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
               {direction() === 'right' ? '\u2192' : '\u2190'} <span class="shortcut-hint">R</span>
             </button>
           </label>
+          <Show when={isAiMode()}>
+            <label class="option-row">
+              <span>AI strength</span>
+              <select value={aiDifficulty()} onChange={(e) => setAiDifficulty(e.currentTarget.value as AiDifficulty)}>
+                <option value="strong">Strong</option>
+                <option value="expert">Expert (NN)</option>
+              </select>
+            </label>
+          </Show>
           <label class="option-row">
             <span>Turn time</span>
             <select

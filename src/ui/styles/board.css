@@ -114,14 +114,9 @@
     font-size: 15px !important;
   }
 
-  .landing-buttons {
-    flex-direction: column;
-  }
-
-  .landing .play-btn {
-    padding: 12px 36px !important;
-    font-size: 16px !important;
-  }
+  .play-cards { flex-direction: column; align-items: center; }
+  .play-card { width: 100%; max-width: 280px; }
+  .friends-bar { max-width: 100%; }
 
   .game-over-modal {
     min-width: auto !important;
@@ -676,60 +671,70 @@
   margin-top: -8px;
 }
 
-.landing-buttons {
+/* Play cards — three equal buttons in a row */
+.play-cards {
   display: flex;
-  gap: 12px;
-  margin-top: 8px;
+  gap: 10px;
+  margin-top: 16px;
+  justify-content: center;
 }
 
-.landing .play-btn {
-  padding: 14px 48px;
-  font-size: 18px;
-  border-radius: 6px;
-}
-
-.landing .play-btn-secondary {
+.play-card {
   background: var(--bg-secondary);
-  border: 1px solid var(--accent);
-}
-
-.landing .play-btn-secondary:hover {
-  background: var(--bg-tertiary);
-}
-
-.ai-play-group {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-}
-
-.difficulty-selector {
-  display: flex;
-  gap: 4px;
-}
-
-.diff-btn {
-  padding: 3px 12px;
-  font-size: 11px;
-  border-radius: 4px;
-  background: transparent;
-  border: 1px solid rgba(255,255,255,0.15);
-  color: var(--text-muted);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 6px;
+  padding: 16px 20px;
   cursor: pointer;
-  transition: all 0.15s;
-}
-
-.diff-btn:hover {
-  border-color: var(--accent);
+  transition: border-color 150ms, background 150ms;
+  text-align: center;
+  min-width: 120px;
+  font-family: var(--font-main);
   color: var(--text-primary);
 }
 
-.diff-btn.active {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--bg-primary);
+.play-card:hover { border-color: var(--highlight); background: var(--bg-tertiary); }
+.play-card.primary { background: var(--highlight); color: #fff; border-color: var(--highlight); }
+.play-card.primary:hover { background: #3a8aee; }
+.play-card.small { padding: 8px 14px; min-width: 80px; }
+
+.play-card-title { font-weight: 600; font-size: 15px; }
+.play-card-desc { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+.play-card.primary .play-card-desc { color: rgba(255,255,255,0.7); }
+
+/* Friends bar — compact horizontal strip */
+.friends-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+  padding: 10px 16px;
+  background: var(--bg-secondary);
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.06);
+  max-width: 500px;
+  font-size: 12px;
 }
+
+.friend-item { display: flex; align-items: center; gap: 5px; }
+.friend-name { color: var(--text-secondary); }
+.friend-challenge { padding: 2px 6px !important; font-size: 12px !important; background: var(--highlight) !important; color: #fff !important; border: none; }
+.friend-accept { padding: 2px 6px !important; font-size: 10px !important; }
+.friend-error { color: #e53935; font-size: 10px; }
+
+.friend-add {
+  display: flex; gap: 4px; margin-left: auto;
+}
+.friend-add input {
+  width: 100px; padding: 4px 6px; background: var(--bg-tertiary);
+  border: 1px solid rgba(255,255,255,0.1); border-radius: 3px;
+  color: var(--text-primary); font-size: 11px; font-family: var(--font-main);
+}
+.friend-add input::placeholder { color: var(--text-muted); }
+
+.header-auth { color: var(--text-primary); font-size: 12px; text-decoration: none; }
+.header-auth.muted { color: var(--text-muted); font-size: 11px; }
+.dev-link { color: var(--text-muted); font-size: 11px; text-decoration: none; }
 
 .landing-shortcuts {
   color: var(--text-muted);
