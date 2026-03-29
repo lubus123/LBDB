@@ -43,5 +43,6 @@ export type ServerMessage =
   | { type: 'chat'; from: string; text: string }
   | { type: 'challenge_received'; from: string; challengeId: string; timeLimit: number }
   | { type: 'challenge_accepted'; gameId: string }
+  | { type: 'challenge_expired'; challengeId: string }
   | { type: 'friend_online'; username: string }
   | { type: 'friend_offline'; username: string };

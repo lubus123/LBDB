@@ -11,6 +11,7 @@
 
 import type { BoardArray, Color } from '../shared/types';
 import { W_BAR, B_BAR } from '../shared/constants';
+import { evaluatePosition } from './ai';
 
 export interface NNWeights {
   W1: number[][];  // [198][80]
@@ -112,7 +113,7 @@ export function evaluatePositionNN(
   colorOff: number,
   opponentOff: number,
 ): number {
-  if (!loadedWeights) return 0;
+  if (!loadedWeights) return evaluatePosition(board, color, colorOff, opponentOff);
 
   const whiteOff = color === 'w' ? colorOff : opponentOff;
   const blackOff = color === 'w' ? opponentOff : colorOff;

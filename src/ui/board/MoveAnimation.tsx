@@ -132,7 +132,7 @@ export function triggerBunnyHop(
 
 export function clearAnimations() {
   setAnimations([]);
-  setHiddenDests(new Set());
+  setHiddenDests(new Set<number>());
 }
 
 const MoveAnimation: Component = () => {
