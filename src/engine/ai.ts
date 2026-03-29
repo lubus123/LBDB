@@ -17,6 +17,9 @@ import { cloneBoard, applyMove, checkersAt, countCheckers } from './board';
 import { generateAllTurns } from './moves';
 import { pipCount } from './pip';
 
+/** A position evaluator: takes board + perspective, returns score (higher = better for color). */
+export type PositionEvaluator = (board: BoardArray, color: Color, colorOff: number, opponentOff: number) => number;
+
 /** Evaluate a board position from `color`'s perspective. Higher = better. */
 export function evaluatePosition(board: BoardArray, color: Color, colorOff: number, opponentOff: number): number {
   const opp: Color = color === 'w' ? 'b' : 'w';
@@ -135,9 +138,12 @@ export interface AIMoveResult {
 /**
  * Choose the best turn for the AI.
  * Generates all legal turns, evaluates each resulting position,
- * and picks the best one (with small random noise for variety).
+ * and picks the best one.
+ *
+ * @param evaluator - Optional position evaluator. Defaults to heuristic.
+ *   When using NN evaluator, hit bonus and noise are skipped (NN handles those).
  */
-export function chooseBestTurn(state: GameState): AIMoveResult {
+export function chooseBestTurn(state: GameState, evaluator?: PositionEvaluator): AIMoveResult {
   const { board, dice, turn, whiteOff, blackOff } = state;
   if (!dice) return { moves: [], score: 0 };
 
@@ -147,7 +153,9 @@ export function chooseBestTurn(state: GameState): AIMoveResult {
     return { moves: [], score: 0 };
   }
 
-  const opp: Color = turn === 'w' ? 'b' : 'w';
+  const useHeuristic = !evaluator;
+  const eval_ = evaluator ?? evaluatePosition;
+
   let bestScore = -Infinity;
   let bestTurn = allTurns[0];
 
@@ -156,14 +164,14 @@ export function chooseBestTurn(state: GameState): AIMoveResult {
     const myOff = turn === 'w' ? result.whiteOff : result.blackOff;
     const oppOff = turn === 'w' ? result.blackOff : result.whiteOff;
 
-    let score = evaluatePosition(result.board, turn, myOff, oppOff);
+    let score = eval_(result.board, turn, myOff, oppOff);
 
-    // Bonus for hitting
-    const hits = turnMoves.filter(m => m.hit).length;
-    score += hits * 12;
-
-    // Small noise for variety (avoids robotic play)
-    score += (Math.random() - 0.5) * 2;
+    if (useHeuristic) {
+      // Hit bonus and noise only for heuristic (NN already accounts for these)
+      const hits = turnMoves.filter(m => m.hit).length;
+      score += hits * 12;
+      score += (Math.random() - 0.5) * 2;
+    }
 
     // Instant win detection
     if ((turn === 'w' && result.whiteOff === CHECKERS_PER_PLAYER) ||

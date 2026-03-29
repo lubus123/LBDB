@@ -53,25 +53,17 @@ function tryMove(
       return { from, to: bearOffTo, die, hit: false };
     }
 
-    // Over-bearing: only if no checker on a higher point
+    // Over-bearing: allowed only if no checker is further from home than this one.
+    // E.g. white on point 3, die=5: legal only if no white checker on points 4-24.
     if (die > dist) {
-      const highest = furthestChecker(board, color);
-      // Only allowed if this IS the furthest checker
-      if (color === 'w' && from < highest) return null;
-      if (color === 'b' && from > highest) return null;
-      // Actually we need: no checker exists further from home than this one
-      if (color === 'w' && highest <= from) {
-        return { from, to: 0, die, hit: false };
-      }
-      if (color === 'b' && highest >= from) {
-        return { from, to: 25, die, hit: false };
-      }
-      return null;
+      const furthest = furthestChecker(board, color);
+      if (color === 'w' && furthest > from) return null;
+      if (color === 'b' && furthest < from) return null;
+      return { from, to: color === 'w' ? 0 : 25, die, hit: false };
     }
 
-    // die < dist: can't bear off, this is a normal move within home board
-    // Fall through to normal logic
-    return null; // to < 1 for white means bear off, already handled
+    // die < dist: can't bear off with this die, and destination is off-board
+    return null;
   }
 
   // Normal move: check destination isn't blocked
