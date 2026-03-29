@@ -115,7 +115,7 @@
 
   .play-cards { flex-direction: column; align-items: center; }
   .play-card { width: 100%; max-width: 280px; }
-  .friends-panel { max-width: 100%; }
+  .friends-panel { position: static; width: 100%; margin-top: 16px; }
 
   .game-over-modal {
     min-width: auto !important;
@@ -714,15 +714,18 @@
 
 /* Friends panel — vertical card */
 .friends-panel {
+  position: fixed;
+  top: calc(var(--header-height) + 12px);
+  right: 16px;
+  width: 240px;
   display: flex;
   flex-direction: column;
-  margin-top: 20px;
-  max-width: 400px;
   background: var(--bg-secondary);
   border-radius: 8px;
   border: 1px solid rgba(255,255,255,0.06);
   font-size: 13px;
   overflow: hidden;
+  z-index: 5;
 }
 .friends-header {
   display: flex;
@@ -1393,7 +1396,7 @@
   margin-bottom: 22px;
 }
 .challenge-time-custom input {
-  width: 64px;
+  width: 76px;
   background: var(--bg-tertiary);
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 4px;

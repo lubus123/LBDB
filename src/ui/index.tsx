@@ -210,35 +210,33 @@ function App() {
     <path d="M30 44 L30 49 M30 49 L26 51 M30 49 L30 52 M30 49 L34 51" stroke="#c49a3c" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
   </>);
 
-  const HeaderLogo = () => {
-    const mode = page() === 'game' ? gameMode() : null;
-    const showSecond = mode === 'online' || mode === 'local';
-    const showBinary = mode === 'ai';
+  const headerMode = () => page() === 'game' ? gameMode() : null;
+  const showSecondDuck = () => headerMode() === 'online' || headerMode() === 'local';
+  const showBinary = () => headerMode() === 'ai';
 
-    return (<>
-      {/* Main duck — always present */}
-      <svg viewBox="0 0 80 64" width="26" height="21" style={{ "vertical-align": "middle", "margin-left": "7px", "margin-top": "-1px" }}>
-        {duckPaths}
-      </svg>
-      {/* Checker + second duck — vs human */}
-      <Show when={showSecond}>
-        <span style={{ display: "inline-flex", "align-items": "center", opacity: "0", animation: "fade-in 300ms ease forwards" }}>
-          <svg viewBox="0 0 20 20" width="12" height="12" style={{ "vertical-align": "middle", margin: "0 1px" }}>
-            <circle cx="10" cy="10" r="8" fill="#e8dcc8" stroke="#c4b8a4" stroke-width="1.5"/>
-          </svg>
-          <svg viewBox="0 0 80 64" width="26" height="21" style={{ "vertical-align": "middle", "margin-top": "-1px", transform: "scaleX(-1)" }}>
-            {duckPaths}
-          </svg>
-        </span>
-      </Show>
-      {/* Binary block — AI mode */}
-      <Show when={showBinary}>
-        <span style={{ "font-family": "var(--font-mono)", "font-size": "8px", color: "#4a9eff", opacity: "0.5", "margin-left": "4px", "line-height": "1", "vertical-align": "middle" }}>
-          010<br/>101
-        </span>
-      </Show>
-    </>);
-  };
+  const HeaderLogo = () => (<>
+    {/* Main duck — always present */}
+    <svg viewBox="0 0 80 64" width="26" height="21" style={{ "vertical-align": "middle", "margin-left": "7px", "margin-top": "-1px" }}>
+      {duckPaths}
+    </svg>
+    {/* Checker + second duck — vs human */}
+    <Show when={showSecondDuck()}>
+      <span style={{ display: "inline-flex", "align-items": "center", opacity: "0", animation: "fade-in 300ms ease forwards" }}>
+        <svg viewBox="0 0 20 20" width="12" height="12" style={{ "vertical-align": "middle", margin: "0 1px" }}>
+          <circle cx="10" cy="10" r="8" fill="#e8dcc8" stroke="#c4b8a4" stroke-width="1.5"/>
+        </svg>
+        <svg viewBox="0 0 80 64" width="26" height="21" style={{ "vertical-align": "middle", "margin-top": "-1px", transform: "scaleX(-1)" }}>
+          {duckPaths}
+        </svg>
+      </span>
+    </Show>
+    {/* Binary block — AI mode */}
+    <Show when={showBinary()}>
+      <span style={{ "font-family": "var(--font-mono)", "font-size": "8px", color: "#4a9eff", opacity: "0.5", "margin-left": "4px", "line-height": "1", "vertical-align": "middle" }}>
+        010<br/>101
+      </span>
+    </Show>
+  </>);
 
   const acceptedFriends = () => friends().filter(f => f.status === 'accepted');
   const pendingIncoming = () => friends().filter(f => f.status === 'pending' && f.friendId === user()?.id);
@@ -386,97 +384,6 @@ function App() {
               </button>
             </div>
 
-            {/* Friends */}
-            <Show when={user()}>
-              <div class="friends-panel">
-                <div class="friends-header">
-                  <span class="friends-label">Friends</span>
-                  <span class="friends-count">{acceptedFriends().filter(f => onlineFriends().has(f.friendUsername)).length} online</span>
-                </div>
-                <div class="friends-list">
-                  <For each={acceptedFriends()}>
-                    {(f) => {
-                      const isOnline = () => onlineFriends().has(f.friendUsername);
-                      return (
-                        <div class={`friend-row ${isOnline() ? '' : 'offline'}`}>
-                          <div class={`online-dot ${isOnline() ? 'on' : 'off'}`} />
-                          <span class="friend-name">{f.friendUsername}</span>
-                          <Show when={isOnline()}>
-                            <Show when={challengeSent()?.username === f.friendUsername} fallback={
-                              <button class="btn btn-small friend-challenge" onClick={() => openChallengeModal(f.friendUsername)}>⚔</button>
-                            }>
-                              <button class="btn btn-small challenge-pending" disabled>⚔ {challengeCountdown()}s</button>
-                            </Show>
-                          </Show>
-                        </div>
-                      );
-                    }}
-                  </For>
-                </div>
-                <Show when={pendingIncoming().length > 0}>
-                  <div class="friends-pending">
-                    <For each={pendingIncoming()}>
-                      {(f) => (
-                        <div class="friend-row pending">
-                          <span class="friend-name"><span class="pending-name">{f.friendUsername}</span> wants to be friends</span>
-                          <button class="btn btn-small friend-accept" onClick={() => handleAcceptFriend(f.id)}>Accept</button>
-                        </div>
-                      )}
-                    </For>
-                  </div>
-                </Show>
-                <div class="friends-add">
-                  <input type="text" placeholder="Add friend..." value={addFriendInput()}
-                    onInput={(e) => setAddFriendInput(e.currentTarget.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') handleAddFriend(); }} />
-                  <button class="btn btn-small" onClick={handleAddFriend}>+</button>
-                </div>
-                <Show when={friendError()}><span class="friend-error">{friendError()}</span></Show>
-              </div>
-              <Show when={challengeTarget()}>
-                <div class="challenge-overlay" onClick={(e) => { if (e.target === e.currentTarget) closeChallengeModal(); }}>
-                  <div class="challenge-modal">
-                    <div class="challenge-title-label">Challenge</div>
-                    <div class="challenge-title-name">{challengeTarget()}</div>
-
-                    <div class="challenge-section-label">Play as</div>
-                    <div class="challenge-color-picker">
-                      <div class={`challenge-color-opt ${challengeColor() === 'w' ? 'selected' : ''}`} onClick={() => setChallengeColor('w')}>
-                        <div class="checker-circle white" />
-                        <span>White</span>
-                      </div>
-                      <div class={`challenge-color-opt ${challengeColor() === 'random' ? 'selected' : ''}`} onClick={() => setChallengeColor('random')}>
-                        <div class="checker-circle random" />
-                        <span>Random</span>
-                      </div>
-                      <div class={`challenge-color-opt ${challengeColor() === 'b' ? 'selected' : ''}`} onClick={() => setChallengeColor('b')}>
-                        <div class="checker-circle black" />
-                        <span>Black</span>
-                      </div>
-                    </div>
-
-                    <div class="challenge-section-label">Time per turn</div>
-                    <div class="challenge-time-presets">
-                      <button class={`challenge-time-btn ${challengeTime() === 15 ? 'selected' : ''}`} onClick={() => { setChallengeTime(15); setChallengeCustomTime(''); }}>15s</button>
-                      <button class={`challenge-time-btn ${challengeTime() === 30 ? 'selected' : ''}`} onClick={() => { setChallengeTime(30); setChallengeCustomTime(''); }}>30s</button>
-                      <button class={`challenge-time-btn ${challengeTime() === 60 ? 'selected' : ''}`} onClick={() => { setChallengeTime(60); setChallengeCustomTime(''); }}>60s</button>
-                      <button class={`challenge-time-btn ${challengeTime() === null && !challengeCustomTime() ? 'selected' : ''}`} onClick={() => { setChallengeTime(null); setChallengeCustomTime(''); }}>∞</button>
-                    </div>
-                    <div class="challenge-time-custom">
-                      <input type="number" placeholder="custom" value={challengeCustomTime()}
-                        onInput={(e) => { setChallengeCustomTime(e.currentTarget.value); const v = parseInt(e.currentTarget.value); setChallengeTime(v > 0 ? v : null); }} />
-                      <span>seconds</span>
-                    </div>
-
-                    <div class="challenge-actions">
-                      <button class="btn challenge-cancel" onClick={closeChallengeModal}>Cancel</button>
-                      <button class="btn btn-primary challenge-send" onClick={sendChallenge}>Challenge ⚔</button>
-                    </div>
-                  </div>
-                </div>
-              </Show>
-            </Show>
-
             <div class="landing-shortcuts">
               <span>Enter</span> roll &middot; <span>Z</span> undo &middot; <span>D</span> double &middot; <span>F</span> flip
             </div>
@@ -491,6 +398,97 @@ function App() {
               </div>
             </Show>
           </div>
+
+          {/* Friends panel — top-right on landing */}
+          <Show when={user()}>
+            <div class="friends-panel">
+              <div class="friends-header">
+                <span class="friends-label">Friends</span>
+                <span class="friends-count">{acceptedFriends().filter(f => onlineFriends().has(f.friendUsername)).length} online</span>
+              </div>
+              <div class="friends-list">
+                <For each={acceptedFriends()}>
+                  {(f) => {
+                    const isOnline = () => onlineFriends().has(f.friendUsername);
+                    return (
+                      <div class={`friend-row ${isOnline() ? '' : 'offline'}`}>
+                        <div class={`online-dot ${isOnline() ? 'on' : 'off'}`} />
+                        <span class="friend-name">{f.friendUsername}</span>
+                        <Show when={isOnline()}>
+                          <Show when={challengeSent()?.username === f.friendUsername} fallback={
+                            <button class="btn btn-small friend-challenge" onClick={() => openChallengeModal(f.friendUsername)}>⚔</button>
+                          }>
+                            <button class="btn btn-small challenge-pending" disabled>⚔ {challengeCountdown()}s</button>
+                          </Show>
+                        </Show>
+                      </div>
+                    );
+                  }}
+                </For>
+              </div>
+              <Show when={pendingIncoming().length > 0}>
+                <div class="friends-pending">
+                  <For each={pendingIncoming()}>
+                    {(f) => (
+                      <div class="friend-row pending">
+                        <span class="friend-name"><span class="pending-name">{f.friendUsername}</span> wants to be friends</span>
+                        <button class="btn btn-small friend-accept" onClick={() => handleAcceptFriend(f.id)}>Accept</button>
+                      </div>
+                    )}
+                  </For>
+                </div>
+              </Show>
+              <div class="friends-add">
+                <input type="text" placeholder="Add friend..." value={addFriendInput()}
+                  onInput={(e) => setAddFriendInput(e.currentTarget.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleAddFriend(); }} />
+                <button class="btn btn-small" onClick={handleAddFriend}>+</button>
+              </div>
+              <Show when={friendError()}><span class="friend-error">{friendError()}</span></Show>
+            </div>
+            <Show when={challengeTarget()}>
+              <div class="challenge-overlay" onClick={(e) => { if (e.target === e.currentTarget) closeChallengeModal(); }}>
+                <div class="challenge-modal">
+                  <div class="challenge-title-label">Challenge</div>
+                  <div class="challenge-title-name">{challengeTarget()}</div>
+
+                  <div class="challenge-section-label">Play as</div>
+                  <div class="challenge-color-picker">
+                    <div class={`challenge-color-opt ${challengeColor() === 'w' ? 'selected' : ''}`} onClick={() => setChallengeColor('w')}>
+                      <div class="checker-circle white" />
+                      <span>White</span>
+                    </div>
+                    <div class={`challenge-color-opt ${challengeColor() === 'random' ? 'selected' : ''}`} onClick={() => setChallengeColor('random')}>
+                      <div class="checker-circle random" />
+                      <span>Random</span>
+                    </div>
+                    <div class={`challenge-color-opt ${challengeColor() === 'b' ? 'selected' : ''}`} onClick={() => setChallengeColor('b')}>
+                      <div class="checker-circle black" />
+                      <span>Black</span>
+                    </div>
+                  </div>
+
+                  <div class="challenge-section-label">Time per turn</div>
+                  <div class="challenge-time-presets">
+                    <button class={`challenge-time-btn ${challengeTime() === 15 ? 'selected' : ''}`} onClick={() => { setChallengeTime(15); setChallengeCustomTime(''); }}>15s</button>
+                    <button class={`challenge-time-btn ${challengeTime() === 30 ? 'selected' : ''}`} onClick={() => { setChallengeTime(30); setChallengeCustomTime(''); }}>30s</button>
+                    <button class={`challenge-time-btn ${challengeTime() === 60 ? 'selected' : ''}`} onClick={() => { setChallengeTime(60); setChallengeCustomTime(''); }}>60s</button>
+                    <button class={`challenge-time-btn ${challengeTime() === null && !challengeCustomTime() ? 'selected' : ''}`} onClick={() => { setChallengeTime(null); setChallengeCustomTime(''); }}>∞</button>
+                  </div>
+                  <div class="challenge-time-custom">
+                    <input type="number" placeholder="custom" value={challengeCustomTime()}
+                      onInput={(e) => { setChallengeCustomTime(e.currentTarget.value); const v = parseInt(e.currentTarget.value); setChallengeTime(v > 0 ? v : null); }} />
+                    <span>seconds</span>
+                  </div>
+
+                  <div class="challenge-actions">
+                    <button class="btn challenge-cancel" onClick={closeChallengeModal}>Cancel</button>
+                    <button class="btn btn-primary challenge-send" onClick={sendChallenge}>Challenge ⚔</button>
+                  </div>
+                </div>
+              </div>
+            </Show>
+          </Show>
         </Show>
 
         {/* Game */}
