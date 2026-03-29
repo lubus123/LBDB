@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
-import { setupTestDb, cleanDb, teardownTestDb, seedUser } from '../helpers/db';
+import { setupTestDb, cleanDb, teardownTestDb, seedUser, seedFriendship } from '../helpers/db';
 import { setupGameServer } from '../helpers/fixtures';
 import { TestWsClient } from '../helpers/ws-client';
 
@@ -46,6 +46,86 @@ describe('WebSocket Auth & Challenges', () => {
       expect(msg.message).toContain('Invalid');
 
       client.close();
+    });
+  });
+
+  describe('friend online status', () => {
+    it('returns online friends in authenticated response', async () => {
+      const alice = await seedUser('alice');
+      const bob = await seedUser('bob');
+      await seedFriendship(alice.id, bob.id);
+
+      // Alice connects first
+      const aliceWs = new TestWsClient(port);
+      await aliceWs.connect();
+      aliceWs.send({ type: 'auth', token: alice.token });
+      const aliceAuth = await aliceWs.waitFor<any>('authenticated');
+      // Bob isn't online yet
+      expect(aliceAuth.onlineFriends).toEqual([]);
+
+      // Bob connects — should see alice in onlineFriends
+      const bobWs = new TestWsClient(port);
+      await bobWs.connect();
+      bobWs.send({ type: 'auth', token: bob.token });
+      const bobAuth = await bobWs.waitFor<any>('authenticated');
+      expect(bobAuth.onlineFriends).toEqual(['alice']);
+
+      // Alice should also receive friend_online push for bob
+      const aliceNotif = await aliceWs.waitFor<any>('friend_online');
+      expect(aliceNotif.username).toBe('bob');
+
+      aliceWs.close();
+      bobWs.close();
+    });
+
+    it('both users see each other online regardless of connect order', async () => {
+      const alice = await seedUser('alice');
+      const bob = await seedUser('bob');
+      await seedFriendship(alice.id, bob.id);
+
+      // Alice connects
+      const aliceWs = new TestWsClient(port);
+      await aliceWs.connect();
+      aliceWs.send({ type: 'auth', token: alice.token });
+      await aliceWs.waitFor('authenticated');
+
+      // Bob connects — gets alice in initial snapshot
+      const bobWs = new TestWsClient(port);
+      await bobWs.connect();
+      bobWs.send({ type: 'auth', token: bob.token });
+      const bobAuth = await bobWs.waitFor<any>('authenticated');
+      expect(bobAuth.onlineFriends).toContain('alice');
+
+      // Alice gets push notification for bob
+      const aliceNotif = await aliceWs.waitFor<any>('friend_online');
+      expect(aliceNotif.username).toBe('bob');
+
+      // Now bob disconnects — alice should get friend_offline
+      bobWs.close();
+      const offlineNotif = await aliceWs.waitFor<any>('friend_offline');
+      expect(offlineNotif.username).toBe('bob');
+
+      aliceWs.close();
+    });
+
+    it('does not include non-friends in online list', async () => {
+      const alice = await seedUser('alice');
+      const bob = await seedUser('bob');
+      // No friendship created
+
+      const aliceWs = new TestWsClient(port);
+      await aliceWs.connect();
+      aliceWs.send({ type: 'auth', token: alice.token });
+      await aliceWs.waitFor('authenticated');
+
+      const bobWs = new TestWsClient(port);
+      await bobWs.connect();
+      bobWs.send({ type: 'auth', token: bob.token });
+      const bobAuth = await bobWs.waitFor<any>('authenticated');
+      expect(bobAuth.onlineFriends).toEqual([]);
+
+      aliceWs.close();
+      bobWs.close();
     });
   });
 

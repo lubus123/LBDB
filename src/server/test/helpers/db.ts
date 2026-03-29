@@ -97,3 +97,12 @@ export async function seedUser(username: string, password: string = 'test1234') 
 
   return { id: user.id as number, username: user.username as string, token };
 }
+
+/** Create an accepted friendship between two users */
+export async function seedFriendship(userId1: number, userId2: number) {
+  if (!pool) throw new Error('Test DB not initialized');
+  await pool.query(
+    'INSERT INTO friends (user_id, friend_id, status) VALUES ($1, $2, $3)',
+    [userId1, userId2, 'accepted']
+  );
+}

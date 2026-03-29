@@ -1,4 +1,4 @@
-import { pgTable, serial, varchar, integer, timestamp, real, jsonb, unique } from 'drizzle-orm/pg-core';
+import { pgTable, serial, varchar, integer, timestamp, real, jsonb, unique, index } from 'drizzle-orm/pg-core';
 
 export const users = pgTable('users', {
   id: serial('id').primaryKey(),
@@ -22,6 +22,8 @@ export const friends = pgTable('friends', {
   createdAt: timestamp('created_at').defaultNow(),
 }, (t) => [
   unique().on(t.userId, t.friendId),
+  index('idx_friends_user_id').on(t.userId),
+  index('idx_friends_friend_id').on(t.friendId),
 ]);
 
 export const games = pgTable('games', {
@@ -35,7 +37,11 @@ export const games = pgTable('games', {
   luckBlack: real('luck_black'),
   timeControl: integer('time_control'),
   createdAt: timestamp('created_at').defaultNow(),
-});
+}, (t) => [
+  index('idx_games_white_id').on(t.whiteId),
+  index('idx_games_black_id').on(t.blackId),
+  index('idx_games_created_at').on(t.createdAt),
+]);
 
 export const sessions = pgTable('sessions', {
   id: serial('id').primaryKey(),

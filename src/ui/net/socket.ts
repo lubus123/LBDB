@@ -44,9 +44,9 @@ function doConnect() {
   ws.onmessage = (event) => {
     try {
       const msg = JSON.parse(event.data as string) as ServerMessage;
-      // Flush queued messages after auth completes
-      if (msg.type === 'authenticated' && queue.length > 0) {
-        for (const m of queue) ws!.send(JSON.stringify(m));
+      // On reconnect, discard stale queued game actions — server will
+      // resync state via game_start, and the user can re-issue moves.
+      if (msg.type === 'authenticated') {
         queue = [];
       }
       handlers.forEach(h => h(msg));

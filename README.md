@@ -20,22 +20,26 @@ sudo -u postgres psql -c "CREATE USER duckgammon WITH PASSWORD 'duck123';"
 sudo -u postgres psql -c "CREATE DATABASE duckgammon OWNER duckgammon;"
 
 # 3. Build + run (kills old server, builds frontend, starts fresh)
-DATABASE_URL="postgresql://duckgammon:duck123@localhost:5432/duckgammon" npm run dev:full
+# Reads PORT, DATABASE_URL, LOG_LEVEL from .env automatically
+npm run dev:full
 ```
 
-Open `http://localhost:3001` — serves frontend, API, and WebSocket on one port.
+Open `http://localhost:8080` (or whatever PORT is in `.env`) — serves frontend, API, and WebSocket on one port.
 Tables are auto-created on first boot. Re-run `npm run dev:full` after changes — it kills the old process automatically.
 
 **Without Postgres** (games work, auth/friends/history disabled):
 ```bash
+# Remove or comment out DATABASE_URL in .env, then:
 npm run dev:full
 ```
 
 **Vite hot-reload dev** (for frontend changes, needs separate server):
 ```bash
-DATABASE_URL="..." npm run dev:server   # Game server on port 3001
-npm run dev                             # Vite on port 5173 (proxies /api + /ws to 3001)
+npm run dev:server   # Game server on PORT from .env (default 8080)
+npm run dev          # Vite on 5173 (proxies /api + /ws to 8080)
 ```
+
+All `dev:*` scripts read `.env` automatically via `--env-file=.env` — never pass env vars manually.
 
 ## Features
 

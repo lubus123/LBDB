@@ -149,26 +149,30 @@ Arrow keys or clicking move entries reconstructs the board state at that point b
 ## Commands
 
 ```bash
-# Full stack dev (kills old server, builds frontend, starts fresh on port 3001)
-DATABASE_URL="postgresql://duckgammon:duck123@localhost:5432/duckgammon" npm run dev:full
-# Open http://localhost:3001
+# Full stack dev (kills old server, builds frontend, starts server)
+# Reads PORT, DATABASE_URL, LOG_LEVEL from .env automatically
+npm run dev:full
+# Open http://localhost:8080 (or whatever PORT is set to in .env)
 # Re-run after every change — it kills the old process automatically
 
 # Vite hot reload (for frontend changes, needs separate server)
-DATABASE_URL="..." npm run dev:server   # Server on 3001
-npm run dev                             # Vite on 5173 (proxies /api + /ws to 3001)
+npm run dev:server   # Server on PORT from .env (default 8080)
+npm run dev          # Vite on 5173 (proxies /api + /ws to 8080)
 
 # Without Postgres (games work, auth/friends/history disabled)
+# Remove or comment out DATABASE_URL in .env, then:
 npm run dev:full
 
 # Tests
-npm test             # 63 unit tests
+npm test             # All 165 tests (engine + server)
 npm run screenshots  # Playwright visual regression
 
 # IMPORTANT: Always kill old server before starting new one.
 # npm run dev:full does this automatically. If starting manually:
 #   pkill -f 'tsx src/server' 2>/dev/null
 ```
+
+**Note:** All `dev:*` scripts use `--env-file=.env` so you never need to pass env vars manually. Configure everything in `.env`.
 
 ### Local Postgres Setup (first time)
 ```bash
@@ -279,12 +283,13 @@ LOG_LEVEL=debug
 - `railway.json` configures Nixpacks build with Node 23
 - `npm run build` builds frontend, `npm start` runs server
 - Health check at `/health`
-- WebSocket auto-detects `wss://` in production, `ws://localhost:3001` in dev
+- WebSocket auto-detects `wss://` in production, `ws://localhost:PORT` in dev
 
 ### Development
-- Frontend: `npm run dev` (Vite on port 5173, proxies WS to 3001)
-- Server: `npm run dev:server` (port 3001)
+- Frontend: `npm run dev` (Vite on port 5173, proxies WS to PORT from .env)
+- Server: `npm run dev:server` (reads PORT from .env, default 8080)
 - Both needed for online play testing
+- **All dev scripts read `.env` automatically — never pass env vars manually**
 
 ## Implementation Phases
 

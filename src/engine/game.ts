@@ -1,8 +1,8 @@
 import type { GameState, Color, CheckerMove, GameResult, GameResultType, BoardArray } from '../shared/types';
-import { createInitialGameState, CHECKERS_PER_PLAYER } from '../shared/constants';
+import { createInitialGameState, CHECKERS_PER_PLAYER, W_BAR, B_BAR } from '../shared/constants';
 import { cloneBoard, applyMove, countCheckers, checkersAt } from './board';
 import { rollDice, diceToMoves } from './dice';
-import { generateAllTurns, hasAnyMoves } from './moves';
+import { generateAllTurns, hasAnyMoves, legalDestinations, movableCheckers } from './moves';
 import { canDouble, offerDouble, acceptDouble } from './cube';
 
 /** Create a fresh game */
@@ -42,6 +42,9 @@ export function doRoll(state: GameState): GameState {
     movesLeft,
     phase: 'moving',
     turnMoves: [],
+    boardAtTurnStart: [...state.board],
+    whiteOffAtTurnStart: state.whiteOff,
+    blackOffAtTurnStart: state.blackOff,
   };
 
   // Check if player has any legal moves
@@ -91,6 +94,12 @@ export function doDropDouble(state: GameState): GameState {
 export function doMove(state: GameState, move: CheckerMove): GameState {
   if (state.phase !== 'moving') return state;
 
+  // Validate move is legal
+  const sources = movableCheckers(state.board, state.movesLeft, state.turn);
+  if (!sources.includes(move.from)) return state;
+  const dests = legalDestinations(state.board, move.from, state.movesLeft, state.turn);
+  if (!dests.includes(move.to)) return state;
+
   const newBoard = cloneBoard(state.board);
   applyMove(newBoard, move, state.turn);
 
@@ -135,19 +144,48 @@ export function undoMove(state: GameState): GameState {
   if (state.phase !== 'moving' || state.turnMoves.length === 0) return state;
   if (!state.dice) return state;
 
-  // Replay all moves except the last one from the turn start
-  const originalMovesLeft = diceToMoves(state.dice);
-  const turnsToReplay = state.turnMoves.slice(0, -1);
-
-  // Reset to start-of-turn state
-  // We need to reconstruct the board from before this turn
-  // The simplest way: re-derive from a saved "turn start" board
-  // For now, we reverse the last move
-
+  const movesToReplay = state.turnMoves.slice(0, -1);
   const lastMove = state.turnMoves[state.turnMoves.length - 1];
+
+  // Use saved turn-start snapshot if available, otherwise fall back to reversal
+  const startBoard = state.boardAtTurnStart
+    ? [...state.boardAtTurnStart]
+    : cloneBoard(state.board);
+  let whiteOff = state.whiteOffAtTurnStart ?? state.whiteOff;
+  let blackOff = state.blackOffAtTurnStart ?? state.blackOff;
+
+  if (state.boardAtTurnStart) {
+    // Replay all moves except the last from the clean turn-start board
+    const newBoard = startBoard;
+    for (const move of movesToReplay) {
+      applyMove(newBoard, move, state.turn);
+      if (move.to <= 0 || move.to >= 25) {
+        if (state.turn === 'w') whiteOff++;
+        else blackOff++;
+      }
+    }
+
+    // Reconstruct movesLeft: start with full dice, remove used ones
+    const originalMovesLeft = diceToMoves(state.dice);
+    for (const move of movesToReplay) {
+      const idx = originalMovesLeft.indexOf(move.die);
+      if (idx !== -1) originalMovesLeft.splice(idx, 1);
+    }
+
+    return {
+      ...state,
+      board: newBoard,
+      movesLeft: originalMovesLeft,
+      whiteOff,
+      blackOff,
+      turnMoves: movesToReplay,
+    };
+  }
+
+  // Fallback: incremental reversal (for states without boardAtTurnStart, e.g. from server)
   const newBoard = cloneBoard(state.board);
   const sign = state.turn === 'w' ? 1 : -1;
-  const opponentBar = state.turn === 'w' ? 25 : 0;
+  const opponentBar = state.turn === 'w' ? B_BAR : W_BAR;
 
   // Reverse: remove from destination
   if (lastMove.to > 0 && lastMove.to < 25) {
@@ -155,8 +193,8 @@ export function undoMove(state: GameState): GameState {
   }
 
   // If it was a bear off, adjust count
-  let whiteOff = state.whiteOff;
-  let blackOff = state.blackOff;
+  whiteOff = state.whiteOff;
+  blackOff = state.blackOff;
   if (lastMove.to <= 0 || lastMove.to >= 25) {
     if (state.turn === 'w') whiteOff--;
     else blackOff--;
@@ -164,8 +202,8 @@ export function undoMove(state: GameState): GameState {
 
   // Reverse hit: restore opponent from bar
   if (lastMove.hit) {
-    newBoard[opponentBar] -= (state.turn === 'w' ? -1 : 1);
-    newBoard[lastMove.to] += (state.turn === 'w' ? -1 : 1);
+    newBoard[opponentBar] += (state.turn === 'w' ? -1 : 1);
+    newBoard[lastMove.to] -= (state.turn === 'w' ? 1 : -1);
   }
 
   // Restore checker to source
@@ -177,7 +215,7 @@ export function undoMove(state: GameState): GameState {
     movesLeft: [...state.movesLeft, lastMove.die],
     whiteOff,
     blackOff,
-    turnMoves: state.turnMoves.slice(0, -1),
+    turnMoves: movesToReplay,
   };
 }
 

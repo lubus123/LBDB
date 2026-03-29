@@ -61,6 +61,13 @@ export class GameRoom {
   }
 
   addPlayer(ws: WebSocket, userId?: number, username?: string): Color | null {
+    // Prevent duplicate userId from joining as both colors
+    if (userId !== undefined) {
+      for (const [, player] of this.players) {
+        if (player.userId === userId) return null;
+      }
+    }
+
     if (this.white === null) {
       this.white = ws;
       this.whiteUserId = userId;
@@ -124,6 +131,9 @@ export class GameRoom {
       movesLeft,
       phase: hasAnyMoves(this.state.board, movesLeft, this.state.turn) ? 'moving' : 'waiting',
       turnMoves: [],
+      boardAtTurnStart: [...this.state.board],
+      whiteOffAtTurnStart: this.state.whiteOff,
+      blackOffAtTurnStart: this.state.blackOff,
     };
 
     this.log.debug(`${color} rolled [${dice}], phase=${this.state.phase}`);

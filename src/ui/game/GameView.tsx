@@ -148,8 +148,8 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
   // ─── WebSocket setup for online mode ───
   if (isOnline()) {
     socket.connect(WS_URL);
-    socket.onStatus(setWsConnected);
-    socket.onMessage((msg: ServerMessage) => {
+    const unsubStatus = socket.onStatus(setWsConnected);
+    const unsubMessage = socket.onMessage((msg: ServerMessage) => {
       switch (msg.type) {
         case 'game_created':
           setOnlineGameId(msg.gameId);
@@ -251,7 +251,11 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
       }, 100);
     }
 
-    onCleanup(() => socket.disconnect());
+    onCleanup(() => {
+      unsubStatus();
+      unsubMessage();
+      socket.disconnect();
+    });
   }
 
   const isReviewing = () => historyIndex() !== null;

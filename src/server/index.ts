@@ -86,28 +86,68 @@ export function createAppServer() {
 
   const wss = new WebSocketServer({ server: httpServer });
 
-  /** Notify user's online friends that they came online/offline */
-  async function notifyFriendsStatus(userId: number, username: string, online: boolean) {
+  /** Get accepted friend rows for a user */
+  async function getFriendRows(userId: number) {
     const db = getDb();
-    if (!db) return;
-    const friendRows = await db.select({ userId: friends.userId, friendId: friends.friendId })
+    if (!db) return [];
+    return db.select({ userId: friends.userId, friendId: friends.friendId })
       .from(friends)
       .where(and(
         or(eq(friends.userId, userId), eq(friends.friendId, userId)),
         eq(friends.status, 'accepted')
       ));
+  }
 
+  /** Notify user's online friends that they came online/offline */
+  async function notifyFriendsStatus(userId: number, username: string, online: boolean) {
+    const friendRows = await getFriendRows(userId);
     for (const row of friendRows) {
       const friendUserId = row.userId === userId ? row.friendId : row.userId;
       const friendConn = authenticatedUsers.get(friendUserId);
       if (friendConn?.ws.readyState === WebSocket.OPEN) {
-        friendConn.ws.send(JSON.stringify({
-          type: online ? 'friend_online' : 'friend_offline',
-          username,
-        }));
+        try {
+          friendConn.ws.send(JSON.stringify({
+            type: online ? 'friend_online' : 'friend_offline',
+            username,
+          }));
+        } catch { /* connection dying, will be cleaned up by heartbeat */ }
       }
     }
   }
+
+  /** Get which of a user's friends are currently online */
+  async function getOnlineFriends(userId: number): Promise<string[]> {
+    const friendRows = await getFriendRows(userId);
+    const online: string[] = [];
+    for (const row of friendRows) {
+      const friendUserId = row.userId === userId ? row.friendId : row.userId;
+      const friendConn = authenticatedUsers.get(friendUserId);
+      if (friendConn?.ws.readyState === WebSocket.OPEN) {
+        online.push(friendConn.user.username);
+      }
+    }
+    return online;
+  }
+
+  // ─── Heartbeat: detect dead connections ───
+  const HEARTBEAT_INTERVAL = 30_000; // 30s
+  const PONG_TIMEOUT = 10_000; // 10s to respond
+  const aliveSet = new WeakSet<WebSocket>();
+
+  const heartbeatTimer = setInterval(() => {
+    for (const client of wss.clients) {
+      if (!aliveSet.has(client)) {
+        // Didn't respond to last ping — terminate
+        log.debug('Terminating unresponsive WebSocket');
+        client.terminate();
+        continue;
+      }
+      aliveSet.delete(client);
+      try { client.ping(); } catch { client.terminate(); }
+    }
+  }, HEARTBEAT_INTERVAL);
+
+  wss.on('close', () => clearInterval(heartbeatTimer));
 
   /** Save completed game to DB and update user stats */
   async function saveGame(room: GameRoom) {
@@ -116,72 +156,112 @@ export function createAppServer() {
     if (!room.whiteUserId && !room.blackUserId) return; // anonymous game
 
     try {
-      await db.insert(games).values({
-        whiteId: room.whiteUserId,
-        blackId: room.blackUserId,
-        winner: room.state.phase === 'gameOver' ? (room.state.whiteOff >= 15 ? 'w' : 'b') : null,
-        resultType: room.resultType || 'single',
-        moves: room.moveHistory,
-        luckWhite: room.luckWhite,
-        luckBlack: room.luckBlack,
-        timeControl: room.timeLimit,
-      });
+      await db.transaction(async (tx) => {
+        await tx.insert(games).values({
+          whiteId: room.whiteUserId,
+          blackId: room.blackUserId,
+          winner: room.state.phase === 'gameOver' ? (room.state.whiteOff >= 15 ? 'w' : 'b') : null,
+          resultType: room.resultType || 'single',
+          moves: room.moveHistory,
+          luckWhite: room.luckWhite,
+          luckBlack: room.luckBlack,
+          timeControl: room.timeLimit,
+        });
 
-      // Update user stats
-      for (const color of ['w', 'b'] as const) {
-        const uid = color === 'w' ? room.whiteUserId : room.blackUserId;
-        if (!uid) continue;
+        // Update user stats
+        for (const color of ['w', 'b'] as const) {
+          const uid = color === 'w' ? room.whiteUserId : room.blackUserId;
+          if (!uid) continue;
 
-        const gameLuck = color === 'w' ? room.luckWhite : room.luckBlack;
-        const won = (room.state.whiteOff >= 15 && color === 'w') || (room.state.blackOff >= 15 && color === 'b');
+          const gameLuck = color === 'w' ? room.luckWhite : room.luckBlack;
+          const won = (room.state.whiteOff >= 15 && color === 'w') || (room.state.blackOff >= 15 && color === 'b');
 
-        // Luck capitalisation formula
-        let capDelta = 0;
-        if (gameLuck !== 0) {
-          const lucky = gameLuck > 0;
-          if (won && lucky) capDelta = 1;      // Expected win
-          else if (won && !lucky) capDelta = 2; // Overcame bad luck
-          else if (!won && lucky) capDelta = -2; // Squandered good luck
-          else capDelta = -1;                    // Expected loss
+          // Luck capitalisation formula
+          let capDelta = 0;
+          if (gameLuck !== 0) {
+            const lucky = gameLuck > 0;
+            if (won && lucky) capDelta = 1;      // Expected win
+            else if (won && !lucky) capDelta = 2; // Overcame bad luck
+            else if (!won && lucky) capDelta = -2; // Squandered good luck
+            else capDelta = -1;                    // Expected loss
+          }
+
+          const [current] = await tx.select({
+            gamesPlayed: users.gamesPlayed,
+            gamesWon: users.gamesWon,
+            totalLuck: users.totalLuck,
+            luckStreak: users.luckStreak,
+            bestLuckStreak: users.bestLuckStreak,
+            worstLuckStreak: users.worstLuckStreak,
+            luckCapitalisation: users.luckCapitalisation,
+          }).from(users).where(eq(users.id, uid)).limit(1);
+          if (!current) continue;
+
+          // Update streak
+          let newStreak = current.luckStreak;
+          if (gameLuck > 0 && newStreak >= 0) newStreak += gameLuck;
+          else if (gameLuck < 0 && newStreak <= 0) newStreak += gameLuck;
+          else newStreak = gameLuck; // sign changed, reset
+
+          await tx.update(users).set({
+            gamesPlayed: current.gamesPlayed + 1,
+            gamesWon: current.gamesWon + (won ? 1 : 0),
+            totalLuck: current.totalLuck + gameLuck,
+            luckStreak: newStreak,
+            bestLuckStreak: Math.max(current.bestLuckStreak, newStreak),
+            worstLuckStreak: Math.min(current.worstLuckStreak, newStreak),
+            luckCapitalisation: current.luckCapitalisation + capDelta,
+          }).where(eq(users.id, uid));
         }
-
-        const [current] = await db.select({
-          gamesPlayed: users.gamesPlayed,
-          gamesWon: users.gamesWon,
-          totalLuck: users.totalLuck,
-          luckStreak: users.luckStreak,
-          bestLuckStreak: users.bestLuckStreak,
-          worstLuckStreak: users.worstLuckStreak,
-          luckCapitalisation: users.luckCapitalisation,
-        }).from(users).where(eq(users.id, uid)).limit(1);
-        if (!current) continue;
-
-        // Update streak
-        let newStreak = current.luckStreak;
-        if (gameLuck > 0 && newStreak >= 0) newStreak += gameLuck;
-        else if (gameLuck < 0 && newStreak <= 0) newStreak += gameLuck;
-        else newStreak = gameLuck; // sign changed, reset
-
-        await db.update(users).set({
-          gamesPlayed: current.gamesPlayed + 1,
-          gamesWon: current.gamesWon + (won ? 1 : 0),
-          totalLuck: current.totalLuck + gameLuck,
-          luckStreak: newStreak,
-          bestLuckStreak: Math.max(current.bestLuckStreak, newStreak),
-          worstLuckStreak: Math.min(current.worstLuckStreak, newStreak),
-          luckCapitalisation: current.luckCapitalisation + capDelta,
-        }).where(eq(users.id, uid));
-      }
+      });
     } catch (err) {
       log.error('Error saving game:', err);
     }
   }
 
+  const MAX_WS_MESSAGE_SIZE = 100 * 1024; // 100KB
+
+  /** Validate that a parsed object is a valid ClientMessage */
+  function isValidClientMessage(msg: any): msg is ClientMessage {
+    if (!msg || typeof msg !== 'object' || typeof msg.type !== 'string') return false;
+    switch (msg.type) {
+      case 'auth': return typeof msg.token === 'string';
+      case 'create': return true;
+      case 'join': return typeof msg.gameId === 'string';
+      case 'roll': case 'confirm': case 'undo': case 'double':
+      case 'accept_double': case 'drop_double': case 'resign':
+      case 'rematch': case 'accept_rematch': return true;
+      case 'move': return msg.move && typeof msg.move.from === 'number'
+        && typeof msg.move.to === 'number' && typeof msg.move.die === 'number'
+        && typeof msg.move.hit === 'boolean';
+      case 'chat': return typeof msg.text === 'string';
+      case 'challenge': return typeof msg.username === 'string';
+      case 'accept_challenge': return typeof msg.challengeId === 'string';
+      default: return false;
+    }
+  }
+
   wss.on('connection', (ws: WebSocket) => {
+    // Mark alive on connect and on every pong
+    aliveSet.add(ws);
+    ws.on('pong', () => aliveSet.add(ws));
+
     ws.on('message', async (data) => {
+      // Size limit
+      const raw = typeof data === 'string' ? data : data.toString();
+      if (raw.length > MAX_WS_MESSAGE_SIZE) {
+        ws.send(JSON.stringify({ type: 'error', message: 'Message too large' }));
+        return;
+      }
+
       let msg: ClientMessage;
-      try { msg = JSON.parse(data.toString()); }
+      try { msg = JSON.parse(raw); }
       catch { ws.send(JSON.stringify({ type: 'error', message: 'Invalid JSON' })); return; }
+
+      if (!isValidClientMessage(msg)) {
+        ws.send(JSON.stringify({ type: 'error', message: 'Invalid message format' }));
+        return;
+      }
 
       // ─── Auth ───
       if (msg.type === 'auth') {
@@ -192,7 +272,10 @@ export function createAppServer() {
         }
         wsUserMap.set(ws, user);
         authenticatedUsers.set(user.id, { ws, user });
-        ws.send(JSON.stringify({ type: 'authenticated', user: { id: user.id, username: user.username } }));
+        // Get who's online BEFORE notifying (so we don't include ourselves)
+        const onlineFriends = await getOnlineFriends(user.id);
+        ws.send(JSON.stringify({ type: 'authenticated', user: { id: user.id, username: user.username }, onlineFriends }));
+        // Now notify friends that we came online
         notifyFriendsStatus(user.id, user.username, true);
 
         // Update username in any GameRoom this player is already in

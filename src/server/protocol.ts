@@ -27,7 +27,7 @@ export type ClientMessage =
 // ─── Server → Client ───
 
 export type ServerMessage =
-  | { type: 'authenticated'; user: { id: number; username: string } }
+  | { type: 'authenticated'; user: { id: number; username: string }; onlineFriends?: string[] }
   | { type: 'auth_error'; message: string }
   | { type: 'game_created'; gameId: string }
   | { type: 'game_start'; state: GameState; color: Color; opponent?: string }

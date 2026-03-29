@@ -64,25 +64,59 @@ function App() {
   const [challengeSent, setChallengeSent] = createSignal<{ username: string; expiresAt: number } | null>(null);
   const [challengeCountdown, setChallengeCountdown] = createSignal(0);
 
-  // Lobby WS
+  // Lobby WS with auto-reconnect
   let lobbyWs: WebSocket | null = null;
+  let lobbyReconnectTimer: number | undefined;
+  let lobbyReconnectAttempts = 0;
+  let lobbyIntentionalClose = false;
 
   function connectLobbyWs() {
-    if (lobbyWs) return;
+    if (lobbyWs && (lobbyWs.readyState === WebSocket.OPEN || lobbyWs.readyState === WebSocket.CONNECTING)) return;
     const token = localStorage.getItem('dg-token');
     if (!token) return;
+    lobbyIntentionalClose = false;
     lobbyWs = new WebSocket(WS_URL);
-    lobbyWs.onopen = () => { lobbyWs!.send(JSON.stringify({ type: 'auth', token })); };
-    lobbyWs.onmessage = (event) => {
-      const msg: ServerMessage = JSON.parse(event.data);
-      if (msg.type === 'friend_online') setOnlineFriends(prev => new Set([...prev, msg.username]));
-      if (msg.type === 'friend_offline') setOnlineFriends(prev => { const s = new Set(prev); s.delete(msg.username); return s; });
-      if (msg.type === 'challenge_received') setIncomingChallenge({ from: msg.from, challengeId: msg.challengeId, timeLimit: msg.timeLimit, expiresAt: Date.now() + 60000 });
-      if (msg.type === 'challenge_accepted') { setChallengeSent(null); setOnlineGameId(msg.gameId); setGameMode('online'); disconnectLobbyWs(); setPage('game'); }
+    lobbyWs.onopen = () => {
+      lobbyReconnectAttempts = 0;
+      lobbyWs!.send(JSON.stringify({ type: 'auth', token }));
     };
-    lobbyWs.onclose = () => { lobbyWs = null; };
+    lobbyWs.onmessage = (event) => {
+      try {
+        const msg: ServerMessage = JSON.parse(event.data);
+        if (msg.type === 'authenticated' && msg.onlineFriends) {
+          // Seed initial online state — this is the authoritative snapshot
+          setOnlineFriends(new Set(msg.onlineFriends));
+        }
+        if (msg.type === 'friend_online') setOnlineFriends(prev => new Set([...prev, msg.username]));
+        if (msg.type === 'friend_offline') setOnlineFriends(prev => { const s = new Set(prev); s.delete(msg.username); return s; });
+        if (msg.type === 'challenge_received') setIncomingChallenge({ from: msg.from, challengeId: msg.challengeId, timeLimit: msg.timeLimit, expiresAt: Date.now() + 60000 });
+        if (msg.type === 'challenge_accepted') { setChallengeSent(null); setOnlineGameId(msg.gameId); setGameMode('online'); disconnectLobbyWs(); setPage('game'); }
+      } catch { /* ignore parse errors */ }
+    };
+    lobbyWs.onclose = () => {
+      lobbyWs = null;
+      if (!lobbyIntentionalClose) {
+        // Auto-reconnect with backoff
+        scheduleLobbyReconnect();
+      }
+    };
   }
-  function disconnectLobbyWs() { if (lobbyWs) { lobbyWs.close(); lobbyWs = null; } }
+
+  function scheduleLobbyReconnect() {
+    if (lobbyReconnectAttempts >= 20) return;
+    const delay = Math.min(2000 * Math.pow(1.5, lobbyReconnectAttempts), 30000);
+    const jitter = Math.random() * delay * 0.2; // ±20% jitter
+    lobbyReconnectAttempts++;
+    lobbyReconnectTimer = window.setTimeout(connectLobbyWs, delay + jitter);
+  }
+
+  function disconnectLobbyWs() {
+    lobbyIntentionalClose = true;
+    clearTimeout(lobbyReconnectTimer);
+    if (lobbyWs) { lobbyWs.close(); lobbyWs = null; }
+    setOnlineFriends(new Set<string>()); // Clear — we no longer have live data
+  }
+
   function sendLobbyMsg(msg: any) { if (lobbyWs?.readyState === WebSocket.OPEN) lobbyWs.send(JSON.stringify(msg)); }
 
   createEffect(() => { if (user() && page() !== 'game') { connectLobbyWs(); loadFriends(); } });
@@ -114,7 +148,7 @@ function App() {
   async function handleLogout() {
     if (page() === 'game') handleExit(); // exit active game first
     await apiFetch('/api/logout', { method: 'POST' }); localStorage.removeItem('dg-token');
-    disconnectLobbyWs(); setUser(null); setFriends([]); setOnlineFriends(new Set());
+    disconnectLobbyWs(); setUser(null); setFriends([]); setOnlineFriends(new Set<string>());
     setPage('landing');
   }
   async function handleAddFriend() {

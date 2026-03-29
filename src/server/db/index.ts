@@ -73,6 +73,11 @@ export async function migrateDb() {
       token VARCHAR(64) UNIQUE NOT NULL,
       expires_at TIMESTAMP NOT NULL
     );
+    CREATE INDEX IF NOT EXISTS idx_friends_user_id ON friends(user_id);
+    CREATE INDEX IF NOT EXISTS idx_friends_friend_id ON friends(friend_id);
+    CREATE INDEX IF NOT EXISTS idx_games_white_id ON games(white_id);
+    CREATE INDEX IF NOT EXISTS idx_games_black_id ON games(black_id);
+    CREATE INDEX IF NOT EXISTS idx_games_created_at ON games(created_at DESC);
   `);
   await pool.end();
   log.info('Schema migrated');
