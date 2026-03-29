@@ -7,14 +7,17 @@ import { doMove, doDouble, doAcceptDouble, doDropDouble, undoMove, confirmTurn, 
 import { legalDestinations, movableCheckers, hasAnyMoves } from '../engine/moves';
 import { diceToMoves } from '../engine/dice';
 import { canDouble } from '../engine/cube';
+import { createLogger } from './logger';
 
 function rollDie(): number {
   return randomInt(1, 7); // crypto-secure [1,6]
 }
 
-function serverRollDice(): [number, number] {
+export function serverRollDice(): [number, number] {
   return [rollDie(), rollDie()];
 }
+
+export type DiceRoller = () => [number, number];
 
 interface Player {
   ws: WebSocket;
@@ -42,11 +45,15 @@ export class GameRoom {
   moveHistory: any[] = [];
   luckWhite = 0;
   luckBlack = 0;
+  private rollDice: DiceRoller;
+  private log;
 
-  constructor(id: string, timeLimit: number | null = 30) {
+  constructor(id: string, timeLimit: number | null = 30, rollDice: DiceRoller = serverRollDice) {
     this.id = id;
     this.state = createInitialGameState(id);
     this.timeLimit = timeLimit;
+    this.rollDice = rollDice;
+    this.log = createLogger(`room:${id}`);
   }
 
   get isFull(): boolean {
@@ -107,7 +114,7 @@ export class GameRoom {
     if (!color || color !== this.state.turn) return this.send(ws, { type: 'error', message: 'Not your turn' });
     if (this.state.phase !== 'waiting') return this.send(ws, { type: 'error', message: 'Cannot roll now' });
 
-    const dice = serverRollDice();
+    const dice = this.rollDice();
     const movesLeft = diceToMoves(dice);
 
     // Apply roll to state
@@ -119,8 +126,11 @@ export class GameRoom {
       turnMoves: [],
     };
 
+    this.log.debug(`${color} rolled [${dice}], phase=${this.state.phase}`);
+
     // If no moves possible, auto-pass
     if (this.state.phase === 'waiting') {
+      this.log.debug(`${color} auto-passed (no legal moves)`);
       this.recordTurn(this.state.turn, dice, []);
       this.state = {
         ...this.state,
@@ -150,6 +160,7 @@ export class GameRoom {
     const prevDice = this.state.dice!;
     const prevMoves = [...this.state.turnMoves, move];
 
+    this.log.debug(`${color} moved ${move.from}→${move.to} (die ${move.die}${move.hit ? ', hit' : ''})`);
     this.state = doMove(this.state, move);
     this.broadcast({ type: 'state', state: this.state });
 
@@ -176,6 +187,7 @@ export class GameRoom {
     if (this.state.phase !== 'moving') return this.send(ws, { type: 'error', message: 'Cannot confirm now' });
 
     if (!hasAnyMoves(this.state.board, this.state.movesLeft, this.state.turn)) {
+      this.log.debug(`${color} confirmed turn`);
       if (this.state.dice) this.recordTurn(this.state.turn, this.state.dice, this.state.turnMoves);
       this.state = confirmTurn(this.state);
       this.clearTimer();
@@ -236,6 +248,7 @@ export class GameRoom {
     if (this.state.phase === 'gameOver') return;
 
     const winner: Color = color === 'w' ? 'b' : 'w';
+    this.log.info(`${color} resigned, winner=${winner}`);
     this.state = { ...this.state, phase: 'gameOver' };
     this.resultType = 'resign';
     this.clearTimer();
@@ -272,6 +285,8 @@ export class GameRoom {
     const color = this.getColor(ws);
     if (!color) return;
 
+    this.log.info(`${color} disconnected, 60s grace period`);
+
     // Notify opponent
     const opponent = color === 'w' ? this.black : this.white;
     if (opponent) this.send(opponent, { type: 'opponent_disconnected' });
@@ -280,6 +295,7 @@ export class GameRoom {
     const timer = setTimeout(() => {
       // Auto-resign after grace period
       if (this.state.phase !== 'gameOver') {
+        this.log.info(`${color} timed out (disconnect), auto-resign`);
         const winner: Color = color === 'w' ? 'b' : 'w';
         this.state = { ...this.state, phase: 'gameOver' };
         this.clearTimer();
@@ -292,6 +308,8 @@ export class GameRoom {
   handleReconnect(oldWs: WebSocket, newWs: WebSocket) {
     const player = this.players.get(oldWs);
     if (!player) return;
+
+    this.log.info(`${player.color} reconnected`);
 
     // Clear disconnect timer
     const timer = this.disconnectTimer.get(oldWs);
@@ -307,8 +325,9 @@ export class GameRoom {
     if (player.color === 'w') this.white = newWs;
     else this.black = newWs;
 
-    // Send current state
-    this.send(newWs, { type: 'game_start', state: this.state, color: player.color });
+    // Send current state with opponent name
+    const opponentName = player.color === 'w' ? this.blackUsername : this.whiteUsername;
+    this.send(newWs, { type: 'game_start', state: this.state, color: player.color, opponent: opponentName });
 
     // Notify opponent
     const opponent = player.color === 'w' ? this.black : this.white;
@@ -325,6 +344,8 @@ export class GameRoom {
 
     this.timer = setTimeout(() => {
       if (this.state.phase !== 'moving') return;
+
+      this.log.info(`${this.state.turn} timed out (${time}s), auto-playing`);
 
       // Play random moves for remaining dice
       while (this.state.phase === 'moving' && this.state.movesLeft.length > 0) {

@@ -1,20 +1,28 @@
 import { drizzle } from 'drizzle-orm/node-postgres';
 import pg from 'pg';
 import * as schema from './schema';
+import { createLogger } from '../logger';
+
+const log = createLogger('db');
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
 let db: ReturnType<typeof drizzle> | null = null;
 
+/** Inject a Drizzle instance (used by tests to provide a test database) */
+export function setDb(instance: ReturnType<typeof drizzle> | null) {
+  db = instance;
+}
+
 export function getDb() {
   if (!db) {
     if (!DATABASE_URL) {
-      console.warn('[db] DATABASE_URL not set — database features disabled');
+      log.warn('DATABASE_URL not set — database features disabled');
       return null;
     }
     const pool = new pg.Pool({ connectionString: DATABASE_URL });
     db = drizzle(pool, { schema });
-    console.log('[db] Connected to PostgreSQL');
+    log.info('Connected to PostgreSQL');
   }
   return db;
 }
@@ -67,5 +75,5 @@ export async function migrateDb() {
     );
   `);
   await pool.end();
-  console.log('[db] Schema migrated');
+  log.info('Schema migrated');
 }
