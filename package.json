@@ -5,12 +5,17 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "dev:server": "tsx src/server/index.ts",
+    "dev:server": "tsx --env-file=.env src/server/index.ts",
+    "dev:full": "npm run build && (ps aux | grep 'server/index' | grep -v grep | awk '{print $2}' | xargs -r kill 2>/dev/null); sleep 0.5 && tsx --env-file=.env src/server/index.ts",
     "start": "node --import tsx src/server/index.ts",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "vitest run",
-    "test:watch": "vitest",
+    "test": "vitest run --config vitest.config.ts",
+    "test:watch": "vitest --config vitest.config.ts",
+    "test:server": "vitest run --config vitest.config.ts src/server/test",
+    "test:server:watch": "vitest --config vitest.config.ts src/server/test",
+    "test:unit": "vitest run --config vitest.config.ts src/engine/test src/server/test/unit",
+    "test:integration": "vitest run --config vitest.config.ts src/server/test/integration",
     "test:visual": "npx playwright test",
     "test:visual:update": "npx playwright test --update-snapshots",
     "screenshots": "npm run build && npx playwright test --reporter=list"
@@ -21,7 +26,10 @@
   "license": "AGPL-3.0",
   "devDependencies": {
     "@playwright/test": "^1.56.1",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/pg": "^8.20.0",
     "@types/ws": "^8.18.1",
+    "drizzle-kit": "^0.31.10",
     "playwright": "^1.56.1",
     "solid-js": "^1.9.12",
     "tsx": "^4.21.0",
@@ -31,6 +39,9 @@
     "vitest": "^4.1.2"
   },
   "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "drizzle-orm": "^0.45.2",
+    "pg": "^8.20.0",
     "ws": "^8.20.0"
   }
 }

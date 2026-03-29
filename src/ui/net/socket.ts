@@ -28,16 +28,27 @@ function doConnect() {
   ws.onopen = () => {
     reconnectAttempts = 0;
     statusHandlers.forEach(h => h(true));
-    // Flush queued messages
-    for (const msg of queue) {
-      ws!.send(JSON.stringify(msg));
+    // Send auth token if available — wait for auth response before flushing queue
+    const token = typeof localStorage !== 'undefined' ? localStorage.getItem('dg-token') : null;
+    if (token) {
+      ws!.send(JSON.stringify({ type: 'auth', token }));
+      // Don't flush queue yet — wait for 'authenticated' response
+      // The onmessage handler will flush when it sees 'authenticated'
+    } else {
+      // No auth — flush immediately
+      for (const msg of queue) ws!.send(JSON.stringify(msg));
+      queue = [];
     }
-    queue = [];
   };
 
   ws.onmessage = (event) => {
     try {
       const msg = JSON.parse(event.data as string) as ServerMessage;
+      // On reconnect, discard stale queued game actions — server will
+      // resync state via game_start, and the user can re-issue moves.
+      if (msg.type === 'authenticated') {
+        queue = [];
+      }
       handlers.forEach(h => h(msg));
     } catch { /* ignore parse errors */ }
   };

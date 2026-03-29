@@ -149,12 +149,37 @@ Arrow keys or clicking move entries reconstructs the board state at that point b
 ## Commands
 
 ```bash
-npm run dev          # Vite dev server (hot reload)
-npm run dev:server   # WebSocket server (port 3001)
-npm start            # Production: serves frontend + WS on same port
-npm run build        # Production build -> dist/
-npm test             # Run all tests (63 tests)
-npm run screenshots  # Build + Playwright screenshot tests
+# Full stack dev (kills old server, builds frontend, starts server)
+# Reads PORT, DATABASE_URL, LOG_LEVEL from .env automatically
+npm run dev:full
+# Open http://localhost:8080 (or whatever PORT is set to in .env)
+# Re-run after every change — it kills the old process automatically
+
+# Vite hot reload (for frontend changes, needs separate server)
+npm run dev:server   # Server on PORT from .env (default 8080)
+npm run dev          # Vite on 5173 (proxies /api + /ws to 8080)
+
+# Without Postgres (games work, auth/friends/history disabled)
+# Remove or comment out DATABASE_URL in .env, then:
+npm run dev:full
+
+# Tests
+npm test             # All 165 tests (engine + server)
+npm run screenshots  # Playwright visual regression
+
+# IMPORTANT: Always kill old server before starting new one.
+# npm run dev:full does this automatically. If starting manually:
+#   pkill -f 'tsx src/server' 2>/dev/null
+```
+
+**Note:** All `dev:*` scripts use `--env-file=.env` so you never need to pass env vars manually. Configure everything in `.env`.
+
+### Local Postgres Setup (first time)
+```bash
+sudo pg_ctlcluster 15 main start                                          # Linux
+sudo -u postgres psql -c "CREATE USER duckgammon WITH PASSWORD 'duck123';"
+sudo -u postgres psql -c "CREATE DATABASE duckgammon OWNER duckgammon;"
+# Tables auto-created on first server boot
 ```
 
 ## Keyboard Shortcuts
@@ -172,6 +197,85 @@ npm run screenshots  # Build + Playwright screenshot tests
 | Left/Right | Navigate move history |
 | Escape | Deselect |
 
+## Testing
+
+### Test Pyramid
+- **Engine unit tests** (63): Pure game logic — board, moves, dice, AI, neural network (`src/engine/test/`)
+- **Server unit tests** (48): GameRoom with mock WebSockets, auth against real DB (`src/server/test/unit/`)
+- **Integration tests** (53): Real HTTP server + WebSocket + PostgreSQL (`src/server/test/integration/`)
+- **Visual regression** (Playwright): Screenshot comparison across 3 viewports (`tests/visual/`)
+
+### Running Tests
+```bash
+npm test                  # All 164 tests (engine + server)
+npm run test:unit         # Engine + server unit tests only
+npm run test:server       # Server tests only (unit + integration)
+npm run test:integration  # Integration tests only (needs Postgres)
+npm run test:watch        # Watch mode for TDD
+npm run test:visual       # Playwright screenshot tests
+```
+
+### Test Infrastructure
+- **Runner**: Vitest with separate `vitest.config.ts` (needed because `vite-plugin-solid` adds a `browser` resolve condition that breaks the `ws` package in tests)
+- **Test DB**: Real PostgreSQL (`duckgammon_test`), tables truncated between tests via `cleanDb()`
+- **File parallelism disabled**: Integration tests share a DB, so `fileParallelism: false` in vitest config
+- **Helpers** (`src/server/test/helpers/`):
+  - `db.ts` — `setupTestDb()`, `cleanDb()`, `teardownTestDb()`, `seedUser()`
+  - `ws-client.ts` — `TestWsClient` with `send()`, `waitFor(type)`, `waitForAny()`, `drain()`
+  - `http.ts` — `api(port, method, path, body?, token?)` for REST endpoint tests
+  - `fixtures.ts` — `setupGameServer()` (port 0), `createTwoPlayerGame()`, `fixedDice()`
+- **Engine-based move simulation**: Integration tests use `movableCheckers()`/`legalDestinations()` from the engine to compute legal moves — never guess or hardcode moves
+
+### Test DB Setup (first time)
+```bash
+sudo -u postgres psql -c "CREATE DATABASE duckgammon_test OWNER duckgammon;"
+```
+
+## Logging
+
+Server uses a lightweight logger (`src/server/logger.ts`) with level-gated output.
+
+### Levels
+`debug` < `info` < `warn` < `error`. Set via `LOG_LEVEL` env var (defaults to `debug` in dev, `info` in production).
+
+### Usage
+```typescript
+import { createLogger } from './logger';
+const log = createLogger('mytag');
+
+log.debug('detailed trace info');  // [mytag] detailed trace info
+log.info('important event');       // [mytag] important event
+log.warn('something unexpected');  // [mytag] something unexpected
+log.error('failure', err);         // [mytag] failure Error: ...
+```
+
+### Tags in use
+`server`, `db`, `api`, `room:<gameId>`
+
+### Timestamps
+Set `LOG_TIMESTAMPS=true` for ISO timestamps in output.
+
+## Development Practices
+
+### TDD
+Write tests before or alongside new server features. Run `npm run test:watch` during development. Every server-side change should have corresponding test coverage.
+
+### Use the Logger
+Add `debug` logs for state transitions and `error` logs for failures. Never use `console.log` directly — always use `createLogger()`. GameRoom methods log all significant events at debug level (roll, move, confirm, resign, disconnect, reconnect, timeout).
+
+### Test Categories
+- **Unit tests**: Pure logic with mock WebSockets (`vi.fn()` for `ws.send`). No DB, no network.
+- **Integration tests**: Real server on port 0, real PostgreSQL, real WebSocket connections.
+- **Engine reuse**: Use `movableCheckers()`/`legalDestinations()` to compute legal moves in test helpers — never hardcode or guess moves (causes flaky tests with random dice).
+
+### Local Dev Configuration
+All local config lives in `.env` (gitignored):
+```
+PORT=8080
+DATABASE_URL=postgresql://duckgammon:duck123@localhost:5432/duckgammon
+LOG_LEVEL=debug
+```
+
 ## Deployment
 
 ### Production: Railway
@@ -179,12 +283,13 @@ npm run screenshots  # Build + Playwright screenshot tests
 - `railway.json` configures Nixpacks build with Node 23
 - `npm run build` builds frontend, `npm start` runs server
 - Health check at `/health`
-- WebSocket auto-detects `wss://` in production, `ws://localhost:3001` in dev
+- WebSocket auto-detects `wss://` in production, `ws://localhost:PORT` in dev
 
 ### Development
-- Frontend: `npm run dev` (Vite on port 5173, proxies WS to 3001)
-- Server: `npm run dev:server` (port 3001)
+- Frontend: `npm run dev` (Vite on port 5173, proxies WS to PORT from .env)
+- Server: `npm run dev:server` (reads PORT from .env, default 8080)
 - Both needed for online play testing
+- **All dev scripts read `.env` automatically — never pass env vars manually**
 
 ## Implementation Phases
 

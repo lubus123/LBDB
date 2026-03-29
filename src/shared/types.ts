@@ -38,6 +38,9 @@ export interface GameState {
   gameId: string;
   ply: number;                // move counter
   turnMoves: CheckerMove[];   // moves made so far this turn
+  boardAtTurnStart?: BoardArray;   // snapshot for reliable undo
+  whiteOffAtTurnStart?: number;
+  blackOffAtTurnStart?: number;
 }
 
 export interface MatchState {

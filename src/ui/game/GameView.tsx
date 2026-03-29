@@ -17,6 +17,7 @@ import MoveAnimation, { triggerAnimation, triggerBunnyHop, clearAnimations, HOP_
 import OpponentArrows from '../board/OpponentArrows';
 import LuckMeter, { type LuckEntry } from '../board/LuckMeter';
 import CountdownClock from '../board/CountdownClock';
+import ChatPanel, { type ChatMessage } from '../board/ChatPanel';
 import { playDiceRoll, playCapture, playJailEscape, playVictory, playDefeat, playTimeout } from '../audio/sounds';
 import * as socket from '../net/socket';
 import type { ServerMessage } from '../../server/protocol';
@@ -30,6 +31,7 @@ interface TurnRecord {
 
 export type GameMode = 'local' | 'ai' | 'online';
 export type AiDifficulty = 'strong' | 'expert';
+// AI difficulty now managed internally in GameView's Options panel
 
 const AI_ROLL_DELAY = 600;
 const AI_MOVE_DELAY = 650;
@@ -41,10 +43,10 @@ interface DevPreset { board: number[]; whiteOff: number; blackOff: number; }
 
 const WS_URL = import.meta.env.VITE_WS_URL ||
   (window.location.hostname === 'localhost'
-    ? `ws://${window.location.hostname}:3001`
+    ? `ws://${window.location.hostname}:${window.location.port || '3001'}`
     : `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}`);
 
-const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevPreset; onlineGameId?: string; aiDifficulty?: AiDifficulty }> = (props) => {
+const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevPreset; onlineGameId?: string }> = (props) => {
   const initState = props.devPreset
     ? {
         board: [...props.devPreset.board],
@@ -61,6 +63,7 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
     (typeof localStorage !== 'undefined' && localStorage.getItem('bg-direction') as 'left' | 'right') || 'right'
   );
   const [bunnyHop, setBunnyHop] = createSignal(true);
+  const [aiDifficulty, setAiDifficulty] = createSignal<AiDifficulty>('expert');
   const [history, setHistory] = createSignal<TurnRecord[]>([]);
   const [aiThinking, setAiThinking] = createSignal(false);
   const [isRolling, setIsRolling] = createSignal(false);
@@ -85,7 +88,7 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
   const [nnReady, setNnReady] = createSignal(false);
 
   // Load NN model for expert difficulty
-  if (props.mode === 'ai' && props.aiDifficulty === 'expert') {
+  if (props.mode === 'ai' && aiDifficulty() === 'expert') {
     if (isModelLoaded()) {
       setNnReady(true);
     } else {
@@ -97,7 +100,7 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
 
   /** Get the position evaluator based on difficulty setting and model availability. */
   const getEvaluator = (): PositionEvaluator | undefined => {
-    if (props.aiDifficulty === 'expert' && nnReady()) return evaluatePositionNN;
+    if (aiDifficulty() === 'expert' && nnReady()) return evaluatePositionNN;
     // 'strong' or model not loaded: use heuristic (undefined = default)
     return undefined;
   };
@@ -106,6 +109,9 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
   const [opponentDisconnected, setOpponentDisconnected] = createSignal(false);
   const [rematchOffered, setRematchOffered] = createSignal(false);
   const [wsConnected, setWsConnected] = createSignal(false);
+  const [chatMessages, setChatMessages] = createSignal<ChatMessage[]>([]);
+  const chatTime = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const [opponentName, setOpponentName] = createSignal<string>('Opponent');
   let initialBoard = [...initState.board];
   let initialWhiteOff = initState.whiteOff;
   let initialBlackOff = initState.blackOff;
@@ -142,8 +148,8 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
   // ─── WebSocket setup for online mode ───
   if (isOnline()) {
     socket.connect(WS_URL);
-    socket.onStatus(setWsConnected);
-    socket.onMessage((msg: ServerMessage) => {
+    const unsubStatus = socket.onStatus(setWsConnected);
+    const unsubMessage = socket.onMessage((msg: ServerMessage) => {
       switch (msg.type) {
         case 'game_created':
           setOnlineGameId(msg.gameId);
@@ -153,6 +159,11 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
         case 'rematch_start':
           setMyColor(msg.color);
           setState(msg.state);
+          if ('opponent' in msg && msg.opponent) setOpponentName(msg.opponent);
+          const opp = ('opponent' in msg && msg.opponent) ? msg.opponent : 'your opponent';
+          setChatMessages([
+            { from: 'duckGammon', text: `Game started! You are ${msg.color === 'w' ? 'white' : 'black'} vs ${opp}. Good luck!`, time: chatTime() },
+          ]);
           initialBoard = [...msg.state.board];
           initialWhiteOff = msg.state.whiteOff;
           initialBlackOff = msg.state.blackOff;
@@ -164,6 +175,17 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
           break;
         case 'state': {
           const prev = currentState();
+
+          // Record completed turn when turn changes or game ends
+          if (prev.dice && prev.phase === 'moving' && (msg.state.turn !== prev.turn || msg.state.phase === 'gameOver')) {
+            setHistory(h => [...h, {
+              ply: prev.ply,
+              player: prev.turn,
+              dice: prev.dice!,
+              moves: prev.turnMoves,
+            }]);
+          }
+
           // Compute luck when dice first appear (phase transitions to 'moving')
           if (msg.state.phase === 'moving' && msg.state.dice && prev.phase !== 'moving') {
             const analysis = computeTurnLuckFull(msg.state, getEvaluator());
@@ -201,6 +223,9 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
         case 'rematch_offered':
           setRematchOffered(true);
           break;
+        case 'chat':
+          setChatMessages(prev => [...prev, { from: msg.from, text: msg.text, time: chatTime() }]);
+          break;
         case 'error':
           console.warn('[duckGammon]', msg.message);
           break;
@@ -226,7 +251,11 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
       }, 100);
     }
 
-    onCleanup(() => socket.disconnect());
+    onCleanup(() => {
+      unsubStatus();
+      unsubMessage();
+      socket.disconnect();
+    });
   }
 
   const isReviewing = () => historyIndex() !== null;
@@ -853,8 +882,9 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
     if (s.phase === 'gameOver') return '';
     if (isRolling()) return 'Rolling...';
     if (isOnline()) {
-      if (opponentDisconnected()) return 'Opponent disconnected...';
-      return isMyTurn() ? 'Your turn' : "Opponent's turn";
+      if (opponentDisconnected()) return `${opponentName()} disconnected...`;
+      const name = opponentName() !== 'Opponent' ? opponentName() : "Opponent";
+      return isMyTurn() ? `Your turn (vs ${name})` : `${name}'s turn`;
     }
     if (isAiMode()) {
       if (s.turn === 'w') return "Your turn";
@@ -999,6 +1029,14 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
 
   return (
     <div class="board-container">
+      {/* Chat panel — left side, online mode only */}
+      <Show when={isOnline() && !waitingForOpponent()}>
+        <ChatPanel
+          messages={chatMessages()}
+          onSend={(text) => socket.send({ type: 'chat', text })}
+        />
+      </Show>
+
       <div class="board-and-jail">
         <div class="board-wrapper">
           <Board
@@ -1071,6 +1109,22 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
       </div>
 
       <div class="side-panel">
+        {/* Opponent box */}
+        <div class="panel-section opponent-box">
+          <div class={`player-row ${currentState().turn === 'b' ? 'active-turn' : ''}`}>
+            <div class="color-dot black" />
+            <span class="player-name">{isAiMode() ? 'AI' : isOnline() ? (myColor() === 'b' ? 'You' : opponentName()) : 'Black'}</span>
+            <span class="pip-inline">{blackPips()} pips</span>
+          </div>
+          <div class="vs-divider">vs</div>
+          <div class={`player-row ${currentState().turn === 'w' ? 'active-turn' : ''}`}>
+            <div class="color-dot white" />
+            <span class="player-name">{isAiMode() ? 'You' : isOnline() ? (myColor() === 'w' ? 'You' : opponentName()) : 'White'}</span>
+            <span class="pip-inline">{whitePips()} pips</span>
+          </div>
+        </div>
+
+        {/* Turn indicator */}
         <div class="panel-section turn-indicator">
           <div class="turn-label">{turnLabel()}</div>
           <Show when={aiThinking()}>
@@ -1085,22 +1139,9 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
           </Show>
           <Show when={isOnline() && opponentDisconnected()}>
             <div style={{ "font-size": "11px", color: "#f0ad4e", "margin-top": "4px" }}>
-              Opponent disconnected — waiting to reconnect...
+              {opponentName()} disconnected — waiting...
             </div>
           </Show>
-        </div>
-
-        <div class="panel-section">
-          <div class={`player-info ${currentState().turn === 'b' ? 'active' : ''}`}>
-            <div class="color-dot black" />
-            <span>{isAiMode() ? 'AI' : 'Black'}</span>
-            <span class="pip-inline">{blackPips()} pips</span>
-          </div>
-          <div class={`player-info ${currentState().turn === 'w' ? 'active' : ''}`}>
-            <div class="color-dot white" />
-            <span>{isAiMode() ? 'You' : 'White'}</span>
-            <span class="pip-inline">{whitePips()} pips</span>
-          </div>
         </div>
 
         <div class="panel-section">
@@ -1123,7 +1164,7 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
         <div class="panel-section">
           <div class="panel-title">Actions</div>
           <div class="controls">
-            <Show when={waitingForOpponent()}>
+            <Show when={waitingForOpponent() && !props.onlineGameId}>
               <div style={{ "font-size": "12px", "text-align": "center" }}>
                 <p style={{ margin: "0 0 8px", color: "var(--text-secondary)" }}>Share this link to invite:</p>
                 <input
@@ -1140,6 +1181,11 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
                 <button class="btn btn-small" style={{ "margin-top": "6px" }}
                   onClick={() => navigator.clipboard?.writeText(`${window.location.origin}?game=${onlineGameId()}`)}
                 >Copy Link</button>
+              </div>
+            </Show>
+            <Show when={waitingForOpponent() && props.onlineGameId}>
+              <div style={{ "font-size": "12px", "text-align": "center", color: "var(--text-secondary)" }}>
+                Connecting to game...
               </div>
             </Show>
             <Show when={currentState().phase === 'waiting' && !isAiTurn() && !waitingForOpponent() && isMyTurn()}>
@@ -1217,6 +1263,15 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
               {direction() === 'right' ? '\u2192' : '\u2190'} <span class="shortcut-hint">R</span>
             </button>
           </label>
+          <Show when={isAiMode()}>
+            <label class="option-row">
+              <span>AI strength</span>
+              <select value={aiDifficulty()} onChange={(e) => setAiDifficulty(e.currentTarget.value as AiDifficulty)}>
+                <option value="strong">Strong</option>
+                <option value="expert">Expert (NN)</option>
+              </select>
+            </label>
+          </Show>
           <label class="option-row">
             <span>Turn time</span>
             <select

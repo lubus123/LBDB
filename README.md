@@ -6,14 +6,40 @@ Lichess-inspired backgammon. Fast, free, open-source. Play online or vs AI.
 
 **Online**: Visit the deployed site and click **Play Online** — share the invite link with a friend.
 
-**Locally**:
+**Local development (full stack with Postgres)**:
 ```bash
 npm install
-npm run dev          # Frontend (port 5173)
-npm run dev:server   # Game server (port 3001)
+
+# 1. Start Postgres (first time setup)
+sudo pg_ctlcluster 15 main start           # Linux
+# Or: brew services start postgresql        # macOS
+# Or: docker run -p 5432:5432 -e POSTGRES_PASSWORD=duck123 postgres:15
+
+# 2. Create DB (first time only)
+sudo -u postgres psql -c "CREATE USER duckgammon WITH PASSWORD 'duck123';"
+sudo -u postgres psql -c "CREATE DATABASE duckgammon OWNER duckgammon;"
+
+# 3. Build + run (kills old server, builds frontend, starts fresh)
+# Reads PORT, DATABASE_URL, LOG_LEVEL from .env automatically
+npm run dev:full
 ```
 
-Open `http://localhost:5173` and play.
+Open `http://localhost:8080` (or whatever PORT is in `.env`) — serves frontend, API, and WebSocket on one port.
+Tables are auto-created on first boot. Re-run `npm run dev:full` after changes — it kills the old process automatically.
+
+**Without Postgres** (games work, auth/friends/history disabled):
+```bash
+# Remove or comment out DATABASE_URL in .env, then:
+npm run dev:full
+```
+
+**Vite hot-reload dev** (for frontend changes, needs separate server):
+```bash
+npm run dev:server   # Game server on PORT from .env (default 8080)
+npm run dev          # Vite on 5173 (proxies /api + /ws to 8080)
+```
+
+All `dev:*` scripts read `.env` automatically via `--env-file=.env` — never pass env vars manually.
 
 ## Features
 
