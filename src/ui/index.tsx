@@ -368,37 +368,45 @@ function App() {
 
             {/* Friends */}
             <Show when={user()}>
-              <div class="friends-bar">
-                <For each={pendingIncoming()}>
-                  {(f) => (
-                    <div class="friend-item">
-                      <span class="friend-name">{f.friendUsername}</span>
-                      <button class="btn btn-small friend-accept" onClick={() => handleAcceptFriend(f.id)}>Accept</button>
-                    </div>
-                  )}
-                </For>
-                <For each={acceptedFriends()}>
-                  {(f) => {
-                    const isOnline = () => onlineFriends().has(f.friendUsername);
-                    return (
-                      <div class="friend-item">
-                        <div class={`online-dot ${isOnline() ? 'on' : 'off'}`} />
-                        <span class="friend-name">{f.friendUsername}</span>
-                        <Show when={isOnline()}>
-                          <Show when={challengeSent()?.username === f.friendUsername} fallback={
-                            <button class="btn btn-small friend-challenge" onClick={() => handleChallenge(f.friendUsername)}>⚔</button>
-                          }>
-                            <button class="btn btn-small challenge-pending" disabled>
-                              ⚔ {challengeCountdown()}s
-                            </button>
+              <div class="friends-panel">
+                <div class="friends-header">
+                  <span class="friends-label">Friends</span>
+                  <span class="friends-count">{acceptedFriends().filter(f => onlineFriends().has(f.friendUsername)).length} online</span>
+                </div>
+                <div class="friends-list">
+                  <For each={acceptedFriends()}>
+                    {(f) => {
+                      const isOnline = () => onlineFriends().has(f.friendUsername);
+                      return (
+                        <div class={`friend-row ${isOnline() ? '' : 'offline'}`}>
+                          <div class={`online-dot ${isOnline() ? 'on' : 'off'}`} />
+                          <span class="friend-name">{f.friendUsername}</span>
+                          <Show when={isOnline()}>
+                            <Show when={challengeSent()?.username === f.friendUsername} fallback={
+                              <button class="btn btn-small friend-challenge" onClick={() => handleChallenge(f.friendUsername)}>⚔</button>
+                            }>
+                              <button class="btn btn-small challenge-pending" disabled>⚔ {challengeCountdown()}s</button>
+                            </Show>
                           </Show>
-                        </Show>
-                      </div>
-                    );
-                  }}
-                </For>
-                <div class="friend-add">
-                  <input type="text" placeholder="Add friend" value={addFriendInput()}
+                        </div>
+                      );
+                    }}
+                  </For>
+                </div>
+                <Show when={pendingIncoming().length > 0}>
+                  <div class="friends-pending">
+                    <For each={pendingIncoming()}>
+                      {(f) => (
+                        <div class="friend-row pending">
+                          <span class="friend-name"><span class="pending-name">{f.friendUsername}</span> wants to be friends</span>
+                          <button class="btn btn-small friend-accept" onClick={() => handleAcceptFriend(f.id)}>Accept</button>
+                        </div>
+                      )}
+                    </For>
+                  </div>
+                </Show>
+                <div class="friends-add">
+                  <input type="text" placeholder="Add friend..." value={addFriendInput()}
                     onInput={(e) => setAddFriendInput(e.currentTarget.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter') handleAddFriend(); }} />
                   <button class="btn btn-small" onClick={handleAddFriend}>+</button>
