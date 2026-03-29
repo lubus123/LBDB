@@ -325,6 +325,16 @@ export function createAppServer() {
         const targetConn = [...authenticatedUsers.values()].find(c => c.user.username === msg.username.toLowerCase());
         if (!targetConn) { ws.send(JSON.stringify({ type: 'error', message: 'User not online' })); return; }
 
+        // Cap pending challenges to prevent unbounded growth
+        if (pendingChallenges.size >= 1000) {
+          // Evict oldest entries
+          const now = Date.now();
+          for (const [cid, c] of pendingChallenges) {
+            if (now - c.createdAt > 30000 || pendingChallenges.size >= 1000) pendingChallenges.delete(cid);
+            if (pendingChallenges.size < 500) break;
+          }
+        }
+
         const id = generateId();
         pendingChallenges.set(id, {
           id, fromUser, toUsername: msg.username.toLowerCase(),
@@ -333,8 +343,16 @@ export function createAppServer() {
         targetConn.ws.send(JSON.stringify({
           type: 'challenge_received', from: fromUser.username, challengeId: id, timeLimit: msg.timeLimit ?? 30,
         }));
-        // Expire after 60s
-        setTimeout(() => pendingChallenges.delete(id), 60000);
+        // Expire after 60s and notify challenger
+        setTimeout(() => {
+          if (pendingChallenges.has(id)) {
+            pendingChallenges.delete(id);
+            const challengerConn = authenticatedUsers.get(fromUser.id);
+            if (challengerConn?.ws.readyState === WebSocket.OPEN) {
+              try { challengerConn.ws.send(JSON.stringify({ type: 'challenge_expired', challengeId: id })); } catch {}
+            }
+          }
+        }, 60000);
         return;
       }
 

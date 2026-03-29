@@ -96,6 +96,8 @@ const Board: Component<BoardProps> = (props) => {
     dragState = { point, startX: e.clientX, startY: e.clientY, dragging: false };
   }
 
+  let dragRafId: number | undefined;
+
   function handlePointerMove(e: PointerEvent) {
     if (!dragState) return;
     const dx = e.clientX - dragState.startX;
@@ -105,7 +107,12 @@ const Board: Component<BoardProps> = (props) => {
       props.onDragStart?.(dragState.point);
     }
     if (dragState.dragging) {
-      props.onDragMove?.(e.clientX, e.clientY);
+      const x = e.clientX, y = e.clientY;
+      if (dragRafId) cancelAnimationFrame(dragRafId);
+      dragRafId = requestAnimationFrame(() => {
+        props.onDragMove?.(x, y);
+        dragRafId = undefined;
+      });
     }
   }
 

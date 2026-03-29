@@ -91,7 +91,8 @@ export class GameRoom {
 
   send(ws: WebSocket, msg: ServerMessage) {
     if (ws.readyState === ws.OPEN) {
-      ws.send(JSON.stringify(msg));
+      try { ws.send(JSON.stringify(msg)); }
+      catch (err) { this.log.warn('Failed to send:', err); }
     }
   }
 
@@ -409,5 +410,6 @@ export class GameRoom {
   destroy() {
     this.clearTimer();
     for (const [, timer] of this.disconnectTimer) clearTimeout(timer);
+    this.disconnectTimer.clear();
   }
 }

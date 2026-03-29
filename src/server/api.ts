@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'http';
-import { eq, and, or, desc, sql } from 'drizzle-orm';
+import { eq, and, or, desc, sql, aliasedTable } from 'drizzle-orm';
 import { register, login, logout, validateToken, type AuthUser } from './auth';
 import { getDb } from './db/index';
 import { users, friends, games } from './db/schema';
@@ -7,11 +7,19 @@ import { createLogger } from './logger';
 
 const log = createLogger('api');
 
+const MAX_BODY_SIZE = 10 * 1024; // 10KB
+
 /** Parse JSON body from request */
 function parseBody(req: IncomingMessage): Promise<any> {
   return new Promise((resolve, reject) => {
     let body = '';
-    req.on('data', chunk => body += chunk);
+    req.on('data', (chunk: string) => {
+      body += chunk;
+      if (body.length > MAX_BODY_SIZE) {
+        req.destroy();
+        reject(new Error('Payload too large'));
+      }
+    });
     req.on('end', () => {
       try { resolve(body ? JSON.parse(body) : {}); }
       catch { reject(new Error('Invalid JSON')); }
@@ -20,8 +28,10 @@ function parseBody(req: IncomingMessage): Promise<any> {
   });
 }
 
+const CORS_ORIGIN = process.env.CORS_ORIGIN || '*';
+
 function json(res: ServerResponse, status: number, data: any) {
-  res.writeHead(status, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+  res.writeHead(status, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': CORS_ORIGIN });
   res.end(JSON.stringify(data));
 }
 
@@ -50,7 +60,7 @@ export async function handleApiRoute(req: IncomingMessage, res: ServerResponse):
   // CORS preflight
   if (method === 'OPTIONS' && url.startsWith('/api/')) {
     res.writeHead(204, {
-      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': CORS_ORIGIN,
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     });
@@ -193,6 +203,8 @@ export async function handleApiRoute(req: IncomingMessage, res: ServerResponse):
       const db = getDb();
       if (!db) { json(res, 500, { error: 'DB unavailable' }); return true; }
 
+      const whiteUser = aliasedTable(users, 'white_user');
+      const blackUser = aliasedTable(users, 'black_user');
       const rows = await db.select({
         id: games.id,
         winner: games.winner,
@@ -200,10 +212,12 @@ export async function handleApiRoute(req: IncomingMessage, res: ServerResponse):
         luckWhite: games.luckWhite,
         luckBlack: games.luckBlack,
         createdAt: games.createdAt,
-        whiteUsername: sql<string>`(SELECT username FROM users WHERE id = ${games.whiteId})`,
-        blackUsername: sql<string>`(SELECT username FROM users WHERE id = ${games.blackId})`,
+        whiteUsername: whiteUser.username,
+        blackUsername: blackUser.username,
       })
         .from(games)
+        .leftJoin(whiteUser, eq(games.whiteId, whiteUser.id))
+        .leftJoin(blackUser, eq(games.blackId, blackUser.id))
         .where(or(eq(games.whiteId, user.id), eq(games.blackId, user.id)))
         .orderBy(desc(games.createdAt))
         .limit(50);

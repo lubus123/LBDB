@@ -21,7 +21,7 @@
     "screenshots": "npm run build && npx playwright test --reporter=list"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=23"
   },
   "license": "AGPL-3.0",
   "devDependencies": {
