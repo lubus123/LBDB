@@ -1317,8 +1317,8 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
         </div>
       </Show>
 
-      <Show when={gameResult() || (isOnline() && currentState().phase === 'gameOver')}>
-        {() => {
+      <Show when={gameResult() || (isOnline() && currentState().phase === 'gameOver')} keyed>
+        {(_when) => {
           const result = gameResult();
           const winnerLabel = () => {
             if (!result) return 'Game Over';
