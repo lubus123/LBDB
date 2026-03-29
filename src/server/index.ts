@@ -190,6 +190,26 @@ wss.on('connection', (ws: WebSocket) => {
       authenticatedUsers.set(user.id, { ws, user });
       ws.send(JSON.stringify({ type: 'authenticated', user: { id: user.id, username: user.username } }));
       notifyFriendsStatus(user.id, user.username, true);
+
+      // Update username in any GameRoom this player is already in
+      const existingGameId = playerRooms.get(ws);
+      if (existingGameId) {
+        const room = rooms.get(existingGameId);
+        if (room) {
+          const player = room.players.get(ws);
+          if (player) {
+            player.username = user.username;
+            player.userId = user.id;
+            if (player.color === 'w') { room.whiteUsername = user.username; room.whiteUserId = user.id; }
+            else { room.blackUsername = user.username; room.blackUserId = user.id; }
+            // Notify opponent of the name
+            const opponent = player.color === 'w' ? room.black : room.white;
+            if (opponent?.readyState === WebSocket.OPEN) {
+              opponent.send(JSON.stringify({ type: 'game_start', state: room.state, color: player.color === 'w' ? 'b' : 'w', opponent: user.username }));
+            }
+          }
+        }
+      }
       return;
     }
 
