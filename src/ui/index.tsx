@@ -220,11 +220,16 @@ function App() {
       <svg viewBox="0 0 80 64" width="26" height="21" style={{ "vertical-align": "middle", "margin-left": "7px", "margin-top": "-1px" }}>
         {duckPaths}
       </svg>
-      {/* Second duck (mirrored) — OTB / online */}
+      {/* Checker + second duck — vs human */}
       <Show when={showSecond}>
-        <svg viewBox="0 0 80 64" width="26" height="21" style={{ "vertical-align": "middle", "margin-left": "2px", "margin-top": "-1px", transform: "scaleX(-1)" }}>
-          {duckPaths}
-        </svg>
+        <span style={{ display: "inline-flex", "align-items": "center", opacity: "0", animation: "fade-in 300ms ease forwards" }}>
+          <svg viewBox="0 0 20 20" width="12" height="12" style={{ "vertical-align": "middle", margin: "0 1px" }}>
+            <circle cx="10" cy="10" r="8" fill="#e8dcc8" stroke="#c4b8a4" stroke-width="1.5"/>
+          </svg>
+          <svg viewBox="0 0 80 64" width="26" height="21" style={{ "vertical-align": "middle", "margin-top": "-1px", transform: "scaleX(-1)" }}>
+            {duckPaths}
+          </svg>
+        </span>
       </Show>
       {/* Binary block — AI mode */}
       <Show when={showBinary}>

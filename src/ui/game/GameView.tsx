@@ -1272,22 +1272,24 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
               </select>
             </label>
           </Show>
-          <label class="option-row">
-            <span>Turn time</span>
-            <select
-              value={timePerMove() === null ? 'none' : String(timePerMove())}
-              disabled={timeLocked()}
-              onChange={(e) => {
-                const v = e.currentTarget.value;
-                setTimePerMove(v === 'none' ? null : Number(v));
-              }}
-            >
-              <option value="15">15s</option>
-              <option value="30">30s</option>
-              <option value="60">60s</option>
-              <option value="none">Untimed</option>
-            </select>
-          </label>
+          <Show when={!isOnline()}>
+            <label class="option-row">
+              <span>Turn time</span>
+              <select
+                value={timePerMove() === null ? 'none' : String(timePerMove())}
+                disabled={timeLocked()}
+                onChange={(e) => {
+                  const v = e.currentTarget.value;
+                  setTimePerMove(v === 'none' ? null : Number(v));
+                }}
+              >
+                <option value="15">15s</option>
+                <option value="30">30s</option>
+                <option value="60">60s</option>
+                <option value="none">Untimed</option>
+              </select>
+            </label>
+          </Show>
         </div>
 
         <div class="controls bottom-controls">
