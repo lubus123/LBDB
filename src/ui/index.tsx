@@ -60,7 +60,9 @@ function App() {
   const [friendError, setFriendError] = createSignal('');
 
   // Challenges
-  const [incomingChallenge, setIncomingChallenge] = createSignal<{ from: string; challengeId: string; timeLimit: number } | null>(null);
+  const [incomingChallenge, setIncomingChallenge] = createSignal<{ from: string; challengeId: string; timeLimit: number; expiresAt: number } | null>(null);
+  const [challengeSent, setChallengeSent] = createSignal<{ username: string; expiresAt: number } | null>(null);
+  const [challengeCountdown, setChallengeCountdown] = createSignal(0);
 
   // Lobby WS
   let lobbyWs: WebSocket | null = null;
@@ -75,8 +77,8 @@ function App() {
       const msg: ServerMessage = JSON.parse(event.data);
       if (msg.type === 'friend_online') setOnlineFriends(prev => new Set([...prev, msg.username]));
       if (msg.type === 'friend_offline') setOnlineFriends(prev => { const s = new Set(prev); s.delete(msg.username); return s; });
-      if (msg.type === 'challenge_received') setIncomingChallenge({ from: msg.from, challengeId: msg.challengeId, timeLimit: msg.timeLimit });
-      if (msg.type === 'challenge_accepted') { setOnlineGameId(msg.gameId); setGameMode('online'); disconnectLobbyWs(); setPage('game'); }
+      if (msg.type === 'challenge_received') setIncomingChallenge({ from: msg.from, challengeId: msg.challengeId, timeLimit: msg.timeLimit, expiresAt: Date.now() + 60000 });
+      if (msg.type === 'challenge_accepted') { setChallengeSent(null); setOnlineGameId(msg.gameId); setGameMode('online'); disconnectLobbyWs(); setPage('game'); }
     };
     lobbyWs.onclose = () => { lobbyWs = null; };
   }
@@ -121,7 +123,17 @@ function App() {
     if (data.error) { setFriendError(data.error); return; } setAddFriendInput(''); loadFriends();
   }
   async function handleAcceptFriend(id: number) { await apiFetch(`/api/friends/${id}/accept`, { method: 'POST' }); loadFriends(); }
-  function handleChallenge(username: string) { sendLobbyMsg({ type: 'challenge', username, timeLimit: 30 }); }
+  function handleChallenge(username: string) {
+    sendLobbyMsg({ type: 'challenge', username, timeLimit: 30 });
+    const expiresAt = Date.now() + 60000;
+    setChallengeSent({ username, expiresAt });
+    setChallengeCountdown(60);
+    const interval = setInterval(() => {
+      const remaining = Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000));
+      setChallengeCountdown(remaining);
+      if (remaining <= 0) { clearInterval(interval); setChallengeSent(null); }
+    }, 1000);
+  }
   function handleAcceptChallenge() {
     const c = incomingChallenge(); if (!c) return;
     sendLobbyMsg({ type: 'accept_challenge', challengeId: c.challengeId });
@@ -202,20 +214,43 @@ function App() {
 
       {/* Incoming Challenge */}
       <Show when={incomingChallenge()}>
-        {(c) => (
-          <div class="game-over-overlay">
-            <div class="game-over-modal" onClick={(e) => e.stopPropagation()}>
-              <h2>Challenge!</h2>
-              <p style={{ color: 'var(--text-secondary)', "margin-bottom": "16px" }}>
-                <strong>{c().from}</strong> wants to play
-              </p>
-              <div style={{ display: 'flex', gap: '8px', "justify-content": 'center' }}>
-                <button class="btn btn-primary" onClick={handleAcceptChallenge}>Accept</button>
-                <button class="btn" onClick={() => setIncomingChallenge(null)}>Decline</button>
+        {(c) => {
+          const [remaining, setRemaining] = createSignal(Math.max(0, Math.ceil((c().expiresAt - Date.now()) / 1000)));
+          const interval = setInterval(() => {
+            const r = Math.max(0, Math.ceil((c().expiresAt - Date.now()) / 1000));
+            setRemaining(r);
+            if (r <= 0) { clearInterval(interval); setIncomingChallenge(null); }
+          }, 1000);
+          onCleanup(() => clearInterval(interval));
+          return (
+            <div class="game-over-overlay">
+              <div class="game-over-modal" onClick={(e) => e.stopPropagation()}>
+                <h2>Challenge!</h2>
+                <p style={{ color: 'var(--text-secondary)', "margin-bottom": "12px" }}>
+                  <strong>{c().from}</strong> wants to play
+                </p>
+                <div class="challenge-timer-ring">
+                  <svg viewBox="0 0 40 40" width="40" height="40">
+                    <circle cx="20" cy="20" r="17" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="3" />
+                    <circle cx="20" cy="20" r="17" fill="none" stroke={remaining() <= 10 ? '#e53935' : 'var(--highlight)'}
+                      stroke-width="3" stroke-linecap="round"
+                      stroke-dasharray={`${2 * Math.PI * 17}`}
+                      stroke-dashoffset={`${2 * Math.PI * 17 * (1 - remaining() / 60)}`}
+                      transform="rotate(-90 20 20)"
+                      style={{ transition: 'stroke-dashoffset 1s linear' }}
+                    />
+                    <text x="20" y="21" text-anchor="middle" dominant-baseline="middle"
+                      font-size="11" font-weight="700" fill="var(--text-primary)">{remaining()}</text>
+                  </svg>
+                </div>
+                <div style={{ display: 'flex', gap: '8px', "justify-content": 'center', "margin-top": "12px" }}>
+                  <button class="btn btn-primary" onClick={handleAcceptChallenge}>Accept</button>
+                  <button class="btn" onClick={() => setIncomingChallenge(null)}>Decline</button>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          );
+        }}
       </Show>
 
       <div class="main-content">
@@ -316,7 +351,13 @@ function App() {
                         <div class={`online-dot ${isOnline() ? 'on' : 'off'}`} />
                         <span class="friend-name">{f.friendUsername}</span>
                         <Show when={isOnline()}>
-                          <button class="btn btn-small friend-challenge" onClick={() => handleChallenge(f.friendUsername)}>⚔</button>
+                          <Show when={challengeSent()?.username === f.friendUsername} fallback={
+                            <button class="btn btn-small friend-challenge" onClick={() => handleChallenge(f.friendUsername)}>⚔</button>
+                          }>
+                            <button class="btn btn-small challenge-pending" disabled>
+                              ⚔ {challengeCountdown()}s
+                            </button>
+                          </Show>
                         </Show>
                       </div>
                     );

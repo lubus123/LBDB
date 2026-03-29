@@ -731,6 +731,29 @@
 .friend-item { display: flex; align-items: center; gap: 5px; }
 .friend-name { color: var(--text-secondary); }
 .friend-challenge { padding: 2px 6px !important; font-size: 12px !important; background: var(--highlight) !important; color: #fff !important; border: none; }
+
+.challenge-pending {
+  padding: 2px 6px !important;
+  font-size: 10px !important;
+  background: #e53935 !important;
+  color: #fff !important;
+  border: 2px solid transparent !important;
+  background-clip: padding-box !important;
+  position: relative;
+  animation: challenge-snake 2s linear infinite;
+}
+
+@keyframes challenge-snake {
+  0% { border-color: rgba(229, 57, 53, 0.8); }
+  50% { border-color: rgba(229, 57, 53, 0.2); }
+  100% { border-color: rgba(229, 57, 53, 0.8); }
+}
+
+.challenge-timer-ring {
+  display: flex;
+  justify-content: center;
+  margin: 8px 0;
+}
 .friend-accept { padding: 2px 6px !important; font-size: 10px !important; }
 .friend-error { color: #e53935; font-size: 10px; }
 
