@@ -42,7 +42,7 @@ interface DevPreset { board: number[]; whiteOff: number; blackOff: number; }
 
 const WS_URL = import.meta.env.VITE_WS_URL ||
   (window.location.hostname === 'localhost'
-    ? `ws://${window.location.hostname}:3001`
+    ? `ws://${window.location.hostname}:${window.location.port || '3001'}`
     : `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}`);
 
 const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevPreset; onlineGameId?: string; aiDifficulty?: AiDifficulty }> = (props) => {
@@ -157,7 +157,10 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
           setMyColor(msg.color);
           setState(msg.state);
           if ('opponent' in msg && msg.opponent) setOpponentName(msg.opponent);
-          setChatMessages([]);
+          const opp = ('opponent' in msg && msg.opponent) ? msg.opponent : 'your opponent';
+          setChatMessages([
+            { from: 'duckGammon', text: `Game started! You are ${msg.color === 'w' ? 'white' : 'black'} vs ${opp}. Good luck!` },
+          ]);
           initialBoard = [...msg.state.board];
           initialWhiteOff = msg.state.whiteOff;
           initialBlackOff = msg.state.blackOff;
