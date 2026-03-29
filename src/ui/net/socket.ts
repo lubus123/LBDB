@@ -28,21 +28,27 @@ function doConnect() {
   ws.onopen = () => {
     reconnectAttempts = 0;
     statusHandlers.forEach(h => h(true));
-    // Send auth token if available
+    // Send auth token if available — wait for auth response before flushing queue
     const token = typeof localStorage !== 'undefined' ? localStorage.getItem('dg-token') : null;
     if (token) {
       ws!.send(JSON.stringify({ type: 'auth', token }));
+      // Don't flush queue yet — wait for 'authenticated' response
+      // The onmessage handler will flush when it sees 'authenticated'
+    } else {
+      // No auth — flush immediately
+      for (const msg of queue) ws!.send(JSON.stringify(msg));
+      queue = [];
     }
-    // Flush queued messages
-    for (const msg of queue) {
-      ws!.send(JSON.stringify(msg));
-    }
-    queue = [];
   };
 
   ws.onmessage = (event) => {
     try {
       const msg = JSON.parse(event.data as string) as ServerMessage;
+      // Flush queued messages after auth completes
+      if (msg.type === 'authenticated' && queue.length > 0) {
+        for (const m of queue) ws!.send(JSON.stringify(m));
+        queue = [];
+      }
       handlers.forEach(h => h(msg));
     } catch { /* ignore parse errors */ }
   };
