@@ -110,8 +110,10 @@ function App() {
     localStorage.setItem('dg-token', data.token); setUser(data.user); setPage('landing');
   }
   async function handleLogout() {
+    if (page() === 'game') handleExit(); // exit active game first
     await apiFetch('/api/logout', { method: 'POST' }); localStorage.removeItem('dg-token');
     disconnectLobbyWs(); setUser(null); setFriends([]); setOnlineFriends(new Set());
+    setPage('landing');
   }
   async function handleAddFriend() {
     setFriendError(''); const username = addFriendInput().trim(); if (!username) return;
@@ -123,7 +125,8 @@ function App() {
   function handleAcceptChallenge() {
     const c = incomingChallenge(); if (!c) return;
     sendLobbyMsg({ type: 'accept_challenge', challengeId: c.challengeId });
-    setIncomingChallenge(null); disconnectLobbyWs(); setGameMode('online'); setPage('game');
+    setIncomingChallenge(null);
+    // Don't navigate yet — wait for challenge_accepted message with gameId
   }
   async function loadProfile() {
     const data = await apiFetch('/api/me'); if (data && !data.error) setUser(data);

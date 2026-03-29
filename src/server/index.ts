@@ -255,6 +255,7 @@ wss.on('connection', (ws: WebSocket) => {
       room.startGame();
 
       challengerConn.ws.send(JSON.stringify({ type: 'challenge_accepted', gameId }));
+      ws.send(JSON.stringify({ type: 'challenge_accepted', gameId }));
       return;
     }
 
@@ -274,7 +275,22 @@ wss.on('connection', (ws: WebSocket) => {
     if (msg.type === 'join') {
       const room = rooms.get(msg.gameId);
       if (!room) { ws.send(JSON.stringify({ type: 'error', message: 'Game not found' })); return; }
-      if (room.isFull) { ws.send(JSON.stringify({ type: 'error', message: 'Game is full' })); return; }
+      if (room.isFull) {
+        // Room full — check if this is a reconnect (same userId, new WS)
+        const user = wsUserMap.get(ws);
+        if (user) {
+          for (const [oldWs, player] of room.players) {
+            if (player.userId === user.id && oldWs !== ws) {
+              room.handleReconnect(oldWs, ws);
+              playerRooms.set(ws, msg.gameId);
+              console.log(`[${msg.gameId}] ${user.username} reconnected`);
+              return;
+            }
+          }
+        }
+        ws.send(JSON.stringify({ type: 'error', message: 'Game is full' }));
+        return;
+      }
       const user = wsUserMap.get(ws);
       const color = room.addPlayer(ws, user?.id, user?.username);
       if (!color) { ws.send(JSON.stringify({ type: 'error', message: 'Could not join' })); return; }

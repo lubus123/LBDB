@@ -866,8 +866,9 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
     if (s.phase === 'gameOver') return '';
     if (isRolling()) return 'Rolling...';
     if (isOnline()) {
-      if (opponentDisconnected()) return 'Opponent disconnected...';
-      return isMyTurn() ? 'Your turn' : "Opponent's turn";
+      if (opponentDisconnected()) return `${opponentName()} disconnected...`;
+      const name = opponentName() !== 'Opponent' ? opponentName() : "Opponent";
+      return isMyTurn() ? `Your turn (vs ${name})` : `${name}'s turn`;
     }
     if (isAiMode()) {
       if (s.turn === 'w') return "Your turn";
@@ -1144,7 +1145,7 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
         <div class="panel-section">
           <div class="panel-title">Actions</div>
           <div class="controls">
-            <Show when={waitingForOpponent()}>
+            <Show when={waitingForOpponent() && !props.onlineGameId}>
               <div style={{ "font-size": "12px", "text-align": "center" }}>
                 <p style={{ margin: "0 0 8px", color: "var(--text-secondary)" }}>Share this link to invite:</p>
                 <input
@@ -1161,6 +1162,11 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
                 <button class="btn btn-small" style={{ "margin-top": "6px" }}
                   onClick={() => navigator.clipboard?.writeText(`${window.location.origin}?game=${onlineGameId()}`)}
                 >Copy Link</button>
+              </div>
+            </Show>
+            <Show when={waitingForOpponent() && props.onlineGameId}>
+              <div style={{ "font-size": "12px", "text-align": "center", color: "var(--text-secondary)" }}>
+                Connecting to game...
               </div>
             </Show>
             <Show when={currentState().phase === 'waiting' && !isAiTurn() && !waitingForOpponent() && isMyTurn()}>
