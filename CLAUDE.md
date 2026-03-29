@@ -80,6 +80,14 @@ src/
 
 duckGammon's core differentiator is **tactile feel**. Every interaction has weight, consequence, and personality. The board is not a static UI — it's a living space where pieces have emotions.
 
+### Robust, Durable, Lightweight
+
+Three engineering principles that complement the feel:
+
+- **Robust** — handles edge cases gracefully, never shows broken state
+- **Durable** — connections recover, state persists, the app is always ready
+- **Lightweight** — minimal dependencies, fast loads, no bloat
+
 ### Core Principles
 
 1. **Nothing teleports.** Every state change has a physical animation. Checkers hop pip-by-pip, dice tumble, highlights appear instantly without distracting animation.
