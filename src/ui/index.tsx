@@ -29,9 +29,9 @@ const MID_GAME: DevPreset = {
 };
 
 const API = '';
-const WS_URL = window.location.hostname === 'localhost'
-  ? `ws://${window.location.hostname}:${window.location.port || '3001'}`
-  : `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}`;
+const WS_URL = window.location.protocol === 'https:'
+  ? `wss://${window.location.host}`
+  : `ws://${window.location.host}`;
 
 async function apiFetch(path: string, opts: RequestInit = {}) {
   const token = localStorage.getItem('dg-token');
