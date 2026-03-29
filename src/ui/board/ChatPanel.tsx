@@ -3,6 +3,7 @@ import { Component, For, createSignal, onCleanup } from 'solid-js';
 export interface ChatMessage {
   from: string;
   text: string;
+  time: string;
 }
 
 interface ChatPanelProps {
@@ -37,6 +38,7 @@ const ChatPanel: Component<ChatPanelProps> = (props) => {
         <For each={props.messages}>
           {(msg) => (
             <div class="chat-msg">
+              <span class="chat-time">{msg.time}</span>
               <span class="chat-from">{msg.from}</span>
               <span class="chat-text">{msg.text}</span>
             </div>

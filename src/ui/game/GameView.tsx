@@ -110,6 +110,7 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
   const [rematchOffered, setRematchOffered] = createSignal(false);
   const [wsConnected, setWsConnected] = createSignal(false);
   const [chatMessages, setChatMessages] = createSignal<ChatMessage[]>([]);
+  const chatTime = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   const [opponentName, setOpponentName] = createSignal<string>('Opponent');
   let initialBoard = [...initState.board];
   let initialWhiteOff = initState.whiteOff;
@@ -161,7 +162,7 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
           if ('opponent' in msg && msg.opponent) setOpponentName(msg.opponent);
           const opp = ('opponent' in msg && msg.opponent) ? msg.opponent : 'your opponent';
           setChatMessages([
-            { from: 'duckGammon', text: `Game started! You are ${msg.color === 'w' ? 'white' : 'black'} vs ${opp}. Good luck!` },
+            { from: 'duckGammon', text: `Game started! You are ${msg.color === 'w' ? 'white' : 'black'} vs ${opp}. Good luck!`, time: chatTime() },
           ]);
           initialBoard = [...msg.state.board];
           initialWhiteOff = msg.state.whiteOff;
@@ -174,6 +175,17 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
           break;
         case 'state': {
           const prev = currentState();
+
+          // Record completed turn when turn changes or game ends
+          if (prev.dice && prev.phase === 'moving' && (msg.state.turn !== prev.turn || msg.state.phase === 'gameOver')) {
+            setHistory(h => [...h, {
+              ply: prev.ply,
+              player: prev.turn,
+              dice: prev.dice!,
+              moves: prev.turnMoves,
+            }]);
+          }
+
           // Compute luck when dice first appear (phase transitions to 'moving')
           if (msg.state.phase === 'moving' && msg.state.dice && prev.phase !== 'moving') {
             const analysis = computeTurnLuckFull(msg.state, getEvaluator());
@@ -212,7 +224,7 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
           setRematchOffered(true);
           break;
         case 'chat':
-          setChatMessages(prev => [...prev, { from: msg.from, text: msg.text }]);
+          setChatMessages(prev => [...prev, { from: msg.from, text: msg.text, time: chatTime() }]);
           break;
         case 'error':
           console.warn('[duckGammon]', msg.message);
@@ -1115,12 +1127,12 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
         <div class="panel-section">
           <div class={`player-info ${currentState().turn === 'b' ? 'active' : ''}`}>
             <div class="color-dot black" />
-            <span>{isAiMode() ? 'AI' : 'Black'}</span>
+            <span>{isAiMode() ? 'AI' : isOnline() ? (myColor() === 'b' ? 'You' : opponentName()) : 'Black'}</span>
             <span class="pip-inline">{blackPips()} pips</span>
           </div>
           <div class={`player-info ${currentState().turn === 'w' ? 'active' : ''}`}>
             <div class="color-dot white" />
-            <span>{isAiMode() ? 'You' : 'White'}</span>
+            <span>{isAiMode() ? 'You' : isOnline() ? (myColor() === 'w' ? 'You' : opponentName()) : 'White'}</span>
             <span class="pip-inline">{whitePips()} pips</span>
           </div>
         </div>
