@@ -63,6 +63,10 @@ function App() {
   const [incomingChallenge, setIncomingChallenge] = createSignal<{ from: string; challengeId: string; timeLimit: number; expiresAt: number } | null>(null);
   const [challengeSent, setChallengeSent] = createSignal<{ username: string; expiresAt: number } | null>(null);
   const [challengeCountdown, setChallengeCountdown] = createSignal(0);
+  const [challengeTarget, setChallengeTarget] = createSignal<string | null>(null);
+  const [challengeColor, setChallengeColor] = createSignal<'w' | 'b' | 'random'>('random');
+  const [challengeTime, setChallengeTime] = createSignal<number | null>(30);
+  const [challengeCustomTime, setChallengeCustomTime] = createSignal('');
 
   // Lobby WS with auto-reconnect
   let lobbyWs: WebSocket | null = null;
@@ -157,16 +161,27 @@ function App() {
     if (data.error) { setFriendError(data.error); return; } setAddFriendInput(''); loadFriends();
   }
   async function handleAcceptFriend(id: number) { await apiFetch(`/api/friends/${id}/accept`, { method: 'POST' }); loadFriends(); }
-  function handleChallenge(username: string) {
-    sendLobbyMsg({ type: 'challenge', username, timeLimit: 30 });
+  function openChallengeModal(username: string) {
+    setChallengeTarget(username);
+    setChallengeColor('random');
+    setChallengeTime(30);
+    setChallengeCustomTime('');
+  }
+  function closeChallengeModal() { setChallengeTarget(null); }
+  function sendChallenge() {
+    const target = challengeTarget();
+    if (!target) return;
+    const time = challengeTime() ?? (parseInt(challengeCustomTime()) || null);
+    sendLobbyMsg({ type: 'challenge', username: target, timeLimit: time ?? 30, colorPreference: challengeColor() });
     const expiresAt = Date.now() + 60000;
-    setChallengeSent({ username, expiresAt });
+    setChallengeSent({ username: target, expiresAt });
     setChallengeCountdown(60);
     const interval = setInterval(() => {
       const remaining = Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000));
       setChallengeCountdown(remaining);
       if (remaining <= 0) { clearInterval(interval); setChallengeSent(null); }
     }, 1000);
+    closeChallengeModal();
   }
   function handleAcceptChallenge() {
     const c = incomingChallenge(); if (!c) return;
@@ -383,7 +398,7 @@ function App() {
                           <span class="friend-name">{f.friendUsername}</span>
                           <Show when={isOnline()}>
                             <Show when={challengeSent()?.username === f.friendUsername} fallback={
-                              <button class="btn btn-small friend-challenge" onClick={() => handleChallenge(f.friendUsername)}>⚔</button>
+                              <button class="btn btn-small friend-challenge" onClick={() => openChallengeModal(f.friendUsername)}>⚔</button>
                             }>
                               <button class="btn btn-small challenge-pending" disabled>⚔ {challengeCountdown()}s</button>
                             </Show>
@@ -413,6 +428,48 @@ function App() {
                 </div>
                 <Show when={friendError()}><span class="friend-error">{friendError()}</span></Show>
               </div>
+              <Show when={challengeTarget()}>
+                <div class="challenge-overlay" onClick={(e) => { if (e.target === e.currentTarget) closeChallengeModal(); }}>
+                  <div class="challenge-modal">
+                    <div class="challenge-title-label">Challenge</div>
+                    <div class="challenge-title-name">{challengeTarget()}</div>
+
+                    <div class="challenge-section-label">Play as</div>
+                    <div class="challenge-color-picker">
+                      <div class={`challenge-color-opt ${challengeColor() === 'w' ? 'selected' : ''}`} onClick={() => setChallengeColor('w')}>
+                        <div class="checker-circle white" />
+                        <span>White</span>
+                      </div>
+                      <div class={`challenge-color-opt ${challengeColor() === 'random' ? 'selected' : ''}`} onClick={() => setChallengeColor('random')}>
+                        <div class="checker-circle random" />
+                        <span>Random</span>
+                      </div>
+                      <div class={`challenge-color-opt ${challengeColor() === 'b' ? 'selected' : ''}`} onClick={() => setChallengeColor('b')}>
+                        <div class="checker-circle black" />
+                        <span>Black</span>
+                      </div>
+                    </div>
+
+                    <div class="challenge-section-label">Time per turn</div>
+                    <div class="challenge-time-presets">
+                      <button class={`challenge-time-btn ${challengeTime() === 15 ? 'selected' : ''}`} onClick={() => { setChallengeTime(15); setChallengeCustomTime(''); }}>15s</button>
+                      <button class={`challenge-time-btn ${challengeTime() === 30 ? 'selected' : ''}`} onClick={() => { setChallengeTime(30); setChallengeCustomTime(''); }}>30s</button>
+                      <button class={`challenge-time-btn ${challengeTime() === 60 ? 'selected' : ''}`} onClick={() => { setChallengeTime(60); setChallengeCustomTime(''); }}>60s</button>
+                      <button class={`challenge-time-btn ${challengeTime() === null && !challengeCustomTime() ? 'selected' : ''}`} onClick={() => { setChallengeTime(null); setChallengeCustomTime(''); }}>∞</button>
+                    </div>
+                    <div class="challenge-time-custom">
+                      <input type="number" placeholder="custom" value={challengeCustomTime()}
+                        onInput={(e) => { setChallengeCustomTime(e.currentTarget.value); const v = parseInt(e.currentTarget.value); setChallengeTime(v > 0 ? v : null); }} />
+                      <span>seconds</span>
+                    </div>
+
+                    <div class="challenge-actions">
+                      <button class="btn challenge-cancel" onClick={closeChallengeModal}>Cancel</button>
+                      <button class="btn btn-primary challenge-send" onClick={sendChallenge}>Challenge ⚔</button>
+                    </div>
+                  </div>
+                </div>
+              </Show>
             </Show>
 
             <div class="landing-shortcuts">
