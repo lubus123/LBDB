@@ -193,6 +193,85 @@ sudo -u postgres psql -c "CREATE DATABASE duckgammon OWNER duckgammon;"
 | Left/Right | Navigate move history |
 | Escape | Deselect |
 
+## Testing
+
+### Test Pyramid
+- **Engine unit tests** (63): Pure game logic — board, moves, dice, AI, neural network (`src/engine/test/`)
+- **Server unit tests** (48): GameRoom with mock WebSockets, auth against real DB (`src/server/test/unit/`)
+- **Integration tests** (53): Real HTTP server + WebSocket + PostgreSQL (`src/server/test/integration/`)
+- **Visual regression** (Playwright): Screenshot comparison across 3 viewports (`tests/visual/`)
+
+### Running Tests
+```bash
+npm test                  # All 164 tests (engine + server)
+npm run test:unit         # Engine + server unit tests only
+npm run test:server       # Server tests only (unit + integration)
+npm run test:integration  # Integration tests only (needs Postgres)
+npm run test:watch        # Watch mode for TDD
+npm run test:visual       # Playwright screenshot tests
+```
+
+### Test Infrastructure
+- **Runner**: Vitest with separate `vitest.config.ts` (needed because `vite-plugin-solid` adds a `browser` resolve condition that breaks the `ws` package in tests)
+- **Test DB**: Real PostgreSQL (`duckgammon_test`), tables truncated between tests via `cleanDb()`
+- **File parallelism disabled**: Integration tests share a DB, so `fileParallelism: false` in vitest config
+- **Helpers** (`src/server/test/helpers/`):
+  - `db.ts` — `setupTestDb()`, `cleanDb()`, `teardownTestDb()`, `seedUser()`
+  - `ws-client.ts` — `TestWsClient` with `send()`, `waitFor(type)`, `waitForAny()`, `drain()`
+  - `http.ts` — `api(port, method, path, body?, token?)` for REST endpoint tests
+  - `fixtures.ts` — `setupGameServer()` (port 0), `createTwoPlayerGame()`, `fixedDice()`
+- **Engine-based move simulation**: Integration tests use `movableCheckers()`/`legalDestinations()` from the engine to compute legal moves — never guess or hardcode moves
+
+### Test DB Setup (first time)
+```bash
+sudo -u postgres psql -c "CREATE DATABASE duckgammon_test OWNER duckgammon;"
+```
+
+## Logging
+
+Server uses a lightweight logger (`src/server/logger.ts`) with level-gated output.
+
+### Levels
+`debug` < `info` < `warn` < `error`. Set via `LOG_LEVEL` env var (defaults to `debug` in dev, `info` in production).
+
+### Usage
+```typescript
+import { createLogger } from './logger';
+const log = createLogger('mytag');
+
+log.debug('detailed trace info');  // [mytag] detailed trace info
+log.info('important event');       // [mytag] important event
+log.warn('something unexpected');  // [mytag] something unexpected
+log.error('failure', err);         // [mytag] failure Error: ...
+```
+
+### Tags in use
+`server`, `db`, `api`, `room:<gameId>`
+
+### Timestamps
+Set `LOG_TIMESTAMPS=true` for ISO timestamps in output.
+
+## Development Practices
+
+### TDD
+Write tests before or alongside new server features. Run `npm run test:watch` during development. Every server-side change should have corresponding test coverage.
+
+### Use the Logger
+Add `debug` logs for state transitions and `error` logs for failures. Never use `console.log` directly — always use `createLogger()`. GameRoom methods log all significant events at debug level (roll, move, confirm, resign, disconnect, reconnect, timeout).
+
+### Test Categories
+- **Unit tests**: Pure logic with mock WebSockets (`vi.fn()` for `ws.send`). No DB, no network.
+- **Integration tests**: Real server on port 0, real PostgreSQL, real WebSocket connections.
+- **Engine reuse**: Use `movableCheckers()`/`legalDestinations()` to compute legal moves in test helpers — never hardcode or guess moves (causes flaky tests with random dice).
+
+### Local Dev Configuration
+All local config lives in `.env` (gitignored):
+```
+PORT=8080
+DATABASE_URL=postgresql://duckgammon:duck123@localhost:5432/duckgammon
+LOG_LEVEL=debug
+```
+
 ## Deployment
 
 ### Production: Railway

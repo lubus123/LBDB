@@ -3,6 +3,9 @@ import { eq, and, or, desc, sql } from 'drizzle-orm';
 import { register, login, logout, validateToken, type AuthUser } from './auth';
 import { getDb } from './db/index';
 import { users, friends, games } from './db/schema';
+import { createLogger } from './logger';
+
+const log = createLogger('api');
 
 /** Parse JSON body from request */
 function parseBody(req: IncomingMessage): Promise<any> {
@@ -212,7 +215,7 @@ export async function handleApiRoute(req: IncomingMessage, res: ServerResponse):
     json(res, 404, { error: 'Not found' });
     return true;
   } catch (err) {
-    console.error('[api]', err);
+    log.error(err);
     json(res, 500, { error: 'Internal error' });
     return true;
   }
