@@ -138,17 +138,41 @@ function App() {
   }
   function handleExit() { setOnlineGameId(undefined); setPage('landing'); if (user()) connectLobbyWs(); }
 
-  const DuckLogo = () => (
-    <svg viewBox="0 0 80 64" width="26" height="21" style={{ "vertical-align": "middle", "margin-left": "7px", "margin-top": "-1px" }}>
-      <path d="M12 38 C12 32 16 26 24 24 L36 22 C42 22 48 26 50 32 C52 38 48 44 42 44 L20 44 C16 44 12 42 12 38 Z" fill="#555"/>
-      <path d="M34 22 C34 16 36 11 40 9 C43 7 47 8 49 11 C51 14 50 19 48 22" fill="#2d6a2d"/>
-      <path d="M49 12 L55 11 C57 10.5 58 12.5 58 14.5 C58 16 57 17 55 16.5 L49 16" fill="#c49a3c"/>
-      <path d="M46 21.5 L49 21.5" stroke="#e8dcc8" stroke-width="1.5" stroke-linecap="round"/>
-      <circle cx="47" cy="12" r="1.3" fill="#1a1a2e"/>
-      <path d="M18 34 C24 30 34 28 42 31" fill="none" stroke="#666" stroke-width="1.2" stroke-linecap="round"/>
-      <path d="M30 44 L30 49 M30 49 L26 51 M30 49 L30 52 M30 49 L34 51" stroke="#c49a3c" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-  );
+  // The standard mallard duck SVG paths
+  const duckPaths = (<>
+    <path d="M12 38 C12 32 16 26 24 24 L36 22 C42 22 48 26 50 32 C52 38 48 44 42 44 L20 44 C16 44 12 42 12 38 Z" fill="#555"/>
+    <path d="M34 22 C34 16 36 11 40 9 C43 7 47 8 49 11 C51 14 50 19 48 22" fill="#2d6a2d"/>
+    <path d="M49 12 L55 11 C57 10.5 58 12.5 58 14.5 C58 16 57 17 55 16.5 L49 16" fill="#c49a3c"/>
+    <path d="M46 21.5 L49 21.5" stroke="#e8dcc8" stroke-width="1.5" stroke-linecap="round"/>
+    <circle cx="47" cy="12" r="1.3" fill="#1a1a2e"/>
+    <path d="M18 34 C24 30 34 28 42 31" fill="none" stroke="#666" stroke-width="1.2" stroke-linecap="round"/>
+    <path d="M30 44 L30 49 M30 49 L26 51 M30 49 L30 52 M30 49 L34 51" stroke="#c49a3c" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+  </>);
+
+  const HeaderLogo = () => {
+    const mode = page() === 'game' ? gameMode() : null;
+    const showSecond = mode === 'online' || mode === 'local';
+    const showBinary = mode === 'ai';
+
+    return (<>
+      {/* Main duck — always present */}
+      <svg viewBox="0 0 80 64" width="26" height="21" style={{ "vertical-align": "middle", "margin-left": "7px", "margin-top": "-1px" }}>
+        {duckPaths}
+      </svg>
+      {/* Second duck (mirrored) — OTB / online */}
+      <Show when={showSecond}>
+        <svg viewBox="0 0 80 64" width="26" height="21" style={{ "vertical-align": "middle", "margin-left": "2px", "margin-top": "-1px", transform: "scaleX(-1)" }}>
+          {duckPaths}
+        </svg>
+      </Show>
+      {/* Binary block — AI mode */}
+      <Show when={showBinary}>
+        <span style={{ "font-family": "var(--font-mono)", "font-size": "8px", color: "#4a9eff", opacity: "0.5", "margin-left": "4px", "line-height": "1", "vertical-align": "middle" }}>
+          010<br/>101
+        </span>
+      </Show>
+    </>);
+  };
 
   const acceptedFriends = () => friends().filter(f => f.status === 'accepted');
   const pendingIncoming = () => friends().filter(f => f.status === 'pending' && f.friendId === user()?.id);
@@ -157,7 +181,7 @@ function App() {
     <>
       <header class="header">
         <a class="header-logo" href="#" onClick={(e) => { e.preventDefault(); handleExit(); }}>
-          duck<span>Gammon</span><DuckLogo />
+          duck<span>Gammon</span><HeaderLogo />
         </a>
         <Show when={page() === 'game'}>
           <span class="header-mode">
