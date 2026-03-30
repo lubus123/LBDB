@@ -214,29 +214,33 @@ function App() {
   const showSecondDuck = () => headerMode() === 'online' || headerMode() === 'local';
   const showBinary = () => headerMode() === 'ai';
 
-  const HeaderLogo = () => (<>
-    {/* Main duck — always present */}
-    <svg viewBox="0 0 80 64" width="26" height="21" style={{ "vertical-align": "middle", "margin-left": "7px", "margin-top": "-1px" }}>
+  const HeaderLogo = () => (<span style={{ display: "inline-flex", "align-items": "center" }}>
+    {/* Main duck — ALWAYS present, never hidden */}
+    <svg viewBox="0 0 80 64" width="26" height="21" style={{ "flex-shrink": "0", "margin-left": "7px" }}>
       {duckPaths}
     </svg>
     {/* Checker + second duck — vs human */}
     <Show when={showSecondDuck()}>
-      <span style={{ display: "inline-flex", "align-items": "center", opacity: "0", animation: "fade-in 300ms ease forwards" }}>
-        <svg viewBox="0 0 20 20" width="12" height="12" style={{ "vertical-align": "middle", margin: "0 1px" }}>
+      <span class="header-duo">
+        <svg viewBox="0 0 20 20" width="12" height="12" style={{ margin: "0 1px" }}>
           <circle cx="10" cy="10" r="8" fill="#e8dcc8" stroke="#c4b8a4" stroke-width="1.5"/>
         </svg>
-        <svg viewBox="0 0 80 64" width="26" height="21" style={{ "vertical-align": "middle", "margin-top": "-1px", transform: "scaleX(-1)" }}>
+        <svg viewBox="0 0 80 64" width="26" height="21" style={{ transform: "scaleX(-1)" }}>
           {duckPaths}
         </svg>
       </span>
     </Show>
-    {/* Binary block — AI mode */}
+    {/* Robot icon — AI mode */}
     <Show when={showBinary()}>
-      <span style={{ "font-family": "var(--font-mono)", "font-size": "8px", color: "#4a9eff", opacity: "0.5", "margin-left": "4px", "line-height": "1", "vertical-align": "middle" }}>
-        010<br/>101
-      </span>
+      <svg viewBox="0 0 24 24" width="18" height="18" style={{ "margin-left": "4px", opacity: "0.5" }}>
+        <rect x="4" y="8" width="16" height="12" rx="2" fill="none" stroke="#4a9eff" stroke-width="1.5"/>
+        <circle cx="9" cy="14" r="1.5" fill="#4a9eff"/>
+        <circle cx="15" cy="14" r="1.5" fill="#4a9eff"/>
+        <line x1="12" y1="4" x2="12" y2="8" stroke="#4a9eff" stroke-width="1.5"/>
+        <circle cx="12" cy="3" r="1.5" fill="#4a9eff"/>
+      </svg>
     </Show>
-  </>);
+  </span>);
 
   const acceptedFriends = () => friends().filter(f => f.status === 'accepted');
   const pendingIncoming = () => friends().filter(f => f.status === 'pending' && f.friendId === user()?.id);

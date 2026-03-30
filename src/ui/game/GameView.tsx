@@ -4,6 +4,7 @@ import { W_BAR, B_BAR } from '../../shared/constants';
 import { checkersAt, cloneBoard, applyMove as applyBoardMove } from '../../engine/board';
 import { newGame, doRoll, doMove, doDouble, doAcceptDouble, doDropDouble, undoMove, confirmTurn, getGameResult } from '../../engine/game';
 import { legalDestinations, movableCheckers, hasAnyMoves } from '../../engine/moves';
+import { rollDice, diceToMoves } from '../../engine/dice';
 import { canDouble } from '../../engine/cube';
 import { pipCount } from '../../engine/pip';
 import { chooseBestTurn, evaluatePosition, type PositionEvaluator } from '../../engine/ai';
@@ -35,7 +36,7 @@ export type AiDifficulty = 'strong' | 'expert';
 
 const AI_ROLL_DELAY = 600;
 const AI_MOVE_DELAY = 650;
-const DICE_ANIM_DURATION = 550;
+const DICE_ANIM_DURATION = 650;
 const BOARD_W = 780;
 const MARGIN = 16;
 
@@ -67,6 +68,7 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
   const [history, setHistory] = createSignal<TurnRecord[]>([]);
   const [aiThinking, setAiThinking] = createSignal(false);
   const [isRolling, setIsRolling] = createSignal(false);
+  const [forcedPass, setForcedPass] = createSignal(false);
   const [pendingState, setPendingState] = createSignal<GameState | null>(null);
   const [diceOrder, setDiceOrder] = createSignal<[number, number]>([0, 1]);
   const [luckHistory, setLuckHistory] = createSignal<LuckEntry[]>([]);
@@ -424,33 +426,70 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
   }
 
   function rollWithAnimation(computeNextState: () => GameState, afterRoll?: (s: GameState) => void) {
+    const prev = currentState();
     const next = computeNextState();
-    if (!next.dice) {
+
+    // doRoll auto-passes when no moves: dice=null, turn changed.
+    // Detect this and reconstruct the dice for display + red flash.
+    const wasAutoPass = !next.dice && next.phase === 'waiting' && next.turn !== prev.turn;
+    let displayState: GameState;
+    let finalState: GameState;
+
+    if (wasAutoPass) {
+      // Reconstruct: roll dice manually to get a "moving" state for display
+      const dice = rollDice();
+      const movesLeft = diceToMoves(dice);
+      displayState = { ...prev, dice, movesLeft, phase: 'moving', turnMoves: [] };
+      finalState = next;
+    } else if (!next.dice) {
       setState(next);
       afterRoll?.(next);
       return;
+    } else {
+      displayState = next;
+      finalState = next;
     }
-    setPendingState(next);
+
+    const isForcedPass = wasAutoPass || !hasAnyMoves(displayState.board, displayState.movesLeft, displayState.turn);
+
+    setPendingState(displayState);
     setIsRolling(true);
+    setForcedPass(false);
     playDiceRoll();
 
     const t = window.setTimeout(() => {
       setIsRolling(false);
-      setState(next);
-      setPendingState(null);
       setDiceOrder([0, 1]);
 
-      if (next.dice && next.phase === 'moving') {
-        const analysis = computeTurnLuckFull(next, getEvaluator());
-        const dice = next.dice;
-        const actualDice: [number, number] = dice[0] <= dice[1] ? [dice[0], dice[1]] : [dice[1], dice[0]];
-        setLuckHistory(h => [...h, {
-          ply: next.ply, player: next.turn, luck: analysis.luck,
-          rolls: analysis.rolls, actualDice, rank: analysis.rank,
-        }]);
-      }
+      if (isForcedPass) {
+        // Show dice settled, flash red, then auto-pass
+        setForcedPass(true);
+        const t2 = window.setTimeout(() => {
+          setForcedPass(false);
+          setPendingState(null);
+          if (!wasAutoPass && displayState.dice) {
+            recordTurn(displayState, finalState);
+          }
+          setState(finalState);
+          afterRoll?.(finalState);
+        }, 800);
+        aiTimeouts.push(t2);
+      } else {
+        setState(finalState);
+        setPendingState(null);
 
-      afterRoll?.(next);
+        if (finalState.dice && finalState.phase === 'moving') {
+          const analysis = computeTurnLuckFull(finalState, getEvaluator());
+          const dice = finalState.dice;
+          const actualDice: [number, number] = dice[0] <= dice[1] ? [dice[0], dice[1]] : [dice[1], dice[0]];
+          setLuckHistory(h => [...h, {
+            ply: finalState.ply, player: finalState.turn, luck: analysis.luck,
+            rolls: analysis.rolls, actualDice, rank: analysis.rank,
+          }]);
+        }
+
+        afterRoll?.(finalState);
+      }
     }, DICE_ANIM_DURATION);
     aiTimeouts.push(t);
   }
@@ -895,7 +934,7 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
 
   const displayDice = () => {
     const p = pendingState();
-    if (isRolling() && p?.dice) return p.dice;
+    if ((isRolling() || forcedPass()) && p?.dice) return p.dice;
     return currentState().dice;
   };
 
@@ -1079,6 +1118,7 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
               rolling={isRolling()}
               diceOrder={diceOrder()}
               onSwap={handleSwapDice}
+              forcedPass={forcedPass()}
             />
           </svg>
         </div>
