@@ -27,6 +27,8 @@ html, body {
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   flex-shrink: 0;
   z-index: 10;
+  padding-top: env(safe-area-inset-top, 0);
+  height: calc(var(--header-height) + env(safe-area-inset-top, 0));
 }
 
 .header-logo {

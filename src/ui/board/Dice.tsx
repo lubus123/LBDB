@@ -177,10 +177,10 @@ const Dice: Component<DiceProps> = (props) => {
             onClick={() => props.onSwap?.()}
             style={{ 'pointer-events': 'all' }}
           >
-            <circle cx={390} cy={dieY} r={12} fill="rgba(255,255,255,0.08)" />
+            <circle cx={390} cy={dieY} r={20} fill="rgba(255,255,255,0.08)" />
             {/* Swap arrows icon */}
             <path
-              d="M385,316 L395,316 M392,313 L395,316 L392,319 M395,324 L385,324 M388,321 L385,324 L388,327"
+              d="M383,315 L397,315 M393,311 L397,315 L393,319 M397,325 L383,325 M387,321 L383,325 L387,329"
               stroke="rgba(255,255,255,0.6)"
               stroke-width={1.5}
               fill="none"
