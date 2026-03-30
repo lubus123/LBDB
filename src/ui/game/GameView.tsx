@@ -751,9 +751,23 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
     const svg = document.querySelector('.board-svg') as SVGSVGElement | null;
     if (!svg) return null;
 
-    const rect = svg.getBoundingClientRect();
-    const svgX = ((clientX - rect.left) / rect.width) * BOARD_VIEWBOX.w;
-    const svgY = ((clientY - rect.top) / rect.height) * BOARD_VIEWBOX.h;
+    // Use getScreenCTM to correctly map screen coords → SVG coords
+    // This handles CSS transforms (rotation, scaling) automatically
+    const ctm = svg.getScreenCTM();
+    let svgX: number, svgY: number;
+    if (ctm) {
+      const pt = svg.createSVGPoint();
+      pt.x = clientX;
+      pt.y = clientY;
+      const svgPt = pt.matrixTransform(ctm.inverse());
+      svgX = svgPt.x;
+      svgY = svgPt.y;
+    } else {
+      // Fallback for environments without getScreenCTM
+      const rect = svg.getBoundingClientRect();
+      svgX = ((clientX - rect.left) / rect.width) * BOARD_VIEWBOX.w;
+      svgY = ((clientY - rect.top) / rect.height) * BOARD_VIEWBOX.h;
+    }
 
     if (svgX < 0 || svgX > BOARD_VIEWBOX.w || svgY < 0 || svgY > BOARD_VIEWBOX.h) return null;
 
@@ -1150,6 +1164,18 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
           onBarClick={handleBarClick}
           onDragEnd={handleJailDragEnd}
         />
+      </div>
+
+      {/* Mobile info strip — turn, pips, cube — hidden on desktop */}
+      <div class="mobile-info-strip">
+        <span class="turn-text">{turnLabel()}</span>
+        <span class="pip-text">W:{whitePips()} B:{blackPips()}</span>
+        <Show when={currentState().cube.value > 1}>
+          <span class="cube-text">×{currentState().cube.value}</span>
+        </Show>
+        <Show when={currentState().phase === 'moving' && !isAiTurn()}>
+          <span class="pip-text">{currentState().movesLeft.join(', ')} left</span>
+        </Show>
       </div>
 
       {/* Mobile action bar — hidden on desktop */}

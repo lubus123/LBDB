@@ -48,11 +48,14 @@
 /* ─── Mobile action bar (hidden on desktop) ─── */
 .mobile-action-bar { display: none; }
 .mobile-backdrop { display: none; }
+.mobile-info-strip { display: none; }
 
 /* ─── Mobile: board-first layout with floating action bar ─── */
 @media (max-width: 768px) {
   .board-container {
-    flex-direction: column;
+    display: grid;
+    grid-template-rows: 1fr auto auto;
+    grid-template-columns: 1fr;
     padding: 0;
     gap: 0;
     width: 100%;
@@ -61,26 +64,65 @@
   }
 
   .board-and-jail {
-    flex: 1 1 0;
-    min-height: 0;
-    width: 100%;
-    padding: 0;
-    justify-content: center;
+    display: flex;
+    flex-direction: column;
     align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 0;
     overflow: hidden;
+    padding: 0;
   }
 
+  /* ─── Portrait rotation: board rotated 90° so points run vertically ─── */
   .board-wrapper {
-    width: 100%;
-    max-height: 100%;
+    /* Pre-rotation: landscape dims that become portrait after rotate(90deg) */
+    /* width (→ visual height) = available vertical space */
+    width: calc(100vh - var(--header-height) - 90px);
+    /* height (→ visual width) = viewport width */
+    height: 100vw;
+    /* Cap so board aspect ratio is respected */
+    max-width: calc(100vw * 780 / 640);
+    position: relative;
+    flex-shrink: 0;
+    transform: rotate(90deg);
+    transform-origin: center;
   }
 
   .board-svg {
     display: block;
     width: 100%;
-    height: auto;
-    margin: 0 auto;
+    height: 100%;
+    margin: 0;
     filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.4));
+  }
+
+  /* Hide point number labels — rotated text is illegible */
+  .board-svg text {
+    display: none;
+  }
+
+  /* Compact turn/pip info strip below board on mobile */
+  .mobile-info-strip {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 6px 12px;
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+  .mobile-info-strip .turn-text {
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .mobile-info-strip .pip-text {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .mobile-info-strip .cube-text {
+    font-size: 11px;
+    color: var(--accent);
   }
 
   /* ─── Side panel: hidden by default, slides in as overlay ─── */

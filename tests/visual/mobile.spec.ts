@@ -52,10 +52,10 @@ test.describe('Mobile layout', () => {
     const viewportSize = page.viewportSize()!;
 
     expect(boardBox).not.toBeNull();
-    // Board should not exceed viewport width
+    // Board should not exceed viewport dimensions
     expect(boardBox!.width).toBeLessThanOrEqual(viewportSize.width + 1);
-    // Board should not exceed 60% of viewport height (leave room for panel)
-    expect(boardBox!.height).toBeLessThanOrEqual(viewportSize.height * 0.65);
+    // With portrait rotation, board can fill up to ~85% of viewport height
+    expect(boardBox!.height).toBeLessThanOrEqual(viewportSize.height * 0.85);
     // Board should be visible (not zero-sized)
     expect(boardBox!.width).toBeGreaterThan(100);
     expect(boardBox!.height).toBeGreaterThan(100);
