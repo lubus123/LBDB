@@ -36,6 +36,15 @@
   touch-action: manipulation;
 }
 
+/* Side panel — desktop */
+.side-panel {
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
 /* ─── Mobile action bar (hidden on desktop) ─── */
 .mobile-action-bar { display: none; }
 .mobile-backdrop { display: none; }
@@ -46,6 +55,7 @@
     flex-direction: column;
     padding: 0;
     gap: 0;
+    width: 100%;
     height: calc(100vh - var(--header-height));
     overflow: hidden;
   }
@@ -54,15 +64,23 @@
     flex: 1 1 0;
     min-height: 0;
     width: 100%;
-    padding: 2px 4px 0;
+    padding: 0;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+  }
+
+  .board-wrapper {
+    width: 100%;
+    max-height: 100%;
   }
 
   .board-svg {
+    display: block;
     width: 100%;
     height: auto;
-    max-height: calc(100vh - var(--header-height) - 56px - 8px);
     margin: 0 auto;
-    filter: drop-shadow(0 2px 12px rgba(0, 0, 0, 0.4));
+    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.4));
   }
 
   /* ─── Side panel: hidden by default, slides in as overlay ─── */
@@ -134,6 +152,7 @@
   .mobile-action-bar {
     display: flex;
     align-items: center;
+    width: 100%;
     gap: 6px;
     padding: 6px 10px;
     padding-bottom: calc(6px + env(safe-area-inset-bottom, 0));
@@ -410,14 +429,7 @@
   opacity: 0.3;
 }
 
-/* Side panel */
-.side-panel {
-  width: 220px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  flex-shrink: 0;
-}
+/* Side panel — desktop base styles defined early so mobile media query overrides */
 
 .panel-section {
   background: var(--bg-secondary);
