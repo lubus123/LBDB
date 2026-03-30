@@ -9,6 +9,7 @@ export interface ChatMessage {
 interface ChatPanelProps {
   messages: ChatMessage[];
   onSend: (text: string) => void;
+  class?: string;
 }
 
 const ChatPanel: Component<ChatPanelProps> = (props) => {
@@ -30,7 +31,7 @@ const ChatPanel: Component<ChatPanelProps> = (props) => {
   }
 
   return (
-    <div class="chat-panel">
+    <div class={`chat-panel ${props.class || ''}`}>
       <div class="chat-header">Chat</div>
       <div class="chat-messages" ref={(el) => {
         observer.observe(el, { childList: true });

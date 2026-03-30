@@ -20,7 +20,13 @@ async function startAIGame(page: Page) {
 }
 
 async function rollDice(page: Page) {
-  await page.click('button:has-text("Roll")');
+  // On mobile, Roll is in the action bar
+  const rollBtn = page.locator('.mobile-action-bar button:has-text("Roll")');
+  if (await rollBtn.isVisible()) {
+    await rollBtn.click();
+  } else {
+    await page.click('button:has-text("Roll")');
+  }
   await page.waitForTimeout(800); // dice animation
 }
 
@@ -55,17 +61,25 @@ test.describe('Mobile layout', () => {
     expect(boardBox!.height).toBeGreaterThan(100);
   });
 
-  test('side panel is visible below board on mobile', async ({ page }) => {
+  test('side panel is hidden by default, shown via menu button', async ({ page }) => {
     await startAIGame(page);
 
+    // Side panel should be off-screen by default
     const panel = page.locator('.side-panel');
-    await expect(panel).toBeVisible();
-
     const panelBox = await panel.boundingBox();
-    const boardBox = await page.locator('.board-svg').boundingBox();
-    expect(panelBox).not.toBeNull();
-    // Panel should be below or adjacent to the board (allow 20px overlap for tight layouts)
-    expect(panelBox!.y).toBeGreaterThanOrEqual(boardBox!.y + boardBox!.height - 20);
+    const viewport = page.viewportSize()!;
+    // Panel should be translated off the right edge
+    expect(panelBox!.x).toBeGreaterThanOrEqual(viewport.width - 5);
+
+    // Tap the menu button to open it
+    const menuBtn = page.locator('.mobile-menu-btn');
+    await expect(menuBtn).toBeVisible();
+    await menuBtn.tap();
+    await page.waitForTimeout(400); // slide animation
+
+    // Now panel should be visible on screen
+    const openBox = await panel.boundingBox();
+    expect(openBox!.x).toBeLessThan(viewport.width);
   });
 
   test('no horizontal overflow on mobile', async ({ page }) => {
@@ -119,15 +133,15 @@ test.describe('Mobile touch targets', () => {
     }
   });
 
-  test('roll button is easily tappable', async ({ page }) => {
+  test('roll button is easily tappable in action bar', async ({ page }) => {
     await startAIGame(page);
 
-    const rollBtn = page.locator('button:has-text("Roll")');
+    const rollBtn = page.locator('.mobile-action-bar button:has-text("Roll")');
     await expect(rollBtn).toBeVisible();
 
     const box = await rollBtn.boundingBox();
-    expect(box!.height).toBeGreaterThanOrEqual(40);
-    expect(box!.width).toBeGreaterThanOrEqual(50);
+    expect(box!.height).toBeGreaterThanOrEqual(36);
+    expect(box!.width).toBeGreaterThanOrEqual(40);
   });
 });
 

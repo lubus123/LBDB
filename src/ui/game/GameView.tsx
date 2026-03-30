@@ -114,6 +114,7 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
   const [chatMessages, setChatMessages] = createSignal<ChatMessage[]>([]);
   const chatTime = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   const [opponentName, setOpponentName] = createSignal<string>('Opponent');
+  const [mobileOverlay, setMobileOverlay] = createSignal<'none' | 'side' | 'chat'>('none');
   let initialBoard = [...initState.board];
   let initialWhiteOff = initState.whiteOff;
   let initialBlackOff = initState.blackOff;
@@ -971,7 +972,9 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
         else if (canConfirmTurn()) handleConfirm();
         break;
       case 'd': handleDouble(); break;
-      case 'Escape': setSelectedPoint(null); break;
+      case 'Escape':
+        if (mobileOverlay() !== 'none') { setMobileOverlay('none'); break; }
+        setSelectedPoint(null); break;
     }
   }
 
@@ -1068,11 +1071,12 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
 
   return (
     <div class="board-container">
-      {/* Chat panel — left side, online mode only */}
+      {/* Chat panel — left side on desktop, overlay on mobile */}
       <Show when={isOnline() && !waitingForOpponent()}>
         <ChatPanel
           messages={chatMessages()}
           onSend={(text) => socket.send({ type: 'chat', text })}
+          class={mobileOverlay() === 'chat' ? 'mobile-open' : ''}
         />
       </Show>
 
@@ -1148,7 +1152,40 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
         />
       </div>
 
-      <div class="side-panel">
+      {/* Mobile action bar — hidden on desktop */}
+      <div class="mobile-action-bar">
+        <Show when={currentState().phase === 'waiting' && !isAiTurn() && !waitingForOpponent() && isMyTurn()}>
+          <button class="btn btn-primary mobile-action-btn" onClick={handleRoll} disabled={isRolling()}>Roll</button>
+          <Show when={canDouble(currentState().cube, currentState().turn)}>
+            <button class="btn mobile-action-btn" onClick={handleDouble}>Double</button>
+          </Show>
+        </Show>
+        <Show when={currentState().phase === 'moving' && !isAiTurn()}>
+          <button class="btn btn-small mobile-action-btn" onClick={handleUndo} disabled={!canUndo()}>Undo</button>
+          <Show when={canConfirmTurn()}>
+            <button class="btn btn-primary mobile-action-btn" onClick={handleConfirm}>Confirm</button>
+          </Show>
+        </Show>
+        <Show when={currentState().phase === 'cubeOffered' && !isAiTurn()}>
+          <button class="btn btn-primary mobile-action-btn" onClick={handleAcceptDouble}>Accept</button>
+          <button class="btn btn-danger mobile-action-btn" onClick={handleDropDouble}>Drop</button>
+        </Show>
+        <Show when={isOnline() && currentState().phase !== 'gameOver'}>
+          <button class="btn mobile-action-btn" style={{ color: '#e53935' }} onClick={handleResign}>Resign</button>
+        </Show>
+        <div style={{ flex: '1' }} />
+        <button class="btn mobile-action-btn mobile-menu-btn" onClick={() => setMobileOverlay(o => o === 'side' ? 'none' : 'side')}>&#8943;</button>
+        <Show when={isOnline()}>
+          <button class="btn mobile-action-btn mobile-chat-btn" onClick={() => setMobileOverlay(o => o === 'chat' ? 'none' : 'chat')}>💬</button>
+        </Show>
+      </div>
+
+      {/* Backdrop for mobile overlays */}
+      <Show when={mobileOverlay() !== 'none'}>
+        <div class="mobile-backdrop" onClick={() => setMobileOverlay('none')} />
+      </Show>
+
+      <div class={`side-panel ${mobileOverlay() === 'side' ? 'mobile-open' : ''}`}>
         {/* Opponent box */}
         <div class="panel-section opponent-box">
           <div class={`player-row ${currentState().turn === 'b' ? 'active-turn' : ''}`}>
