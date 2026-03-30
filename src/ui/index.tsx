@@ -27,6 +27,11 @@ const MID_GAME: DevPreset = {
   board: [0, -2, 0, 0, 0, 3, 2, 0, 3, 0, 0, 0, -4, 4, 0, 0, 0, -3, 0, -3, 0, 0, -1, 0, 2, 0],
   whiteOff: 1, blackOff: 1,
 };
+// White has 2 on bar, black blocks all entry points (19-24). White can never enter.
+const JAIL_BLOCKED: DevPreset = {
+  board: [2, 0, 0, 5, 5, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -3, -2, -2, -3, -2, -3, 0],
+  whiteOff: 0, blackOff: 0,
+};
 
 const API = '';
 const WS_URL = window.location.protocol === 'https:'
@@ -214,7 +219,7 @@ function App() {
   const showSecondDuck = () => headerMode() === 'online' || headerMode() === 'local';
   const showBinary = () => headerMode() === 'ai';
 
-  const HeaderLogo = () => (<span style={{ display: "inline-flex", "align-items": "center" }}>
+  const HeaderLogo = () => (<span style={{ display: "inline-flex", "align-items": "center", "vertical-align": "middle", "margin-top": "-2px" }}>
     {/* Main duck — ALWAYS present, never hidden */}
     <svg viewBox="0 0 80 64" width="26" height="21" style={{ "flex-shrink": "0", "margin-left": "7px" }}>
       {duckPaths}
@@ -399,6 +404,7 @@ function App() {
               <div class="play-cards" style={{ "margin-top": "8px" }}>
                 <button class="play-card small" onClick={() => startGame('ai', BEAROFF_RACE)}>Bear-off</button>
                 <button class="play-card small" onClick={() => startGame('ai', MID_GAME)}>Mid-game</button>
+                <button class="play-card small" onClick={() => startGame('ai', JAIL_BLOCKED)}>Jail blocked</button>
               </div>
             </Show>
           </div>
