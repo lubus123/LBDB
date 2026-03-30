@@ -33,6 +33,7 @@ interface PendingChallenge {
   toUsername: string;
   timeLimit: number;
   createdAt: number;
+  colorPreference: 'w' | 'b' | 'random';
 }
 
 export function createAppServer() {
@@ -272,6 +273,7 @@ export function createAppServer() {
         }
         wsUserMap.set(ws, user);
         authenticatedUsers.set(user.id, { ws, user });
+        log.debug(`${user.username} authenticated (userId=${user.id}, authenticatedUsers=${authenticatedUsers.size})`);
         // Get who's online BEFORE notifying (so we don't include ourselves)
         const onlineFriends = await getOnlineFriends(user.id);
         ws.send(JSON.stringify({ type: 'authenticated', user: { id: user.id, username: user.username }, onlineFriends }));
@@ -321,9 +323,11 @@ export function createAppServer() {
       // ─── Challenge ───
       if (msg.type === 'challenge') {
         const fromUser = wsUserMap.get(ws);
-        if (!fromUser) { ws.send(JSON.stringify({ type: 'error', message: 'Must be logged in' })); return; }
+        if (!fromUser) { log.debug(`Challenge rejected: sender not authenticated`); ws.send(JSON.stringify({ type: 'error', message: 'Must be logged in' })); return; }
+        log.debug(`Challenge from ${fromUser.username} to ${msg.username}`);
         const targetConn = [...authenticatedUsers.values()].find(c => c.user.username === msg.username.toLowerCase());
-        if (!targetConn) { ws.send(JSON.stringify({ type: 'error', message: 'User not online' })); return; }
+        if (!targetConn) { log.debug(`Challenge rejected: ${msg.username} not in authenticatedUsers (${authenticatedUsers.size} users online)`); ws.send(JSON.stringify({ type: 'error', message: 'User not online' })); return; }
+        log.debug(`Challenge ${fromUser.username} → ${targetConn.user.username}, target ws readyState=${targetConn.ws.readyState}`);
 
         // Cap pending challenges to prevent unbounded growth
         if (pendingChallenges.size >= 1000) {
@@ -339,6 +343,7 @@ export function createAppServer() {
         pendingChallenges.set(id, {
           id, fromUser, toUsername: msg.username.toLowerCase(),
           timeLimit: msg.timeLimit ?? 30, createdAt: Date.now(),
+          colorPreference: msg.colorPreference ?? 'random',
         });
         targetConn.ws.send(JSON.stringify({
           type: 'challenge_received', from: fromUser.username, challengeId: id, timeLimit: msg.timeLimit ?? 30,
@@ -373,8 +378,16 @@ export function createAppServer() {
         const challengerConn = authenticatedUsers.get(challenge.fromUser.id);
         if (!challengerConn) return;
 
-        room.addPlayer(challengerConn.ws, challenge.fromUser.id, challenge.fromUser.username);
-        room.addPlayer(ws, acceptUser.id, acceptUser.username);
+        // Assign colors based on challenger's preference
+        const challengerFirst = challenge.colorPreference === 'w' ||
+          (challenge.colorPreference === 'random' && Math.random() < 0.5);
+        if (challengerFirst) {
+          room.addPlayer(challengerConn.ws, challenge.fromUser.id, challenge.fromUser.username);
+          room.addPlayer(ws, acceptUser.id, acceptUser.username);
+        } else {
+          room.addPlayer(ws, acceptUser.id, acceptUser.username);
+          room.addPlayer(challengerConn.ws, challenge.fromUser.id, challenge.fromUser.username);
+        }
         playerRooms.set(challengerConn.ws, gameId);
         playerRooms.set(ws, gameId);
         room.startGame();

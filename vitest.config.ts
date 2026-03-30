@@ -7,5 +7,11 @@ export default defineConfig({
     testTimeout: 10000,
     hookTimeout: 15000,
     fileParallelism: false,
+    coverage: {
+      provider: 'v8',
+      include: ['src/ui/**/*.{ts,tsx}'],
+      exclude: ['src/ui/**/*.test.{ts,tsx}', 'src/ui/styles/**'],
+      reporter: ['text', 'text-summary'],
+    },
   },
 });

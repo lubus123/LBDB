@@ -21,7 +21,7 @@ export type ClientMessage =
   | { type: 'rematch' }
   | { type: 'accept_rematch' }
   | { type: 'chat'; text: string }
-  | { type: 'challenge'; username: string; timeLimit?: number }
+  | { type: 'challenge'; username: string; timeLimit?: number; colorPreference?: 'w' | 'b' | 'random' }
   | { type: 'accept_challenge'; challengeId: string };
 
 // ─── Server → Client ───

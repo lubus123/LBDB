@@ -1,0 +1,40 @@
+{
+  "planPath": "docs/superpowers/plans/2026-03-29-web-polish.md",
+  "tasks": [
+    {
+      "id": 12,
+      "subject": "Task 1: Ethos update + vertical alignment + chat width",
+      "status": "pending",
+      "description": "**Goal:** Update CLAUDE.md with robust/durable/lightweight ethos. Fix board container so chat, board, and side panel are top-aligned. Widen chat to 220px.\n\n```json:metadata\n{\"files\": [\"CLAUDE.md\", \"src/ui/styles/board.css\"], \"verifyCommand\": \"npm run build\", \"acceptanceCriteria\": [\"ethos in CLAUDE.md\", \"top-aligned panels\", \"chat 220px\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 13,
+      "subject": "Task 2: Friends panel redesign",
+      "status": "pending",
+      "blockedBy": [12],
+      "description": "**Goal:** Replace horizontal friends bar with vertical card layout.\n\n```json:metadata\n{\"files\": [\"src/ui/index.tsx\", \"src/ui/styles/board.css\"], \"verifyCommand\": \"npm run build\", \"acceptanceCriteria\": [\"vertical card layout\", \"clear section separation\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 14,
+      "subject": "Task 3: Challenge popup modal",
+      "status": "pending",
+      "blockedBy": [13],
+      "description": "**Goal:** Replace instant-challenge with centered modal — color picker, time presets, protocol update.\n\n```json:metadata\n{\"files\": [\"src/ui/index.tsx\", \"src/ui/styles/board.css\", \"src/server/protocol.ts\", \"src/server/index.ts\"], \"verifyCommand\": \"npm test && npm run build\", \"acceptanceCriteria\": [\"challenge modal works\", \"color preference respected\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 15,
+      "subject": "Task 4: Header duck checker + hide time picker in online",
+      "status": "pending",
+      "blockedBy": [14],
+      "description": "**Goal:** Add white checker between ducks in header for human games. Hide turn time in online mode.\n\n```json:metadata\n{\"files\": [\"src/ui/index.tsx\", \"src/ui/styles/layout.css\", \"src/ui/game/GameView.tsx\"], \"verifyCommand\": \"npm run build\", \"acceptanceCriteria\": [\"checker between ducks\", \"time picker hidden online\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 16,
+      "subject": "Task 5: Final verification",
+      "status": "pending",
+      "blockedBy": [15],
+      "description": "**Goal:** Run full test suite, type check, build.\n\n```json:metadata\n{\"files\": [], \"verifyCommand\": \"npm test && npx tsc --noEmit && npm run build\", \"acceptanceCriteria\": [\"all tests pass\", \"zero TS errors\", \"build succeeds\"], \"requiresUserVerification\": false}\n```"
+    }
+  ],
+  "lastUpdated": "2026-03-29T17:00:00Z"
+}

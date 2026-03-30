@@ -98,7 +98,7 @@ test.describe('Landing page', () => {
 
     // Both play buttons visible
     await expect(page.locator('button', { hasText: 'Play vs AI' })).toBeVisible();
-    await expect(page.locator('button', { hasText: 'Local 2-Player' })).toBeVisible();
+    await expect(page.locator('button', { hasText: 'Local 2P' })).toBeVisible();
 
     // No scroll
     await assertNoScroll(page);
@@ -286,7 +286,7 @@ test.describe('Game view - board flip', () => {
 test.describe('Local 2-player mode', () => {
   test('renders correctly', async ({ page }, testInfo) => {
     await page.goto('/');
-    await page.click('button:has-text("Local 2-Player")');
+    await page.click('button:has-text("Local 2P")');
     await page.waitForSelector('.board-svg');
     await page.waitForTimeout(300);
 
