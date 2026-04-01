@@ -79,6 +79,7 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
   const [arrowsEnabled, setArrowsEnabled] = createSignal(false);
   const [historyIndex, setHistoryIndex] = createSignal<number | null>(null);
   const [timePerMove, setTimePerMove] = createSignal<number | null>(
+    props.mode === 'ai' ? null : // No clock by default for AI games
     typeof localStorage !== 'undefined' ? (() => {
       const v = localStorage.getItem('bg-time');
       return v === 'none' ? null : Number(v) || 30;

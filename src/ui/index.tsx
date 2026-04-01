@@ -49,6 +49,7 @@ async function apiFetch(path: string, opts: RequestInit = {}) {
 function App() {
   const [page, setPage] = createSignal<Page>('landing');
   const [gameMode, setGameMode] = createSignal<GameMode>('ai');
+  const [gameKey, setGameKey] = createSignal(0);
   const [devPreset, setDevPreset] = createSignal<DevPreset | undefined>(undefined);
   const [showDev, setShowDev] = createSignal(false);
   const [onlineGameId, setOnlineGameId] = createSignal<string | undefined>(undefined);
@@ -200,6 +201,7 @@ function App() {
   }
   function startGame(mode: GameMode, preset?: DevPreset) {
     setGameMode(mode); setDevPreset(preset); setOnlineGameId(undefined);
+    setGameKey(k => k + 1); // force fresh GameView instance
     if (mode === 'online') disconnectLobbyWs(); setPage('game');
   }
   function handleExit() { setOnlineGameId(undefined); setPage('landing'); if (user()) connectLobbyWs(); }
@@ -501,9 +503,11 @@ function App() {
           </Show>
         </Show>
 
-        {/* Game */}
-        <Show when={page() === 'game'}>
-          <GameView onExit={handleExit} mode={gameMode()} devPreset={devPreset()} onlineGameId={onlineGameId()} />
+        {/* Game — keyed by gameKey to force fresh instance on each start */}
+        <Show when={page() === 'game' ? gameKey() : false} keyed>
+          {(_key) => (
+            <GameView onExit={handleExit} mode={gameMode()} devPreset={devPreset()} onlineGameId={onlineGameId()} />
+          )}
         </Show>
       </div>
     </>
