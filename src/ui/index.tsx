@@ -238,6 +238,7 @@ function App() {
   }
   function startGame(mode: GameMode, preset?: DevPreset) {
     setGameMode(mode); setDevPreset(preset); setOnlineGameId(undefined);
+    setResumeData(null); setReviewMoves(null); // always fresh game from play buttons
     setGameKey(k => k + 1); // force fresh GameView instance
     if (mode === 'online') disconnectLobbyWs(); setPage('game');
   }
