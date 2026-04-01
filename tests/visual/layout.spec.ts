@@ -71,13 +71,9 @@ async function assertBoardVisible(page: Page) {
 }
 
 async function assertControlsVisible(page: Page) {
-  // Roll button should be visible on initial game state
-  const rollBtn = page.locator('button', { hasText: 'Roll' });
-  await expect(rollBtn).toBeVisible();
-
-  // Bottom controls (Flip, New, Exit) should be visible
-  const flipBtn = page.locator('button', { hasText: 'Flip' });
-  await expect(flipBtn).toBeVisible();
+  // Roll button should be visible (in side panel on desktop, action bar on mobile)
+  const rollBtns = page.locator('button:visible', { hasText: 'Roll' });
+  await expect(rollBtns.first()).toBeVisible();
 }
 
 // ─── Landing Page ───
@@ -154,7 +150,7 @@ test.describe('Game view - after roll', () => {
     await page.waitForTimeout(300);
 
     // Click Roll (wait for dice animation to complete: 550ms)
-    await page.click('button:has-text("Roll")');
+    await page.locator('button:visible:has-text("Roll")').first().click();
     await page.waitForTimeout(800);
 
     await page.screenshot({
@@ -184,7 +180,7 @@ test.describe('Game view - AI turn', () => {
     await page.waitForTimeout(300);
 
     // Roll, then make moves to complete the turn
-    await page.click('button:has-text("Roll")');
+    await page.locator('button:visible:has-text("Roll")').first().click();
     await page.waitForTimeout(800);
 
     // Make moves by clicking moveable checkers then destinations (force to bypass overlays)
@@ -224,7 +220,7 @@ test.describe('Game view - AI turn', () => {
     await page.waitForTimeout(300);
 
     // Roll dice
-    await page.click('button:has-text("Roll")');
+    await page.locator('button:visible:has-text("Roll")').first().click();
     await page.waitForTimeout(800);
 
     // Make moves to complete the turn (force click to bypass SVG overlays)

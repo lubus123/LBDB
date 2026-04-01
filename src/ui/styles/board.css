@@ -36,86 +36,235 @@
   touch-action: manipulation;
 }
 
-/* ─── Mobile: vertical stack, zero scroll ─── */
+/* Side panel — desktop */
+.side-panel {
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* ─── Mobile action bar (hidden on desktop) ─── */
+.mobile-action-bar { display: none; }
+.mobile-backdrop { display: none; }
+.mobile-info-strip { display: none; }
+
+/* ─── Mobile: board-first layout with floating action bar ─── */
 @media (max-width: 768px) {
   .board-container {
-    flex-direction: column;
+    display: grid;
+    grid-template-rows: 1fr auto auto;
+    grid-template-columns: 1fr;
     padding: 0;
     gap: 0;
+    width: 100%;
     height: calc(100vh - var(--header-height));
     overflow: hidden;
   }
 
   .board-and-jail {
-    flex: 1 1 0;
-    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     width: 100%;
-    padding: 2px 4px 0;
+    min-height: 0;
+    overflow: visible;
+    padding: 0;
+    position: relative;
+  }
+
+  /* ─── Portrait rotation: board rotated 90° so points run vertically ─── */
+  .board-wrapper {
+    /* Pre-rotation: landscape dims that become portrait after rotate(90deg) */
+    /* width (→ visual height) = available vertical space */
+    width: calc(100vh - var(--header-height) - 90px);
+    /* height (→ visual width) = viewport width */
+    height: 100vw;
+    /* Cap so board aspect ratio is respected */
+    max-width: calc(100vw * 780 / 640);
+    position: relative;
+    flex-shrink: 0;
+    transform: rotate(90deg);
+    transform-origin: center;
   }
 
   .board-svg {
+    display: block;
     width: 100%;
-    height: auto;
-    max-height: 55vh;
-    margin: 0 auto;
-    filter: drop-shadow(0 2px 12px rgba(0, 0, 0, 0.4));
+    height: 100%;
+    margin: 0;
+    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.4));
   }
 
+  /* Hide point number labels — rotated text is illegible */
+  .board-svg text {
+    display: none;
+  }
+
+  /* Jail strip: position as overlay on portrait board */
+  .jail-strip {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 5;
+    border-radius: 6px;
+    background: rgba(21, 21, 32, 0.9);
+    max-width: 90%;
+  }
+
+  /* Counter-rotate dice so they appear upright in portrait */
+  .dice-group {
+    transform-origin: 390px 320px;
+    transform: rotate(-90deg);
+  }
+  .dice-swap-btn {
+    transform-origin: 390px 320px;
+    transform: rotate(-90deg);
+  }
+
+  /* Compact turn/pip info strip below board on mobile */
+  .mobile-info-strip {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 6px 12px;
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+  .mobile-info-strip .turn-text {
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .mobile-info-strip .pip-text {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .mobile-info-strip .cube-text {
+    font-size: 11px;
+    color: var(--accent);
+  }
+
+  /* ─── Side panel: hidden by default, slides in as overlay ─── */
   .side-panel {
-    width: 100% !important;
-    flex-shrink: 0 !important;
-    flex-direction: column !important;
-    gap: 4px !important;
-    padding: 4px 10px 6px !important;
+    position: fixed;
+    right: 0;
+    top: var(--header-height);
+    width: 80vw;
+    max-width: 320px;
+    height: calc(100vh - var(--header-height));
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px 14px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0));
+    background: var(--bg-secondary);
+    border-left: 1px solid rgba(255,255,255,0.08);
     overflow-y: auto;
-    min-height: 0;
     -webkit-overflow-scrolling: touch;
+    z-index: 50;
+    transform: translateX(100%);
+    transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
+    /* Reset desktop flex properties */
+    flex-shrink: unset;
+  }
+  .side-panel.mobile-open {
+    transform: translateX(0);
   }
 
   .side-panel .panel-section {
-    padding: 5px 10px;
+    padding: 8px 10px;
   }
-
-  /* Compact: hide verbose sections, show essentials inline */
   .side-panel .panel-title {
-    display: none;
+    font-size: 10px;
   }
-
   .side-panel .turn-indicator {
-    padding: 4px 10px;
+    padding: 6px 10px;
   }
-
-  /* Compact cube section on mobile — hide title, reduce padding */
-  .side-panel .panel-section:nth-child(3) .panel-title { display: none; }
-  .side-panel .panel-section:nth-child(3) { padding: 4px 10px; }
-
-  /* Hide move history on mobile to save space */
-  .side-panel .panel-section:last-of-type {
-    display: none;
-  }
-
   .move-list {
-    max-height: 60px !important;
+    max-height: 120px;
   }
-
   .controls.bottom-controls {
     justify-content: center;
-    padding: 2px 0;
+    padding: 4px 0;
   }
 
+  /* ─── Chat panel: overlay on mobile ─── */
+  .chat-panel {
+    position: fixed;
+    right: 0;
+    top: var(--header-height);
+    width: 80vw;
+    max-width: 320px;
+    height: calc(100dvh - var(--header-height));
+    z-index: 50;
+    transform: translateX(100%);
+    transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
+    display: flex;
+    flex-direction: column;
+    border-left: 1px solid rgba(255,255,255,0.08);
+  }
+  .chat-panel.mobile-open {
+    transform: translateX(0);
+  }
+
+  /* ─── Mobile action bar: bottom floating bar ─── */
+  .mobile-action-bar {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 6px;
+    padding: 6px 10px;
+    padding-bottom: calc(6px + env(safe-area-inset-bottom, 0));
+    background: var(--bg-secondary);
+    border-top: 1px solid rgba(255,255,255,0.08);
+    flex-shrink: 0;
+    touch-action: manipulation;
+  }
+  .mobile-action-btn {
+    min-height: 40px;
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+  .mobile-menu-btn, .mobile-chat-btn {
+    min-height: 40px;
+    padding: 8px 12px;
+    font-size: 16px;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.1);
+    color: var(--text-secondary);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+  }
+  .mobile-menu-btn:active, .mobile-chat-btn:active {
+    background: rgba(255,255,255,0.05);
+  }
+
+  /* ─── Backdrop ─── */
+  .mobile-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 49;
+  }
+
+  /* ─── General mobile overrides ─── */
   .btn { min-height: 44px; padding: 10px 16px; }
   .btn-small { min-height: 36px; padding: 6px 12px; }
   .shortcut-hint { display: none; }
-  .board-container { padding-bottom: env(safe-area-inset-bottom, 0); }
 
   .landing {
     padding: 24px 16px;
   }
-
   .landing h1 {
     font-size: 32px !important;
   }
-
   .landing .tagline {
     font-size: 15px !important;
   }
@@ -345,14 +494,7 @@
   opacity: 0.3;
 }
 
-/* Side panel */
-.side-panel {
-  width: 220px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  flex-shrink: 0;
-}
+/* Side panel — desktop base styles defined early so mobile media query overrides */
 
 .panel-section {
   background: var(--bg-secondary);
@@ -1283,10 +1425,6 @@
 .game-history-table td {
   padding: 6px 8px;
   border-bottom: 1px solid rgba(255,255,255,0.03);
-}
-
-@media (max-width: 768px) {
-  .chat-panel { display: none; }
 }
 
 .opponent-arrows {
