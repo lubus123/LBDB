@@ -692,13 +692,16 @@ const GameView: Component<{
       const isLast = i === aiResult.moves.length - 1;
 
       const t = window.setTimeout(() => {
-        setState(prev => {
-          if (prev.turn !== 'b' || prev.phase !== 'moving') return prev;
-
-          animateMove(move.from, move.to, 'b', prev.board, move.hit);
-
+        // Animate outside setState to avoid double-trigger from reactive re-runs
+        const currentState = state();
+        if (currentState.turn === 'b' && currentState.phase === 'moving') {
+          animateMove(move.from, move.to, 'b', currentState.board, move.hit);
           if (move.hit) playCapture();
           if (move.from === B_BAR) playJailEscape();
+        }
+
+        setState(prev => {
+          if (prev.turn !== 'b' || prev.phase !== 'moving') return prev;
 
           const next = doMove(prev, move);
 
