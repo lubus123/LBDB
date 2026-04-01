@@ -66,6 +66,7 @@ const GameView: Component<{
   resumeGameId?: number;
   resumeMoves?: TurnRecord[];
   resumeAiDifficulty?: string;
+  reviewMoves?: any[];
 }> = (props) => {
   const initState = props.devPreset
     ? {
@@ -169,6 +170,14 @@ const GameView: Component<{
 
   if (props.resumeAiDifficulty) {
     setAiDifficulty(props.resumeAiDifficulty as AiDifficulty);
+  }
+
+  const isReview = () => props.mode === 'review';
+
+  // Initialize review mode
+  if (isReview() && props.reviewMoves && props.reviewMoves.length > 0) {
+    setHistory(props.reviewMoves as TurnRecord[]);
+    setHistoryIndex(-1); // start at initial position
   }
 
   const [dbGameId, setDbGameId] = createSignal<number | null>(props.resumeGameId ?? null);
@@ -1297,6 +1306,9 @@ const GameView: Component<{
         <Show when={isOnline() && currentState().phase !== 'gameOver'}>
           <button class="btn mobile-action-btn" style={{ color: '#e53935' }} onClick={handleResign}>Resign</button>
         </Show>
+        <Show when={isReview()}>
+          <span style={{ color: 'var(--text-muted)', "font-size": "12px" }}>Review mode · ← → to navigate</span>
+        </Show>
         <div style={{ flex: '1' }} />
         <button class="btn mobile-action-btn mobile-menu-btn" onClick={() => setMobileOverlay(o => o === 'side' ? 'none' : 'side')}>&#8943;</button>
         <Show when={isOnline()}>
@@ -1362,6 +1374,7 @@ const GameView: Component<{
           <LuckMeter history={luckHistory()} isAiMode={isAiMode()} />
         </div>
 
+        <Show when={!isReview()}>
         <div class="panel-section">
           <div class="panel-title">Actions</div>
           <div class="controls">
@@ -1427,6 +1440,7 @@ const GameView: Component<{
             </Show>
           </div>
         </div>
+        </Show>
 
         <div class="panel-section" style={{ flex: 1, "min-height": 0 }}>
           <div class="panel-title">Moves</div>
