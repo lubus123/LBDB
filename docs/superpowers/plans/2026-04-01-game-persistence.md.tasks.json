@@ -1,0 +1,11 @@
+{
+  "planPath": "docs/superpowers/plans/2026-04-01-game-persistence.md",
+  "tasks": [
+    { "id": 26, "subject": "Task 1: Schema changes + migration", "status": "pending" },
+    { "id": 27, "subject": "Task 2: Game CRUD API endpoints with TDD", "status": "pending", "blockedBy": [26] },
+    { "id": 28, "subject": "Task 3: Server-side online game save per turn", "status": "pending", "blockedBy": [26] },
+    { "id": 29, "subject": "Task 4: Client-side save for AI/local + resume", "status": "pending", "blockedBy": [27] },
+    { "id": 30, "subject": "Task 5: Profile UI — hamburger, tabs, game cards, review mode", "status": "pending", "blockedBy": [29] }
+  ],
+  "lastUpdated": "2026-04-01T02:00:00Z"
+}
