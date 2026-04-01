@@ -150,6 +150,19 @@ export function createAppServer() {
 
   wss.on('close', () => clearInterval(heartbeatTimer));
 
+  /** Save current move history to DB (non-blocking) */
+  function saveMoves(room: GameRoom) {
+    if (!room.dbGameId) return;
+    const db = getDb();
+    if (!db) return;
+    db.update(games).set({
+      moves: room.moveHistory,
+      moveCount: room.moveHistory.length,
+      currentTurn: room.state.turn,
+      updatedAt: new Date(),
+    }).where(eq(games.id, room.dbGameId)).catch(err => log.warn('Failed to save moves:', err));
+  }
+
   /** Save completed game to DB and update user stats */
   async function saveGame(room: GameRoom) {
     const db = getDb();
@@ -158,16 +171,32 @@ export function createAppServer() {
 
     try {
       await db.transaction(async (tx) => {
-        await tx.insert(games).values({
-          whiteId: room.whiteUserId,
-          blackId: room.blackUserId,
-          winner: room.state.phase === 'gameOver' ? (room.state.whiteOff >= 15 ? 'w' : 'b') : null,
-          resultType: room.resultType || 'single',
-          moves: room.moveHistory,
-          luckWhite: room.luckWhite,
-          luckBlack: room.luckBlack,
-          timeControl: room.timeLimit,
-        });
+        if (room.dbGameId) {
+          // Update existing record
+          await tx.update(games).set({
+            winner: room.state.phase === 'gameOver' ? (room.state.whiteOff >= 15 ? 'w' : 'b') : null,
+            resultType: room.resultType || 'single',
+            moves: room.moveHistory,
+            luckWhite: room.luckWhite,
+            luckBlack: room.luckBlack,
+            status: 'completed',
+            moveCount: room.moveHistory.length,
+            updatedAt: new Date(),
+          }).where(eq(games.id, room.dbGameId));
+        } else {
+          // Legacy: create new record for games started before persistence
+          await tx.insert(games).values({
+            whiteId: room.whiteUserId,
+            blackId: room.blackUserId,
+            winner: room.state.phase === 'gameOver' ? (room.state.whiteOff >= 15 ? 'w' : 'b') : null,
+            resultType: room.resultType || 'single',
+            moves: room.moveHistory,
+            luckWhite: room.luckWhite,
+            luckBlack: room.luckBlack,
+            timeControl: room.timeLimit,
+            status: 'completed',
+          });
+        }
 
         // Update user stats
         for (const color of ['w', 'b'] as const) {
@@ -392,6 +421,23 @@ export function createAppServer() {
         playerRooms.set(ws, gameId);
         room.startGame();
 
+        // Create DB game record
+        const db = getDb();
+        if (db && room.whiteUserId && room.blackUserId) {
+          try {
+            const [dbGame] = await db.insert(games).values({
+              whiteId: room.whiteUserId,
+              blackId: room.blackUserId,
+              status: 'in_progress',
+              mode: 'online',
+              moves: [],
+              timeControl: room.timeLimit,
+              moveCount: 0,
+            }).returning({ id: games.id });
+            room.dbGameId = dbGame.id;
+          } catch (err) { log.warn('Failed to create game record:', err); }
+        }
+
         challengerConn.ws.send(JSON.stringify({ type: 'challenge_accepted', gameId }));
         ws.send(JSON.stringify({ type: 'challenge_accepted', gameId }));
         return;
@@ -434,6 +480,24 @@ export function createAppServer() {
         if (!color) { ws.send(JSON.stringify({ type: 'error', message: 'Could not join' })); return; }
         playerRooms.set(ws, msg.gameId);
         room.startGame();
+
+        // Create DB game record
+        const db2 = getDb();
+        if (db2 && room.whiteUserId && room.blackUserId) {
+          try {
+            const [dbGame] = await db2.insert(games).values({
+              whiteId: room.whiteUserId,
+              blackId: room.blackUserId,
+              status: 'in_progress',
+              mode: 'online',
+              moves: [],
+              timeControl: room.timeLimit,
+              moveCount: 0,
+            }).returning({ id: games.id });
+            room.dbGameId = dbGame.id;
+          } catch (err) { log.warn('Failed to create game record:', err); }
+        }
+
         log.info(`[${msg.gameId}] Player joined as ${color}`);
         return;
       }
@@ -455,6 +519,9 @@ export function createAppServer() {
         case 'resign': room.handleResign(ws); break;
         case 'rematch': case 'accept_rematch': room.handleRematch(ws); break;
       }
+
+      // Save moves to DB after any game action
+      saveMoves(room);
 
       // Check if game just ended — save to DB
       if (room.state.phase === 'gameOver' && !room.saved) {

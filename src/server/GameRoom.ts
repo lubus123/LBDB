@@ -41,6 +41,7 @@ export class GameRoom {
   rematchOffer: Color | null = null;
   disconnectTimer: Map<WebSocket, ReturnType<typeof setTimeout>> = new Map();
   saved = false;
+  dbGameId?: number;
   resultType: string | null = null;
   moveHistory: any[] = [];
   luckWhite = 0;
