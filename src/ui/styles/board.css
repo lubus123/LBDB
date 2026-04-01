@@ -70,8 +70,9 @@
     justify-content: center;
     width: 100%;
     min-height: 0;
-    overflow: hidden;
+    overflow: visible;
     padding: 0;
+    position: relative;
   }
 
   /* ─── Portrait rotation: board rotated 90° so points run vertically ─── */
@@ -100,6 +101,28 @@
   /* Hide point number labels — rotated text is illegible */
   .board-svg text {
     display: none;
+  }
+
+  /* Jail strip: position as overlay on portrait board */
+  .jail-strip {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 5;
+    border-radius: 6px;
+    background: rgba(21, 21, 32, 0.9);
+    max-width: 90%;
+  }
+
+  /* Counter-rotate dice so they appear upright in portrait */
+  .dice-group {
+    transform-origin: 390px 320px;
+    transform: rotate(-90deg);
+  }
+  .dice-swap-btn {
+    transform-origin: 390px 320px;
+    transform: rotate(-90deg);
   }
 
   /* Compact turn/pip info strip below board on mobile */
