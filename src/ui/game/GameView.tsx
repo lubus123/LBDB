@@ -681,12 +681,14 @@ const GameView: Component<{
           const next = doMove(prev, move);
 
           if (isLast || next.phase === 'waiting' || next.phase === 'gameOver') {
-            setHistory(h => [...h, {
+            const aiTurnRecord: TurnRecord = {
               ply: prev.ply,
               player: 'b',
               dice: savedDice,
               moves: aiResult.moves,
-            }]);
+            };
+            setHistory(h => [...h, aiTurnRecord]);
+            saveDbTurn(aiTurnRecord);
             showOpponentArrows(aiResult.moves);
             setAiThinking(false);
           }
