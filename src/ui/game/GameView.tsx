@@ -14,7 +14,7 @@ import { formatTurn, formatDice } from '../../shared/notation';
 import Board, { BOARD_VIEWBOX, colToPoint, pointX, pointToCol, checkerY } from '../board/Board';
 import Dice from '../board/Dice';
 import Jail from '../board/Jail';
-import MoveAnimation, { triggerAnimation, triggerBunnyHop, clearAnimations, HOP_DURATION, ANIM_DURATION, getHiddenDests } from '../board/MoveAnimation';
+import MoveAnimation, { triggerAnimation, triggerBunnyHop, triggerCapture, clearAnimations, HOP_DURATION, ANIM_DURATION, getHiddenDests } from '../board/MoveAnimation';
 import OpponentArrows from '../board/OpponentArrows';
 import LuckMeter, { type LuckEntry } from '../board/LuckMeter';
 import CountdownClock from '../board/CountdownClock';
@@ -497,11 +497,33 @@ const GameView: Component<{
     return waypoints.length >= 2 ? waypoints : null;
   }
 
-  function animateMove(from: number, to: number, color: Color, board: number[]): number {
+  function animateMove(from: number, to: number, color: Color, board: number[], hit?: boolean): number {
+    let duration: number;
+
+    // If this is a capture, show the captured checker lingering at the destination
+    if (hit && to > 0 && to < 25) {
+      const capturedColor: Color = color === 'w' ? 'b' : 'w';
+      const capturedPos = getCheckerPixel(to, board); // position of captured checker BEFORE move
+      const barX = MARGIN + 6 + 6 * 52 + 20; // bar center X
+      const barY = BOARD_VIEWBOX.h / 2; // bar center Y
+      if (capturedPos) {
+        // Compute animation duration to know when impact happens
+        let impactDelay: number;
+        if (bunnyHop()) {
+          const wp = computeHopWaypoints(from, to, color, board);
+          impactDelay = wp ? (wp.length - 1) * HOP_DURATION : ANIM_DURATION;
+        } else {
+          impactDelay = ANIM_DURATION;
+        }
+        triggerCapture(capturedPos.x, capturedPos.y, barX, barY, capturedColor, impactDelay);
+      }
+    }
+
     if (bunnyHop()) {
       const wp = computeHopWaypoints(from, to, color, board);
       if (wp && wp.length >= 2) {
-        return triggerBunnyHop(wp, color, to);
+        duration = triggerBunnyHop(wp, color, to);
+        return duration;
       }
     }
     // Fallback to slide
@@ -673,7 +695,7 @@ const GameView: Component<{
         setState(prev => {
           if (prev.turn !== 'b' || prev.phase !== 'moving') return prev;
 
-          animateMove(move.from, move.to, 'b', prev.board);
+          animateMove(move.from, move.to, 'b', prev.board, move.hit);
 
           if (move.hit) playCapture();
           if (move.from === B_BAR) playJailEscape();
@@ -793,7 +815,7 @@ const GameView: Component<{
       hit: isHit && to > 0 && to < 25,
     };
 
-    animateMove(from, to, s.turn, s.board);
+    animateMove(from, to, s.turn, s.board, move.hit);
     if (move.hit) playCapture();
     if (from === W_BAR || from === B_BAR) playJailEscape();
 

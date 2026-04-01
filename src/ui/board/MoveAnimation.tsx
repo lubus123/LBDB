@@ -1,4 +1,4 @@
-import { Component, For, createSignal } from 'solid-js';
+import { Component, For, createSignal, Show } from 'solid-js';
 import type { Color } from '../../shared/types';
 
 export interface AnimatingChecker {
@@ -18,6 +18,20 @@ export interface AnimatingChecker {
   startTime?: number;
 }
 
+/** A captured checker that lingers at the capture point then flies to the bar */
+interface CapturedChecker {
+  id: number;
+  color: Color;
+  x: number;
+  y: number;
+  barX: number;
+  barY: number;
+  phase: 'waiting' | 'flying' | 'impact';
+  startTime: number;
+  impactTime: number; // when the capturing checker arrives
+  scale: number;
+}
+
 const COLORS = {
   checkerWhite: '#e8dcc8',
   checkerWhiteBorder: '#c4b8a4',
@@ -33,6 +47,7 @@ const ARC_HEIGHT = 25;
 let nextId = 0;
 
 const [animations, setAnimations] = createSignal<AnimatingChecker[]>([]);
+const [capturedCheckers, setCapturedCheckers] = createSignal<CapturedChecker[]>([]);
 
 // Points where a checker just landed — hide the top checker there until animation ends
 const [hiddenDests, setHiddenDests] = createSignal<Set<number>>(new Set());
@@ -50,6 +65,48 @@ function addHiddenDest(point: number, duration: number) {
       return next;
     });
   }, duration);
+}
+
+const CAPTURE_FLY_DURATION = 350;
+const CAPTURE_IMPACT_DURATION = 150;
+
+/**
+ * Show a captured checker lingering at its position, then when the capturing
+ * checker arrives (after `delay` ms), shake and fly to the bar.
+ */
+export function triggerCapture(
+  x: number, y: number,
+  barX: number, barY: number,
+  capturedColor: Color,
+  delay: number,
+) {
+  const id = nextId++;
+  const now = performance.now();
+
+  const cap: CapturedChecker = {
+    id, color: capturedColor, x, y, barX, barY,
+    phase: 'waiting', startTime: now, impactTime: now + delay, scale: 1,
+  };
+  setCapturedCheckers(prev => [...prev, cap]);
+
+  // Phase 2: impact shake when capturing checker arrives
+  setTimeout(() => {
+    setCapturedCheckers(prev => prev.map(c =>
+      c.id === id ? { ...c, phase: 'impact' as const } : c
+    ));
+
+    // Phase 3: fly to bar
+    setTimeout(() => {
+      setCapturedCheckers(prev => prev.map(c =>
+        c.id === id ? { ...c, phase: 'flying' as const } : c
+      ));
+
+      // Remove after fly completes
+      setTimeout(() => {
+        setCapturedCheckers(prev => prev.filter(c => c.id !== id));
+      }, CAPTURE_FLY_DURATION + 50);
+    }, CAPTURE_IMPACT_DURATION);
+  }, delay);
 }
 
 export function triggerAnimation(
@@ -132,12 +189,52 @@ export function triggerBunnyHop(
 
 export function clearAnimations() {
   setAnimations([]);
+  setCapturedCheckers([]);
   setHiddenDests(new Set<number>());
 }
 
 const MoveAnimation: Component = () => {
   return (
     <g class="move-animation-layer">
+      {/* Captured checkers: linger, shake on impact, fly to bar */}
+      <For each={capturedCheckers()}>
+        {(cap) => {
+          const fill = cap.color === 'w' ? COLORS.checkerWhite : COLORS.checkerBlack;
+          const stroke = cap.color === 'w' ? COLORS.checkerWhiteBorder : COLORS.checkerBlackBorder;
+
+          const x = cap.phase === 'flying' ? cap.barX : cap.x;
+          const y = cap.phase === 'flying' ? cap.barY : cap.y;
+          const scale = cap.phase === 'impact' ? 1.15 : cap.phase === 'flying' ? 0.7 : 1;
+          const opacity = cap.phase === 'flying' ? 0.6 : 1;
+
+          return (
+            <circle
+              cx={x}
+              cy={y}
+              r={CHECKER_R}
+              fill={fill}
+              stroke={cap.phase === 'impact' ? '#ff4444' : stroke}
+              stroke-width={cap.phase === 'impact' ? 2.5 : 1.5}
+              style={{
+                transition: cap.phase === 'flying'
+                  ? `cx ${CAPTURE_FLY_DURATION}ms ease-in, cy ${CAPTURE_FLY_DURATION}ms ease-in, opacity ${CAPTURE_FLY_DURATION}ms ease-in, transform ${CAPTURE_FLY_DURATION}ms ease-in`
+                  : cap.phase === 'impact'
+                  ? `transform ${CAPTURE_IMPACT_DURATION}ms ease-out, stroke ${CAPTURE_IMPACT_DURATION}ms ease-out`
+                  : 'none',
+                opacity: String(opacity),
+                transform: `scale(${scale})`,
+                'transform-origin': `${cap.x}px ${cap.y}px`,
+                'transform-box': 'fill-box' as any,
+                filter: cap.phase === 'impact'
+                  ? 'drop-shadow(0 0 8px rgba(255,68,68,0.5))'
+                  : 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
+              }}
+            />
+          );
+        }}
+      </For>
+
+      {/* Moving checkers */}
       <For each={animations()}>
         {(anim) => {
           const fill = anim.color === 'w' ? COLORS.checkerWhite : COLORS.checkerBlack;
