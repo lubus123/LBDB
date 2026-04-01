@@ -1,6 +1,6 @@
 import { Component, Show, createSignal, createMemo, createEffect, onCleanup } from 'solid-js';
 import type { GameState, Color, CheckerMove, GameResult } from '../../shared/types';
-import { W_BAR, B_BAR } from '../../shared/constants';
+import { W_BAR, B_BAR, INITIAL_BOARD } from '../../shared/constants';
 import { checkersAt, cloneBoard, applyMove as applyBoardMove } from '../../engine/board';
 import { newGame, doRoll, doMove, doDouble, doAcceptDouble, doDropDouble, undoMove, confirmTurn, getGameResult } from '../../engine/game';
 import { legalDestinations, movableCheckers, hasAnyMoves } from '../../engine/moves';
@@ -30,9 +30,20 @@ interface TurnRecord {
   moves: CheckerMove[];
 }
 
-export type GameMode = 'local' | 'ai' | 'online';
+export type GameMode = 'local' | 'ai' | 'online' | 'review';
 export type AiDifficulty = 'strong' | 'expert';
 // AI difficulty now managed internally in GameView's Options panel
+
+async function gameApiFetch(path: string, opts: RequestInit = {}) {
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('dg-token') : null;
+  if (!token) return null;
+  const headers: Record<string, string> = { 'Content-Type': 'application/json', ...(opts.headers as Record<string, string> || {}) };
+  headers['Authorization'] = `Bearer ${token}`;
+  try {
+    const res = await fetch(path, { ...opts, headers });
+    return res.json();
+  } catch { return null; }
+}
 
 const AI_ROLL_DELAY = 600;
 const AI_MOVE_DELAY = 650;
@@ -47,7 +58,15 @@ const WS_URL = import.meta.env.VITE_WS_URL ||
     ? `wss://${window.location.host}`
     : `ws://${window.location.host}`);
 
-const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevPreset; onlineGameId?: string }> = (props) => {
+const GameView: Component<{
+  onExit: () => void;
+  mode: GameMode;
+  devPreset?: DevPreset;
+  onlineGameId?: string;
+  resumeGameId?: number;
+  resumeMoves?: TurnRecord[];
+  resumeAiDifficulty?: string;
+}> = (props) => {
   const initState = props.devPreset
     ? {
         board: [...props.devPreset.board],
@@ -120,6 +139,72 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
   let initialWhiteOff = initState.whiteOff;
   let initialBlackOff = initState.blackOff;
 
+  // Resume from saved game
+  if (props.resumeMoves && props.resumeMoves.length > 0) {
+    const board = [...INITIAL_BOARD];
+    let wOff = 0, bOff = 0;
+    let lastTurn: Color = 'w';
+    for (const turn of props.resumeMoves) {
+      for (const move of turn.moves) {
+        applyBoardMove(board, move, turn.player);
+        if ((turn.player === 'w' && move.to <= 0) || (turn.player === 'b' && move.to >= 25)) {
+          if (turn.player === 'w') wOff++; else bOff++;
+        }
+      }
+      lastTurn = turn.player === 'w' ? 'b' : 'w';
+    }
+    setState({
+      ...initState,
+      board,
+      whiteOff: wOff,
+      blackOff: bOff,
+      turn: lastTurn,
+      ply: props.resumeMoves.length,
+    });
+    setHistory(props.resumeMoves);
+    initialBoard = [...INITIAL_BOARD];
+    initialWhiteOff = 0;
+    initialBlackOff = 0;
+  }
+
+  if (props.resumeAiDifficulty) {
+    setAiDifficulty(props.resumeAiDifficulty as AiDifficulty);
+  }
+
+  const [dbGameId, setDbGameId] = createSignal<number | null>(props.resumeGameId ?? null);
+
+  // Save game to DB (non-blocking, authenticated users only)
+  async function createDbGame() {
+    const data = await gameApiFetch('/api/games', {
+      method: 'POST',
+      body: JSON.stringify({ mode: props.mode, aiDifficulty: aiDifficulty() }),
+    });
+    if (data?.gameId) setDbGameId(data.gameId);
+  }
+
+  async function saveDbTurn(turn: TurnRecord) {
+    const id = dbGameId();
+    if (!id) return;
+    gameApiFetch(`/api/games/${id}/moves`, {
+      method: 'PATCH',
+      body: JSON.stringify(turn),
+    });
+  }
+
+  async function completeDbGame(winner: string, resultType: string) {
+    const id = dbGameId();
+    if (!id) return;
+    gameApiFetch(`/api/games/${id}/complete`, {
+      method: 'PATCH',
+      body: JSON.stringify({ winner, resultType }),
+    });
+  }
+
+  // Create DB record for new AI/local games (not online — server handles that)
+  if (props.mode !== 'online' && !props.resumeGameId) {
+    createDbGame();
+  }
+
   // Persist settings
   createEffect(() => {
     if (typeof localStorage !== 'undefined') {
@@ -143,6 +228,16 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
   const isAiMode = () => props.mode === 'ai';
   const isAiTurn = () => isAiMode() && currentState().turn === 'b';
   const isOnline = () => props.mode === 'online';
+
+  // Save game completion to DB
+  createEffect(() => {
+    const s = currentState();
+    if (s.phase === 'gameOver' && !isOnline()) {
+      const result = getGameResult(s);
+      if (result) completeDbGame(result.winner, result.type);
+    }
+  });
+
   const isMyTurn = () => {
     if (isOnline()) return currentState().turn === myColor();
     if (isAiMode()) return currentState().turn === 'w';
@@ -868,12 +963,14 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
   function recordTurn(before: GameState, _after: GameState, extraMove?: CheckerMove) {
     if (before.dice) {
       const moves = extraMove ? [...before.turnMoves, extraMove] : before.turnMoves;
-      setHistory(prev => [...prev, {
+      const turnRecord: TurnRecord = {
         ply: before.ply,
         player: before.turn,
         dice: before.dice!,
         moves,
-      }]);
+      };
+      setHistory(prev => [...prev, turnRecord]);
+      if (!isOnline()) saveDbTurn(turnRecord);
     }
   }
 
