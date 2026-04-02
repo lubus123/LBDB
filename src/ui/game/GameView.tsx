@@ -676,7 +676,7 @@ const GameView: Component<{
       return;
     }
 
-    if (s.phase === 'moving' && s.dice) {
+    if (s.phase === 'moving' && s.dice && !aiThinking()) {
       setAiThinking(true);
       doAiMoves(s);
     }
@@ -701,27 +701,33 @@ const GameView: Component<{
     let currentDelay = AI_MOVE_DELAY;
     const savedDice = s.dice!;
 
+    // Pre-compute all intermediate states so timeouts don't depend on reactive state
+    let simState = s;
+    const intermediateStates: GameState[] = [s];
+    for (const move of aiResult.moves) {
+      simState = doMove(simState, move);
+      intermediateStates.push(simState);
+      if (simState.phase !== 'moving') break;
+    }
+
+    let aiRecorded = false;
+
     for (let i = 0; i < aiResult.moves.length; i++) {
       const move = aiResult.moves[i];
+      const nextState = intermediateStates[i + 1];
+      const prevState = intermediateStates[i];
       const isLast = i === aiResult.moves.length - 1;
 
       const t = window.setTimeout(() => {
-        // Batch animation + state update so they render in one frame
-        // Prevents the source checker from being visible simultaneously
-        // with the animation checker
         batch(() => {
-          const cur = state();
-          if (cur.turn !== 'b' || cur.phase !== 'moving') return;
-
-          animateMove(move.from, move.to, 'b', cur.board, move.hit);
+          animateMove(move.from, move.to, 'b', prevState.board, move.hit);
           if (move.hit) playCapture();
           if (move.from === B_BAR) playJailEscape();
 
-          const next = doMove(cur, move);
-
-          if (isLast || next.phase === 'waiting' || next.phase === 'gameOver') {
+          if (!aiRecorded && (isLast || nextState.phase === 'waiting' || nextState.phase === 'gameOver')) {
+            aiRecorded = true;
             const aiTurnRecord: TurnRecord = {
-              ply: cur.ply,
+              ply: s.ply,
               player: 'b',
               dice: savedDice,
               moves: aiResult.moves,
@@ -731,7 +737,7 @@ const GameView: Component<{
             showOpponentArrows(aiResult.moves);
             setAiThinking(false);
           }
-          setState(next);
+          setState(nextState);
         });
       }, currentDelay);
       aiTimeouts.push(t);
