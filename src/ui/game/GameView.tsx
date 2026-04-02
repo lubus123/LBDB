@@ -1196,14 +1196,15 @@ const GameView: Component<{
     if (wOff !== s.whiteOff || bOff !== s.blackOff) mismatch = true;
 
     if (mismatch) {
-      // Find first differing point
       const diffs: string[] = [];
       for (let i = 0; i < 26; i++) {
         if (board[i] !== s.board[i]) diffs.push(`pt${i}:replay=${board[i]},live=${s.board[i]}`);
       }
       if (wOff !== s.whiteOff) diffs.push(`wOff:replay=${wOff},live=${s.whiteOff}`);
       if (bOff !== s.blackOff) diffs.push(`bOff:replay=${bOff},live=${s.blackOff}`);
-      console.warn(`[duckGammon] History mismatch! ${h.length} turns, ply=${s.ply}, ${s.turn}'s turn. Diffs: ${diffs.join('; ')}. Last recorded: ply=${h[h.length-1]?.ply} ${h[h.length-1]?.player} dice=${h[h.length-1]?.dice} moves=${h[h.length-1]?.moves?.length}`);
+      // Dump full history for debugging
+      const histDump = h.map((t, i) => `${i}:ply${t.ply} ${t.player} ${t.dice} [${t.moves.map(m => `${m.from}→${m.to}${m.hit?'!':''}`).join(',')}]`).join(' | ');
+      console.warn(`[duckGammon] MISMATCH ${h.length} turns ply=${s.ply} ${s.turn}. ${diffs.join('; ')}. History: ${histDump}`);
     }
   });
 
