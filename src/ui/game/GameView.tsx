@@ -285,7 +285,8 @@ const GameView: Component<{
           const prev = currentState();
 
           // Record completed turn when turn changes or game ends
-          if (prev.dice && prev.phase === 'moving' && (msg.state.turn !== prev.turn || msg.state.phase === 'gameOver')) {
+          // Catches normal moves AND forced passes (server sends dice state then waiting state)
+          if (prev.dice && (msg.state.turn !== prev.turn || msg.state.phase === 'gameOver')) {
             setHistory(h => [...h, {
               ply: prev.ply,
               player: prev.turn,
@@ -1488,9 +1489,47 @@ const GameView: Component<{
                 <span class="ply">{h.ply + 1}.</span>
                 <span class={`color-indicator ${h.player === 'w' ? 'white' : 'black'}`} />
                 <span class="dice-label">{formatDice(h.dice)}</span>
-                <span>{formatTurn(h.moves, h.player)}</span>
+                <span>{h.moves.length > 0 ? formatTurn(h.moves, h.player) : '(no moves)'}</span>
               </div>
             ))}
+            {/* Live turn — current in-progress */}
+            <Show when={!isReviewing() && currentState().phase !== 'gameOver'}>
+              {(() => {
+                const s = currentState();
+                const turnNum = history().length + 1;
+                const colorClass = s.turn === 'w' ? 'white' : 'black';
+
+                if (s.phase === 'waiting' && !waitingForOpponent()) {
+                  return (
+                    <div class="move-entry current">
+                      <span class="ply">{turnNum}.</span>
+                      <span class={`color-indicator ${colorClass}`} />
+                      <span class="move-status">Awaiting roll</span>
+                    </div>
+                  );
+                }
+                if (isRolling()) {
+                  return (
+                    <div class="move-entry current">
+                      <span class="ply">{turnNum}.</span>
+                      <span class={`color-indicator ${colorClass}`} />
+                      <span class="move-status">Rolling...</span>
+                    </div>
+                  );
+                }
+                if (s.phase === 'moving' && s.dice) {
+                  return (
+                    <div class="move-entry current">
+                      <span class="ply">{turnNum}.</span>
+                      <span class={`color-indicator ${colorClass}`} />
+                      <span class="dice-label">{formatDice(s.dice)}</span>
+                      <span>{s.turnMoves.length > 0 ? formatTurn(s.turnMoves, s.turn) : '...'}</span>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
+            </Show>
           </div>
         </div>
 

@@ -1219,6 +1219,17 @@
   padding-left: 4px;
 }
 
+.move-entry.current {
+  opacity: 0.6;
+  font-style: italic;
+}
+
+.move-status {
+  color: var(--text-muted);
+  font-style: italic;
+  font-size: 11px;
+}
+
 /* ─── Connection indicator ─── */
 .connection-indicator {
   position: fixed;

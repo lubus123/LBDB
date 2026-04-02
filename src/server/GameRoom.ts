@@ -143,6 +143,9 @@ export class GameRoom {
     // If no moves possible, auto-pass
     if (this.state.phase === 'waiting') {
       this.log.debug(`${color} auto-passed (no legal moves)`);
+      // Broadcast state WITH dice first so client can see the roll + record the forced pass
+      const stateWithDice = { ...this.state, dice, phase: 'moving' as const };
+      this.broadcast({ type: 'state', state: stateWithDice });
       this.recordTurn(this.state.turn, dice, []);
       this.state = {
         ...this.state,
