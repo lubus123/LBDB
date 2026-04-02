@@ -79,6 +79,10 @@ export function triggerCapture(
   capturedColor: Color,
   delay: number,
 ) {
+  // Dedup: don't create another capture at the same position
+  const existing = capturedCheckers();
+  if (existing.some(c => Math.abs(c.x - x) < 5 && Math.abs(c.y - y) < 5)) return;
+
   const id = nextId++;
 
   const cap: CapturedChecker = {

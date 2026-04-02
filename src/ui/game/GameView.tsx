@@ -1,4 +1,4 @@
-import { Component, Show, createSignal, createMemo, createEffect, onCleanup } from 'solid-js';
+import { Component, Show, createSignal, createMemo, createEffect, onCleanup, batch } from 'solid-js';
 import type { GameState, Color, CheckerMove, GameResult } from '../../shared/types';
 import { W_BAR, B_BAR, INITIAL_BOARD } from '../../shared/constants';
 import { checkersAt, cloneBoard, applyMove as applyBoardMove } from '../../engine/board';
@@ -692,22 +692,22 @@ const GameView: Component<{
       const isLast = i === aiResult.moves.length - 1;
 
       const t = window.setTimeout(() => {
-        // Animate outside setState to avoid double-trigger from reactive re-runs
-        const currentState = state();
-        if (currentState.turn === 'b' && currentState.phase === 'moving') {
-          animateMove(move.from, move.to, 'b', currentState.board, move.hit);
+        // Batch animation + state update so they render in one frame
+        // Prevents the source checker from being visible simultaneously
+        // with the animation checker
+        batch(() => {
+          const cur = state();
+          if (cur.turn !== 'b' || cur.phase !== 'moving') return;
+
+          animateMove(move.from, move.to, 'b', cur.board, move.hit);
           if (move.hit) playCapture();
           if (move.from === B_BAR) playJailEscape();
-        }
 
-        setState(prev => {
-          if (prev.turn !== 'b' || prev.phase !== 'moving') return prev;
-
-          const next = doMove(prev, move);
+          const next = doMove(cur, move);
 
           if (isLast || next.phase === 'waiting' || next.phase === 'gameOver') {
             const aiTurnRecord: TurnRecord = {
-              ply: prev.ply,
+              ply: cur.ply,
               player: 'b',
               dice: savedDice,
               moves: aiResult.moves,
@@ -717,7 +717,7 @@ const GameView: Component<{
             showOpponentArrows(aiResult.moves);
             setAiThinking(false);
           }
-          return next;
+          setState(next);
         });
       }, currentDelay);
       aiTimeouts.push(t);
@@ -818,23 +818,29 @@ const GameView: Component<{
       hit: isHit && to > 0 && to < 25,
     };
 
-    animateMove(from, to, s.turn, s.board, move.hit);
-    if (move.hit) playCapture();
-    if (from === W_BAR || from === B_BAR) playJailEscape();
-
+    // Batch animation + state update so they render in one frame
+    // (prevents source checker + animation checker both visible)
     if (isOnline()) {
-      // Send to server — server will broadcast authoritative state
-      socket.send({ type: 'move', move });
-      // Optimistic local update for responsiveness
-      const newState = doMove(s, move);
-      setState(newState);
-      setSelectedPoint(null);
+      batch(() => {
+        animateMove(from, to, s.turn, s.board, move.hit);
+        if (move.hit) playCapture();
+        if (from === W_BAR || from === B_BAR) playJailEscape();
+        socket.send({ type: 'move', move });
+        setState(doMove(s, move));
+        setSelectedPoint(null);
+      });
       return;
     }
 
-    const newState = doMove(s, move);
-    setState(newState);
-    setSelectedPoint(null);
+    let newState!: GameState;
+    batch(() => {
+      animateMove(from, to, s.turn, s.board, move.hit);
+      if (move.hit) playCapture();
+      if (from === W_BAR || from === B_BAR) playJailEscape();
+      newState = doMove(s, move);
+      setState(newState);
+      setSelectedPoint(null);
+    });
 
     if (newState.phase === 'waiting' || newState.phase === 'gameOver') {
       recordTurn(s, newState, move);
