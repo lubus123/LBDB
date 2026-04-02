@@ -136,9 +136,10 @@ const GameView: Component<{
   const chatTime = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   const [opponentName, setOpponentName] = createSignal<string>('Opponent');
   const [mobileOverlay, setMobileOverlay] = createSignal<'none' | 'side' | 'chat'>('none');
-  let initialBoard = [...initState.board];
-  let initialWhiteOff = initState.whiteOff;
-  let initialBlackOff = initState.blackOff;
+  // Reactive signals so reviewState memo recomputes when these change
+  const [initialBoard, setInitialBoard] = createSignal<number[]>([...initState.board]);
+  const [initialWhiteOff, setInitialWhiteOff] = createSignal(initState.whiteOff);
+  const [initialBlackOff, setInitialBlackOff] = createSignal(initState.blackOff);
 
   // Resume from saved game
   if (props.resumeMoves && props.resumeMoves.length > 0) {
@@ -163,9 +164,9 @@ const GameView: Component<{
       ply: props.resumeMoves.length,
     });
     setHistory(props.resumeMoves);
-    initialBoard = [...INITIAL_BOARD];
-    initialWhiteOff = 0;
-    initialBlackOff = 0;
+    setInitialBoard([...INITIAL_BOARD]);
+    setInitialWhiteOff(0);
+    setInitialBlackOff(0);
   }
 
   if (props.resumeAiDifficulty) {
@@ -272,9 +273,9 @@ const GameView: Component<{
           setChatMessages([
             { from: 'duckGammon', text: `Game started! You are ${msg.color === 'w' ? 'white' : 'black'} vs ${opp}. Good luck!`, time: chatTime() },
           ]);
-          initialBoard = [...msg.state.board];
-          initialWhiteOff = msg.state.whiteOff;
-          initialBlackOff = msg.state.blackOff;
+          setInitialBoard([...msg.state.board]);
+          setInitialWhiteOff(msg.state.whiteOff);
+          setInitialBlackOff(msg.state.blackOff);
           setWaitingForOpponent(false);
           setRematchOffered(false);
           setHistory([]);
@@ -397,9 +398,9 @@ const GameView: Component<{
     const idx = historyIndex();
     if (idx === null) return null;
     const h = history();
-    const board = cloneBoard(initialBoard);
-    let wOff = initialWhiteOff;
-    let bOff = initialBlackOff;
+    const board = cloneBoard(initialBoard());
+    let wOff = initialWhiteOff();
+    let bOff = initialBlackOff();
     if (idx === -1) return { board, whiteOff: wOff, blackOff: bOff }; // starting position
     for (let i = 0; i <= idx && i < h.length; i++) {
       const turn = h[i];
@@ -1027,9 +1028,9 @@ const GameView: Component<{
     setArrowVisible(false);
     setArrowMoves([]);
     const fresh = newGame();
-    initialBoard = [...fresh.board];
-    initialWhiteOff = 0;
-    initialBlackOff = 0;
+    setInitialBoard([...fresh.board]);
+    setInitialWhiteOff(0);
+    setInitialBlackOff(0);
     setState(fresh);
     setSelectedPoint(null);
     setHistory([]);
