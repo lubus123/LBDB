@@ -1384,7 +1384,7 @@
 
 /* ─── Profile ─── */
 .profile-page {
-  max-width: 500px;
+  max-width: 650px;
   margin: 40px auto;
   padding: 24px;
 }
@@ -1692,6 +1692,13 @@
   color: var(--text-muted);
   margin-top: 2px;
 }
+.game-card-date {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  margin-right: 8px;
+}
+
 .game-card-action {
   font-size: 14px;
   min-height: 32px;

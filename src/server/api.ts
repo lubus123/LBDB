@@ -285,6 +285,8 @@ export async function handleApiRoute(req: IncomingMessage, res: ServerResponse):
       const blackUser = aliasedTable(users, 'black_user');
       const rows = await db.select({
         id: games.id,
+        whiteId: games.whiteId,
+        blackId: games.blackId,
         winner: games.winner,
         resultType: games.resultType,
         luckWhite: games.luckWhite,
@@ -295,6 +297,7 @@ export async function handleApiRoute(req: IncomingMessage, res: ServerResponse):
         status: games.status,
         mode: games.mode,
         aiDifficulty: games.aiDifficulty,
+        currentTurn: games.currentTurn,
         moveCount: games.moveCount,
         updatedAt: games.updatedAt,
       })

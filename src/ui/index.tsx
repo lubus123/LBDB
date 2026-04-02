@@ -427,9 +427,13 @@ function App() {
                               <span class="game-card-icon">{g.mode === 'ai' ? '🤖' : '🦆'}</span>
                               <div>
                                 <div class="game-card-opponent">vs {g.mode === 'ai' ? `AI (${g.aiDifficulty || 'expert'})` : (g.whiteUsername || g.blackUsername || 'opponent')}</div>
-                                <div class="game-card-meta">{g.moveCount || 0} moves · {timeAgo(g.updatedAt)}</div>
+                                <div class="game-card-meta">
+                                  {g.moveCount || 0} moves · {timeAgo(g.updatedAt)}
+                                  {g.currentTurn ? ` · ${g.currentTurn === 'w' ? (g.whiteUsername || 'White') : (g.blackUsername || 'Black')}'s turn` : ''}
+                                </div>
                               </div>
                             </div>
+                            <div class="game-card-date">{new Date(g.createdAt).toLocaleDateString()}</div>
                             <button class="btn btn-small game-card-action">{(g.mode === 'ai' || g.mode === 'local') ? '→' : '👁'}</button>
                           </div>
                         )}
@@ -444,9 +448,12 @@ function App() {
                               <span class="game-card-icon">{g.mode === 'ai' ? '🤖' : '🦆'}</span>
                               <div>
                                 <div class="game-card-opponent">vs {g.mode === 'ai' ? 'AI' : (g.whiteUsername || g.blackUsername || 'opponent')}</div>
-                                <div class="game-card-meta">{g.winner === 'w' ? 'Won' : 'Lost'} ({g.resultType || 'single'}) · {g.moveCount || 0} moves · {timeAgo(g.createdAt)}</div>
+                                <div class="game-card-meta">
+                                  {g.winner === (g.whiteId === u().id ? 'w' : 'b') ? 'Won' : 'Lost'} ({g.resultType || 'single'}) · {g.moveCount || 0} moves
+                                </div>
                               </div>
                             </div>
+                            <div class="game-card-date">{new Date(g.createdAt).toLocaleDateString()}</div>
                             <button class="btn btn-small game-card-action">👁</button>
                           </div>
                         )}
