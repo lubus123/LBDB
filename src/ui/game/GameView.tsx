@@ -288,12 +288,16 @@ const GameView: Component<{
           // Record completed turn when turn changes or game ends
           // Catches normal moves AND forced passes (server sends dice state then waiting state)
           if (prev.dice && (msg.state.turn !== prev.turn || msg.state.phase === 'gameOver')) {
-            setHistory(h => [...h, {
-              ply: prev.ply,
-              player: prev.turn,
-              dice: prev.dice!,
-              moves: prev.turnMoves,
-            }]);
+            const h = history();
+            // Guard: don't double-record the same ply (optimistic update + server state)
+            if (h.length === 0 || h[h.length - 1].ply !== prev.ply) {
+              setHistory(h => [...h, {
+                ply: prev.ply,
+                player: prev.turn,
+                dice: prev.dice!,
+                moves: prev.turnMoves,
+              }]);
+            }
           }
 
           // Compute luck when dice first appear (phase transitions to 'moving')
@@ -309,10 +313,18 @@ const GameView: Component<{
           setState(msg.state);
           break;
         }
-        case 'timeout':
+        case 'timeout': {
+          const prevT = currentState();
+          if (prevT.dice) {
+            const h = history();
+            if (h.length === 0 || h[h.length - 1].ply !== prevT.ply) {
+              setHistory(h => [...h, { ply: prevT.ply, player: prevT.turn, dice: prevT.dice!, moves: prevT.turnMoves }]);
+            }
+          }
           playTimeout();
           setState(msg.state);
           break;
+        }
         case 'game_over':
           if (msg.result.winner === myColor()) playVictory();
           else playDefeat();
@@ -1148,6 +1160,44 @@ const GameView: Component<{
       else playDefeat();
     } else {
       playVictory();
+    }
+  });
+
+  // Client-side validation: replay history must match live board at each turn boundary
+  createEffect(() => {
+    const s = currentState();
+    if (s.phase === 'gameOver' || isReviewing()) return;
+    if (s.phase !== 'waiting') return; // only validate at turn boundaries
+    const h = history();
+    if (h.length === 0) return;
+
+    const board = cloneBoard(initialBoard());
+    let wOff = initialWhiteOff();
+    let bOff = initialBlackOff();
+    for (const turn of h) {
+      for (const move of turn.moves) {
+        applyBoardMove(board, move, turn.player);
+        if ((turn.player === 'w' && move.to <= 0) || (turn.player === 'b' && move.to >= 25)) {
+          if (turn.player === 'w') wOff++; else bOff++;
+        }
+      }
+    }
+
+    let mismatch = false;
+    for (let i = 0; i < 26; i++) {
+      if (board[i] !== s.board[i]) { mismatch = true; break; }
+    }
+    if (wOff !== s.whiteOff || bOff !== s.blackOff) mismatch = true;
+
+    if (mismatch) {
+      // Find first differing point
+      const diffs: string[] = [];
+      for (let i = 0; i < 26; i++) {
+        if (board[i] !== s.board[i]) diffs.push(`pt${i}:replay=${board[i]},live=${s.board[i]}`);
+      }
+      if (wOff !== s.whiteOff) diffs.push(`wOff:replay=${wOff},live=${s.whiteOff}`);
+      if (bOff !== s.blackOff) diffs.push(`bOff:replay=${bOff},live=${s.blackOff}`);
+      console.warn(`[duckGammon] History mismatch! ${h.length} turns, ply=${s.ply}, ${s.turn}'s turn. Diffs: ${diffs.join('; ')}. Last recorded: ply=${h[h.length-1]?.ply} ${h[h.length-1]?.player} dice=${h[h.length-1]?.dice} moves=${h[h.length-1]?.moves?.length}`);
     }
   });
 
