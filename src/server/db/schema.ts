@@ -37,10 +37,18 @@ export const games = pgTable('games', {
   luckBlack: real('luck_black'),
   timeControl: integer('time_control'),
   createdAt: timestamp('created_at').defaultNow(),
+  status: varchar('status', { length: 15 }).default('completed').notNull(),
+  mode: varchar('mode', { length: 10 }),
+  aiDifficulty: varchar('ai_difficulty', { length: 10 }),
+  currentTurn: varchar('current_turn', { length: 1 }).default('w'),
+  moveCount: integer('move_count').default(0).notNull(),
+  updatedAt: timestamp('updated_at').defaultNow(),
 }, (t) => [
   index('idx_games_white_id').on(t.whiteId),
   index('idx_games_black_id').on(t.blackId),
   index('idx_games_created_at').on(t.createdAt),
+  index('idx_games_status').on(t.status),
+  index('idx_games_updated_at').on(t.updatedAt),
 ]);
 
 export const sessions = pgTable('sessions', {

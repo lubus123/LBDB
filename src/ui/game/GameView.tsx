@@ -1,6 +1,6 @@
-import { Component, Show, createSignal, createMemo, createEffect, onCleanup } from 'solid-js';
+import { Component, Show, createSignal, createMemo, createEffect, onCleanup, batch } from 'solid-js';
 import type { GameState, Color, CheckerMove, GameResult } from '../../shared/types';
-import { W_BAR, B_BAR } from '../../shared/constants';
+import { W_BAR, B_BAR, INITIAL_BOARD } from '../../shared/constants';
 import { checkersAt, cloneBoard, applyMove as applyBoardMove } from '../../engine/board';
 import { newGame, doRoll, doMove, doDouble, doAcceptDouble, doDropDouble, undoMove, confirmTurn, getGameResult } from '../../engine/game';
 import { legalDestinations, movableCheckers, hasAnyMoves } from '../../engine/moves';
@@ -14,7 +14,7 @@ import { formatTurn, formatDice } from '../../shared/notation';
 import Board, { BOARD_VIEWBOX, colToPoint, pointX, pointToCol, checkerY } from '../board/Board';
 import Dice from '../board/Dice';
 import Jail from '../board/Jail';
-import MoveAnimation, { triggerAnimation, triggerBunnyHop, clearAnimations, HOP_DURATION, ANIM_DURATION, getHiddenDests } from '../board/MoveAnimation';
+import MoveAnimation, { triggerAnimation, triggerBunnyHop, triggerCapture, clearAnimations, HOP_DURATION, ANIM_DURATION, getHiddenDests } from '../board/MoveAnimation';
 import OpponentArrows from '../board/OpponentArrows';
 import LuckMeter, { type LuckEntry } from '../board/LuckMeter';
 import CountdownClock from '../board/CountdownClock';
@@ -30,9 +30,20 @@ interface TurnRecord {
   moves: CheckerMove[];
 }
 
-export type GameMode = 'local' | 'ai' | 'online';
+export type GameMode = 'local' | 'ai' | 'online' | 'review';
 export type AiDifficulty = 'strong' | 'expert';
 // AI difficulty now managed internally in GameView's Options panel
+
+async function gameApiFetch(path: string, opts: RequestInit = {}) {
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('dg-token') : null;
+  if (!token) return null;
+  const headers: Record<string, string> = { 'Content-Type': 'application/json', ...(opts.headers as Record<string, string> || {}) };
+  headers['Authorization'] = `Bearer ${token}`;
+  try {
+    const res = await fetch(path, { ...opts, headers });
+    return res.json();
+  } catch { return null; }
+}
 
 const AI_ROLL_DELAY = 600;
 const AI_MOVE_DELAY = 650;
@@ -47,7 +58,16 @@ const WS_URL = import.meta.env.VITE_WS_URL ||
     ? `wss://${window.location.host}`
     : `ws://${window.location.host}`);
 
-const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevPreset; onlineGameId?: string }> = (props) => {
+const GameView: Component<{
+  onExit: () => void;
+  mode: GameMode;
+  devPreset?: DevPreset;
+  onlineGameId?: string;
+  resumeGameId?: number;
+  resumeMoves?: TurnRecord[];
+  resumeAiDifficulty?: string;
+  reviewMoves?: any[];
+}> = (props) => {
   const initState = props.devPreset
     ? {
         board: [...props.devPreset.board],
@@ -79,6 +99,7 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
   const [arrowsEnabled, setArrowsEnabled] = createSignal(false);
   const [historyIndex, setHistoryIndex] = createSignal<number | null>(null);
   const [timePerMove, setTimePerMove] = createSignal<number | null>(
+    props.mode === 'ai' ? null : // No clock by default for AI games
     typeof localStorage !== 'undefined' ? (() => {
       const v = localStorage.getItem('bg-time');
       return v === 'none' ? null : Number(v) || 30;
@@ -115,9 +136,84 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
   const chatTime = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   const [opponentName, setOpponentName] = createSignal<string>('Opponent');
   const [mobileOverlay, setMobileOverlay] = createSignal<'none' | 'side' | 'chat'>('none');
-  let initialBoard = [...initState.board];
-  let initialWhiteOff = initState.whiteOff;
-  let initialBlackOff = initState.blackOff;
+  // Reactive signals so reviewState memo recomputes when these change
+  const [initialBoard, setInitialBoard] = createSignal<number[]>([...initState.board]);
+  const [initialWhiteOff, setInitialWhiteOff] = createSignal(initState.whiteOff);
+  const [initialBlackOff, setInitialBlackOff] = createSignal(initState.blackOff);
+
+  // Resume from saved game
+  if (props.resumeMoves && props.resumeMoves.length > 0) {
+    const board = [...INITIAL_BOARD];
+    let wOff = 0, bOff = 0;
+    let lastTurn: Color = 'w';
+    for (const turn of props.resumeMoves) {
+      for (const move of turn.moves) {
+        applyBoardMove(board, move, turn.player);
+        if ((turn.player === 'w' && move.to <= 0) || (turn.player === 'b' && move.to >= 25)) {
+          if (turn.player === 'w') wOff++; else bOff++;
+        }
+      }
+      lastTurn = turn.player === 'w' ? 'b' : 'w';
+    }
+    setState({
+      ...initState,
+      board,
+      whiteOff: wOff,
+      blackOff: bOff,
+      turn: lastTurn,
+      ply: props.resumeMoves.length,
+    });
+    setHistory(props.resumeMoves);
+    setInitialBoard([...INITIAL_BOARD]);
+    setInitialWhiteOff(0);
+    setInitialBlackOff(0);
+  }
+
+  if (props.resumeAiDifficulty) {
+    setAiDifficulty(props.resumeAiDifficulty as AiDifficulty);
+  }
+
+  const isReview = () => props.mode === 'review';
+
+  // Initialize review mode
+  if (isReview() && props.reviewMoves && props.reviewMoves.length > 0) {
+    setHistory(props.reviewMoves as TurnRecord[]);
+    setHistoryIndex(-1); // start at initial position
+  }
+
+  const [dbGameId, setDbGameId] = createSignal<number | null>(props.resumeGameId ?? null);
+
+  // Save game to DB (non-blocking, authenticated users only)
+  async function createDbGame() {
+    const data = await gameApiFetch('/api/games', {
+      method: 'POST',
+      body: JSON.stringify({ mode: props.mode, aiDifficulty: aiDifficulty() }),
+    });
+    if (data?.gameId) setDbGameId(data.gameId);
+  }
+
+  async function saveDbTurn(turn: TurnRecord) {
+    const id = dbGameId();
+    if (!id) return;
+    gameApiFetch(`/api/games/${id}/moves`, {
+      method: 'PATCH',
+      body: JSON.stringify(turn),
+    });
+  }
+
+  async function completeDbGame(winner: string, resultType: string) {
+    const id = dbGameId();
+    if (!id) return;
+    gameApiFetch(`/api/games/${id}/complete`, {
+      method: 'PATCH',
+      body: JSON.stringify({ winner, resultType }),
+    });
+  }
+
+  // Create DB record for new AI/local games (not online — server handles that)
+  if (props.mode !== 'online' && !props.resumeGameId) {
+    createDbGame();
+  }
 
   // Persist settings
   createEffect(() => {
@@ -142,6 +238,16 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
   const isAiMode = () => props.mode === 'ai';
   const isAiTurn = () => isAiMode() && currentState().turn === 'b';
   const isOnline = () => props.mode === 'online';
+
+  // Save game completion to DB
+  createEffect(() => {
+    const s = currentState();
+    if (s.phase === 'gameOver' && !isOnline()) {
+      const result = getGameResult(s);
+      if (result) completeDbGame(result.winner, result.type);
+    }
+  });
+
   const isMyTurn = () => {
     if (isOnline()) return currentState().turn === myColor();
     if (isAiMode()) return currentState().turn === 'w';
@@ -167,9 +273,9 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
           setChatMessages([
             { from: 'duckGammon', text: `Game started! You are ${msg.color === 'w' ? 'white' : 'black'} vs ${opp}. Good luck!`, time: chatTime() },
           ]);
-          initialBoard = [...msg.state.board];
-          initialWhiteOff = msg.state.whiteOff;
-          initialBlackOff = msg.state.blackOff;
+          setInitialBoard([...msg.state.board]);
+          setInitialWhiteOff(msg.state.whiteOff);
+          setInitialBlackOff(msg.state.blackOff);
           setWaitingForOpponent(false);
           setRematchOffered(false);
           setHistory([]);
@@ -180,13 +286,18 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
           const prev = currentState();
 
           // Record completed turn when turn changes or game ends
-          if (prev.dice && prev.phase === 'moving' && (msg.state.turn !== prev.turn || msg.state.phase === 'gameOver')) {
-            setHistory(h => [...h, {
-              ply: prev.ply,
-              player: prev.turn,
-              dice: prev.dice!,
-              moves: prev.turnMoves,
-            }]);
+          // Catches normal moves AND forced passes (server sends dice state then waiting state)
+          if (prev.dice && (msg.state.turn !== prev.turn || msg.state.phase === 'gameOver')) {
+            const h = history();
+            // Guard: don't double-record the same ply (optimistic update + server state)
+            if (h.length === 0 || h[h.length - 1].ply !== prev.ply) {
+              setHistory(h => [...h, {
+                ply: prev.ply,
+                player: prev.turn,
+                dice: prev.dice!,
+                moves: prev.turnMoves,
+              }]);
+            }
           }
 
           // Compute luck when dice first appear (phase transitions to 'moving')
@@ -202,10 +313,18 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
           setState(msg.state);
           break;
         }
-        case 'timeout':
+        case 'timeout': {
+          const prevT = currentState();
+          if (prevT.dice) {
+            const h = history();
+            if (h.length === 0 || h[h.length - 1].ply !== prevT.ply) {
+              setHistory(h => [...h, { ply: prevT.ply, player: prevT.turn, dice: prevT.dice!, moves: prevT.turnMoves }]);
+            }
+          }
           playTimeout();
           setState(msg.state);
           break;
+        }
         case 'game_over':
           if (msg.result.winner === myColor()) playVictory();
           else playDefeat();
@@ -291,9 +410,9 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
     const idx = historyIndex();
     if (idx === null) return null;
     const h = history();
-    const board = cloneBoard(initialBoard);
-    let wOff = initialWhiteOff;
-    let bOff = initialBlackOff;
+    const board = cloneBoard(initialBoard());
+    let wOff = initialWhiteOff();
+    let bOff = initialBlackOff();
     if (idx === -1) return { board, whiteOff: wOff, blackOff: bOff }; // starting position
     for (let i = 0; i <= idx && i < h.length; i++) {
       const turn = h[i];
@@ -392,11 +511,33 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
     return waypoints.length >= 2 ? waypoints : null;
   }
 
-  function animateMove(from: number, to: number, color: Color, board: number[]): number {
+  function animateMove(from: number, to: number, color: Color, board: number[], hit?: boolean): number {
+    let duration: number;
+
+    // If this is a capture, show the captured checker lingering at the destination
+    if (hit && to > 0 && to < 25) {
+      const capturedColor: Color = color === 'w' ? 'b' : 'w';
+      const capturedPos = getCheckerPixel(to, board); // position of captured checker BEFORE move
+      const barX = MARGIN + 6 + 6 * 52 + 20; // bar center X
+      const barY = BOARD_VIEWBOX.h / 2; // bar center Y
+      if (capturedPos) {
+        // Compute animation duration to know when impact happens
+        let impactDelay: number;
+        if (bunnyHop()) {
+          const wp = computeHopWaypoints(from, to, color, board);
+          impactDelay = wp ? (wp.length - 1) * HOP_DURATION : ANIM_DURATION;
+        } else {
+          impactDelay = ANIM_DURATION;
+        }
+        triggerCapture(capturedPos.x, capturedPos.y, barX, barY, capturedColor, impactDelay);
+      }
+    }
+
     if (bunnyHop()) {
       const wp = computeHopWaypoints(from, to, color, board);
       if (wp && wp.length >= 2) {
-        return triggerBunnyHop(wp, color, to);
+        duration = triggerBunnyHop(wp, color, to);
+        return duration;
       }
     }
     // Fallback to slide
@@ -535,7 +676,7 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
       return;
     }
 
-    if (s.phase === 'moving' && s.dice) {
+    if (s.phase === 'moving' && s.dice && !aiThinking()) {
       setAiThinking(true);
       doAiMoves(s);
     }
@@ -560,32 +701,43 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
     let currentDelay = AI_MOVE_DELAY;
     const savedDice = s.dice!;
 
+    // Pre-compute all intermediate states so timeouts don't depend on reactive state
+    let simState = s;
+    const intermediateStates: GameState[] = [s];
+    for (const move of aiResult.moves) {
+      simState = doMove(simState, move);
+      intermediateStates.push(simState);
+      if (simState.phase !== 'moving') break;
+    }
+
+    let aiRecorded = false;
+
     for (let i = 0; i < aiResult.moves.length; i++) {
       const move = aiResult.moves[i];
+      const nextState = intermediateStates[i + 1];
+      const prevState = intermediateStates[i];
       const isLast = i === aiResult.moves.length - 1;
 
       const t = window.setTimeout(() => {
-        setState(prev => {
-          if (prev.turn !== 'b' || prev.phase !== 'moving') return prev;
-
-          animateMove(move.from, move.to, 'b', prev.board);
-
+        batch(() => {
+          animateMove(move.from, move.to, 'b', prevState.board, move.hit);
           if (move.hit) playCapture();
           if (move.from === B_BAR) playJailEscape();
 
-          const next = doMove(prev, move);
-
-          if (isLast || next.phase === 'waiting' || next.phase === 'gameOver') {
-            setHistory(h => [...h, {
-              ply: prev.ply,
+          if (!aiRecorded && (isLast || nextState.phase === 'waiting' || nextState.phase === 'gameOver')) {
+            aiRecorded = true;
+            const aiTurnRecord: TurnRecord = {
+              ply: s.ply,
               player: 'b',
               dice: savedDice,
               moves: aiResult.moves,
-            }]);
+            };
+            setHistory(h => [...h, aiTurnRecord]);
+            saveDbTurn(aiTurnRecord);
             showOpponentArrows(aiResult.moves);
             setAiThinking(false);
           }
-          return next;
+          setState(nextState);
         });
       }, currentDelay);
       aiTimeouts.push(t);
@@ -686,23 +838,29 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
       hit: isHit && to > 0 && to < 25,
     };
 
-    animateMove(from, to, s.turn, s.board);
-    if (move.hit) playCapture();
-    if (from === W_BAR || from === B_BAR) playJailEscape();
-
+    // Batch animation + state update so they render in one frame
+    // (prevents source checker + animation checker both visible)
     if (isOnline()) {
-      // Send to server — server will broadcast authoritative state
-      socket.send({ type: 'move', move });
-      // Optimistic local update for responsiveness
-      const newState = doMove(s, move);
-      setState(newState);
-      setSelectedPoint(null);
+      batch(() => {
+        animateMove(from, to, s.turn, s.board, move.hit);
+        if (move.hit) playCapture();
+        if (from === W_BAR || from === B_BAR) playJailEscape();
+        socket.send({ type: 'move', move });
+        setState(doMove(s, move));
+        setSelectedPoint(null);
+      });
       return;
     }
 
-    const newState = doMove(s, move);
-    setState(newState);
-    setSelectedPoint(null);
+    let newState!: GameState;
+    batch(() => {
+      animateMove(from, to, s.turn, s.board, move.hit);
+      if (move.hit) playCapture();
+      if (from === W_BAR || from === B_BAR) playJailEscape();
+      newState = doMove(s, move);
+      setState(newState);
+      setSelectedPoint(null);
+    });
 
     if (newState.phase === 'waiting' || newState.phase === 'gameOver') {
       recordTurn(s, newState, move);
@@ -867,12 +1025,14 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
   function recordTurn(before: GameState, _after: GameState, extraMove?: CheckerMove) {
     if (before.dice) {
       const moves = extraMove ? [...before.turnMoves, extraMove] : before.turnMoves;
-      setHistory(prev => [...prev, {
+      const turnRecord: TurnRecord = {
         ply: before.ply,
         player: before.turn,
         dice: before.dice!,
         moves,
-      }]);
+      };
+      setHistory(prev => [...prev, turnRecord]);
+      if (!isOnline()) saveDbTurn(turnRecord);
     }
   }
 
@@ -886,9 +1046,9 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
     setArrowVisible(false);
     setArrowMoves([]);
     const fresh = newGame();
-    initialBoard = [...fresh.board];
-    initialWhiteOff = 0;
-    initialBlackOff = 0;
+    setInitialBoard([...fresh.board]);
+    setInitialWhiteOff(0);
+    setInitialBlackOff(0);
     setState(fresh);
     setSelectedPoint(null);
     setHistory([]);
@@ -1006,6 +1166,45 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
       else playDefeat();
     } else {
       playVictory();
+    }
+  });
+
+  // Client-side validation: replay history must match live board at each turn boundary
+  createEffect(() => {
+    const s = currentState();
+    if (s.phase === 'gameOver' || isReviewing()) return;
+    if (s.phase !== 'waiting') return; // only validate at turn boundaries
+    const h = history();
+    if (h.length === 0) return;
+
+    const board = cloneBoard(initialBoard());
+    let wOff = initialWhiteOff();
+    let bOff = initialBlackOff();
+    for (const turn of h) {
+      for (const move of turn.moves) {
+        applyBoardMove(board, move, turn.player);
+        if ((turn.player === 'w' && move.to <= 0) || (turn.player === 'b' && move.to >= 25)) {
+          if (turn.player === 'w') wOff++; else bOff++;
+        }
+      }
+    }
+
+    let mismatch = false;
+    for (let i = 0; i < 26; i++) {
+      if (board[i] !== s.board[i]) { mismatch = true; break; }
+    }
+    if (wOff !== s.whiteOff || bOff !== s.blackOff) mismatch = true;
+
+    if (mismatch) {
+      const diffs: string[] = [];
+      for (let i = 0; i < 26; i++) {
+        if (board[i] !== s.board[i]) diffs.push(`pt${i}:replay=${board[i]},live=${s.board[i]}`);
+      }
+      if (wOff !== s.whiteOff) diffs.push(`wOff:replay=${wOff},live=${s.whiteOff}`);
+      if (bOff !== s.blackOff) diffs.push(`bOff:replay=${bOff},live=${s.blackOff}`);
+      // Dump full history for debugging
+      const histDump = h.map((t, i) => `${i}:ply${t.ply} ${t.player} ${t.dice} [${t.moves.map(m => `${m.from}→${m.to}${m.hit?'!':''}`).join(',')}]`).join(' | ');
+      console.warn(`[duckGammon] MISMATCH ${h.length} turns ply=${s.ply} ${s.turn}. ${diffs.join('; ')}. History: ${histDump}`);
     }
   });
 
@@ -1199,6 +1398,9 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
         <Show when={isOnline() && currentState().phase !== 'gameOver'}>
           <button class="btn mobile-action-btn" style={{ color: '#e53935' }} onClick={handleResign}>Resign</button>
         </Show>
+        <Show when={isReview()}>
+          <span style={{ color: 'var(--text-muted)', "font-size": "12px" }}>Review mode · ← → to navigate</span>
+        </Show>
         <div style={{ flex: '1' }} />
         <button class="btn mobile-action-btn mobile-menu-btn" onClick={() => setMobileOverlay(o => o === 'side' ? 'none' : 'side')}>&#8943;</button>
         <Show when={isOnline()}>
@@ -1264,6 +1466,7 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
           <LuckMeter history={luckHistory()} isAiMode={isAiMode()} />
         </div>
 
+        <Show when={!isReview()}>
         <div class="panel-section">
           <div class="panel-title">Actions</div>
           <div class="controls">
@@ -1329,6 +1532,7 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
             </Show>
           </div>
         </div>
+        </Show>
 
         <div class="panel-section" style={{ flex: 1, "min-height": 0 }}>
           <div class="panel-title">Moves</div>
@@ -1343,9 +1547,47 @@ const GameView: Component<{ onExit: () => void; mode: GameMode; devPreset?: DevP
                 <span class="ply">{h.ply + 1}.</span>
                 <span class={`color-indicator ${h.player === 'w' ? 'white' : 'black'}`} />
                 <span class="dice-label">{formatDice(h.dice)}</span>
-                <span>{formatTurn(h.moves, h.player)}</span>
+                <span>{h.moves.length > 0 ? formatTurn(h.moves, h.player) : '(no moves)'}</span>
               </div>
             ))}
+            {/* Live turn — current in-progress */}
+            <Show when={!isReviewing() && currentState().phase !== 'gameOver'}>
+              {(() => {
+                const s = currentState();
+                const turnNum = history().length + 1;
+                const colorClass = s.turn === 'w' ? 'white' : 'black';
+
+                if (s.phase === 'waiting' && !waitingForOpponent()) {
+                  return (
+                    <div class="move-entry current">
+                      <span class="ply">{turnNum}.</span>
+                      <span class={`color-indicator ${colorClass}`} />
+                      <span class="move-status">Awaiting roll</span>
+                    </div>
+                  );
+                }
+                if (isRolling()) {
+                  return (
+                    <div class="move-entry current">
+                      <span class="ply">{turnNum}.</span>
+                      <span class={`color-indicator ${colorClass}`} />
+                      <span class="move-status">Rolling...</span>
+                    </div>
+                  );
+                }
+                if (s.phase === 'moving' && s.dice) {
+                  return (
+                    <div class="move-entry current">
+                      <span class="ply">{turnNum}.</span>
+                      <span class={`color-indicator ${colorClass}`} />
+                      <span class="dice-label">{formatDice(s.dice)}</span>
+                      <span>{s.turnMoves.length > 0 ? formatTurn(s.turnMoves, s.turn) : '...'}</span>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
+            </Show>
           </div>
         </div>
 

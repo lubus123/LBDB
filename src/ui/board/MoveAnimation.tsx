@@ -1,4 +1,4 @@
-import { Component, For, createSignal } from 'solid-js';
+import { Component, For, createSignal, Show } from 'solid-js';
 import type { Color } from '../../shared/types';
 
 export interface AnimatingChecker {
@@ -18,6 +18,18 @@ export interface AnimatingChecker {
   startTime?: number;
 }
 
+/** A captured checker that lingers, then rises toward board center while fading */
+interface CapturedChecker {
+  id: number;
+  color: Color;
+  x: number;
+  y: number;
+  phase: 'waiting' | 'impact' | 'rising';
+  currentY: number;
+  opacity: number;
+  scale: number;
+}
+
 const COLORS = {
   checkerWhite: '#e8dcc8',
   checkerWhiteBorder: '#c4b8a4',
@@ -33,6 +45,7 @@ const ARC_HEIGHT = 25;
 let nextId = 0;
 
 const [animations, setAnimations] = createSignal<AnimatingChecker[]>([]);
+const [capturedCheckers, setCapturedCheckers] = createSignal<CapturedChecker[]>([]);
 
 // Points where a checker just landed — hide the top checker there until animation ends
 const [hiddenDests, setHiddenDests] = createSignal<Set<number>>(new Set());
@@ -50,6 +63,75 @@ function addHiddenDest(point: number, duration: number) {
       return next;
     });
   }, duration);
+}
+
+const BOARD_CENTER_Y = 320;
+const CAPTURE_RISE_DURATION = 500; // total rise+fade: 0.5s
+const CAPTURE_IMPACT_DURATION = 100; // brief impact pulse
+
+/**
+ * Captured checker: lingers at position, impact glow when hit,
+ * then rises toward board center while fading away (0.5s).
+ */
+export function triggerCapture(
+  x: number, y: number,
+  _barX: number, _barY: number,
+  capturedColor: Color,
+  delay: number,
+) {
+  // Dedup: don't create another capture at the same position
+  const existing = capturedCheckers();
+  if (existing.some(c => Math.abs(c.x - x) < 5 && Math.abs(c.y - y) < 5)) return;
+
+  const id = nextId++;
+
+  const cap: CapturedChecker = {
+    id, color: capturedColor, x, y,
+    phase: 'waiting', currentY: y, opacity: 1, scale: 1,
+  };
+  setCapturedCheckers(prev => [...prev, cap]);
+
+  // Phase 2: impact when capturing checker arrives
+  setTimeout(() => {
+    setCapturedCheckers(prev => prev.map(c =>
+      c.id === id ? { ...c, phase: 'impact' as const, scale: 1.15 } : c
+    ));
+
+    // Phase 3: rise toward center while fading
+    setTimeout(() => {
+      setCapturedCheckers(prev => prev.map(c =>
+        c.id === id ? { ...c, phase: 'rising' as const } : c
+      ));
+
+      const startTime = performance.now();
+      const startY = y;
+      // Direction: toward center. Top checkers float down, bottom float up.
+      const targetY = BOARD_CENTER_Y;
+
+      function tick() {
+        const elapsed = performance.now() - startTime;
+        const t = Math.min(elapsed / CAPTURE_RISE_DURATION, 1);
+        // Ease-out for smooth deceleration
+        const ease = 1 - Math.pow(1 - t, 2);
+
+        const currentY = startY + (targetY - startY) * ease;
+        const opacity = 1 - t; // linear fade to 0
+        const scale = 1.15 - 0.15 * ease; // shrink from 1.15 back to 1
+
+        setCapturedCheckers(prev => prev.map(c =>
+          c.id === id ? { ...c, currentY, opacity, scale } : c
+        ));
+
+        if (t < 1) {
+          requestAnimationFrame(tick);
+        } else {
+          setCapturedCheckers(prev => prev.filter(c => c.id !== id));
+        }
+      }
+
+      requestAnimationFrame(tick);
+    }, CAPTURE_IMPACT_DURATION);
+  }, delay);
 }
 
 export function triggerAnimation(
@@ -132,12 +214,39 @@ export function triggerBunnyHop(
 
 export function clearAnimations() {
   setAnimations([]);
+  setCapturedCheckers([]);
   setHiddenDests(new Set<number>());
 }
 
 const MoveAnimation: Component = () => {
   return (
     <g class="move-animation-layer">
+      {/* Captured checkers: linger, impact glow, rise toward center while fading */}
+      <For each={capturedCheckers()}>
+        {(cap) => {
+          const fill = cap.color === 'w' ? COLORS.checkerWhite : COLORS.checkerBlack;
+          const stroke = cap.color === 'w' ? COLORS.checkerWhiteBorder : COLORS.checkerBlackBorder;
+
+          return (
+            <circle
+              cx={cap.x}
+              cy={cap.currentY}
+              r={CHECKER_R * cap.scale}
+              fill={fill}
+              stroke={cap.phase === 'impact' || cap.phase === 'rising' ? '#ff6666' : stroke}
+              stroke-width={cap.phase === 'impact' ? 2.5 : 1.5}
+              opacity={cap.opacity}
+              style={{
+                filter: cap.phase === 'impact'
+                  ? 'drop-shadow(0 0 10px rgba(255,100,100,0.6))'
+                  : 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
+              }}
+            />
+          );
+        }}
+      </For>
+
+      {/* Moving checkers */}
       <For each={animations()}>
         {(anim) => {
           const fill = anim.color === 'w' ? COLORS.checkerWhite : COLORS.checkerBlack;

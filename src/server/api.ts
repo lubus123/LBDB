@@ -196,6 +196,84 @@ export async function handleApiRoute(req: IncomingMessage, res: ServerResponse):
       return true;
     }
 
+    // ─── Game CRUD ───
+    if (method === 'POST' && url === '/api/games') {
+      const user = await requireAuth(req, res);
+      if (!user) return true;
+      const db = getDb();
+      if (!db) { json(res, 500, { error: 'DB unavailable' }); return true; }
+      const { mode, aiDifficulty } = await parseBody(req);
+      const [game] = await db.insert(games).values({
+        whiteId: user.id,
+        status: 'in_progress',
+        mode: mode || 'ai',
+        aiDifficulty: aiDifficulty || null,
+        moves: [],
+        currentTurn: 'w',
+        moveCount: 0,
+      }).returning({ id: games.id });
+      json(res, 200, { gameId: game.id });
+      return true;
+    }
+
+    const movesMatch = url.match(/^\/api\/games\/(\d+)\/moves$/);
+    if (method === 'PATCH' && movesMatch) {
+      const user = await requireAuth(req, res);
+      if (!user) return true;
+      const db = getDb();
+      if (!db) { json(res, 500, { error: 'DB unavailable' }); return true; }
+      const gameId = parseInt(movesMatch[1]);
+      const [game] = await db.select().from(games).where(eq(games.id, gameId)).limit(1);
+      if (!game) { json(res, 404, { error: 'Game not found' }); return true; }
+      if (game.whiteId !== user.id && game.blackId !== user.id) { json(res, 403, { error: 'Not your game' }); return true; }
+      const turn = await parseBody(req);
+      const currentMoves = (game.moves as any[]) || [];
+      currentMoves.push(turn);
+      await db.update(games).set({
+        moves: currentMoves,
+        moveCount: currentMoves.length,
+        currentTurn: turn.player === 'w' ? 'b' : 'w',
+        updatedAt: new Date(),
+      }).where(eq(games.id, gameId));
+      json(res, 200, { ok: true, moveCount: currentMoves.length });
+      return true;
+    }
+
+    const completeMatch = url.match(/^\/api\/games\/(\d+)\/complete$/);
+    if (method === 'PATCH' && completeMatch) {
+      const user = await requireAuth(req, res);
+      if (!user) return true;
+      const db = getDb();
+      if (!db) { json(res, 500, { error: 'DB unavailable' }); return true; }
+      const gameId = parseInt(completeMatch[1]);
+      const [game] = await db.select().from(games).where(eq(games.id, gameId)).limit(1);
+      if (!game) { json(res, 404, { error: 'Game not found' }); return true; }
+      if (game.whiteId !== user.id && game.blackId !== user.id) { json(res, 403, { error: 'Not your game' }); return true; }
+      const { winner, resultType } = await parseBody(req);
+      await db.update(games).set({
+        status: 'completed',
+        winner,
+        resultType: resultType || 'single',
+        updatedAt: new Date(),
+      }).where(eq(games.id, gameId));
+      json(res, 200, { ok: true });
+      return true;
+    }
+
+    const gameMatch = url.match(/^\/api\/games\/(\d+)$/);
+    if (method === 'GET' && gameMatch) {
+      const user = await requireAuth(req, res);
+      if (!user) return true;
+      const db = getDb();
+      if (!db) { json(res, 500, { error: 'DB unavailable' }); return true; }
+      const gameId = parseInt(gameMatch[1]);
+      const [game] = await db.select().from(games).where(eq(games.id, gameId)).limit(1);
+      if (!game) { json(res, 404, { error: 'Game not found' }); return true; }
+      if (game.whiteId !== user.id && game.blackId !== user.id) { json(res, 403, { error: 'Not your game' }); return true; }
+      json(res, 200, game);
+      return true;
+    }
+
     // ─── Game History ───
     if (method === 'GET' && url === '/api/history') {
       const user = await requireAuth(req, res);
@@ -207,6 +285,8 @@ export async function handleApiRoute(req: IncomingMessage, res: ServerResponse):
       const blackUser = aliasedTable(users, 'black_user');
       const rows = await db.select({
         id: games.id,
+        whiteId: games.whiteId,
+        blackId: games.blackId,
         winner: games.winner,
         resultType: games.resultType,
         luckWhite: games.luckWhite,
@@ -214,6 +294,12 @@ export async function handleApiRoute(req: IncomingMessage, res: ServerResponse):
         createdAt: games.createdAt,
         whiteUsername: whiteUser.username,
         blackUsername: blackUser.username,
+        status: games.status,
+        mode: games.mode,
+        aiDifficulty: games.aiDifficulty,
+        currentTurn: games.currentTurn,
+        moveCount: games.moveCount,
+        updatedAt: games.updatedAt,
       })
         .from(games)
         .leftJoin(whiteUser, eq(games.whiteId, whiteUser.id))

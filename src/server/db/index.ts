@@ -78,6 +78,14 @@ export async function migrateDb() {
     CREATE INDEX IF NOT EXISTS idx_games_white_id ON games(white_id);
     CREATE INDEX IF NOT EXISTS idx_games_black_id ON games(black_id);
     CREATE INDEX IF NOT EXISTS idx_games_created_at ON games(created_at DESC);
+    ALTER TABLE games ADD COLUMN IF NOT EXISTS status VARCHAR(15) DEFAULT 'completed' NOT NULL;
+    ALTER TABLE games ADD COLUMN IF NOT EXISTS mode VARCHAR(10);
+    ALTER TABLE games ADD COLUMN IF NOT EXISTS ai_difficulty VARCHAR(10);
+    ALTER TABLE games ADD COLUMN IF NOT EXISTS current_turn VARCHAR(1) DEFAULT 'w';
+    ALTER TABLE games ADD COLUMN IF NOT EXISTS move_count INTEGER DEFAULT 0 NOT NULL;
+    ALTER TABLE games ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW();
+    CREATE INDEX IF NOT EXISTS idx_games_status ON games(status);
+    CREATE INDEX IF NOT EXISTS idx_games_updated_at ON games(updated_at DESC);
   `);
   await pool.end();
   log.info('Schema migrated');

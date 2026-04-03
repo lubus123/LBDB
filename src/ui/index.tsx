@@ -38,6 +38,18 @@ const WS_URL = window.location.protocol === 'https:'
   ? `wss://${window.location.host}`
   : `ws://${window.location.host}`;
 
+function timeAgo(date: string | Date | null): string {
+  if (!date) return '';
+  const now = Date.now();
+  const then = new Date(date).getTime();
+  const diff = Math.floor((now - then) / 1000);
+  if (diff < 60) return 'just now';
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
+  return new Date(date).toLocaleDateString();
+}
+
 async function apiFetch(path: string, opts: RequestInit = {}) {
   const token = localStorage.getItem('dg-token');
   const headers: Record<string, string> = { 'Content-Type': 'application/json', ...(opts.headers as Record<string, string> || {}) };
@@ -49,6 +61,11 @@ async function apiFetch(path: string, opts: RequestInit = {}) {
 function App() {
   const [page, setPage] = createSignal<Page>('landing');
   const [gameMode, setGameMode] = createSignal<GameMode>('ai');
+  const [gameKey, setGameKey] = createSignal(0);
+  const [menuOpen, setMenuOpen] = createSignal(false);
+  const [profileTab, setProfileTab] = createSignal<'stats' | 'games'>('stats');
+  const [resumeData, setResumeData] = createSignal<{ gameId: number; moves: any[]; aiDifficulty?: string } | null>(null);
+  const [reviewMoves, setReviewMoves] = createSignal<any[] | null>(null);
   const [devPreset, setDevPreset] = createSignal<DevPreset | undefined>(undefined);
   const [showDev, setShowDev] = createSignal(false);
   const [onlineGameId, setOnlineGameId] = createSignal<string | undefined>(undefined);
@@ -198,8 +215,31 @@ function App() {
     const data = await apiFetch('/api/me'); if (data && !data.error) setUser(data);
     const history = await apiFetch('/api/history'); if (Array.isArray(history)) setGameHistory(history); setPage('profile');
   }
+
+  async function handleGameAction(game: any) {
+    const data = await apiFetch(`/api/games/${game.id}`);
+    if (!data || data.error) return;
+
+    if (game.status === 'in_progress' && (game.mode === 'ai' || game.mode === 'local')) {
+      // Resume
+      setResumeData({ gameId: game.id, moves: data.moves || [], aiDifficulty: data.aiDifficulty });
+      setReviewMoves(null);
+      setGameMode(game.mode as GameMode);
+      setGameKey(k => k + 1);
+      setPage('game');
+    } else {
+      // Review
+      setResumeData(null);
+      setReviewMoves(data.moves || []);
+      setGameMode('review' as GameMode);
+      setGameKey(k => k + 1);
+      setPage('game');
+    }
+  }
   function startGame(mode: GameMode, preset?: DevPreset) {
     setGameMode(mode); setDevPreset(preset); setOnlineGameId(undefined);
+    setResumeData(null); setReviewMoves(null); // always fresh game from play buttons
+    setGameKey(k => k + 1); // force fresh GameView instance
     if (mode === 'online') disconnectLobbyWs(); setPage('game');
   }
   function handleExit() { setOnlineGameId(undefined); setPage('landing'); if (user()) connectLobbyWs(); }
@@ -265,10 +305,17 @@ function App() {
           <Show when={user()} fallback={
             <a href="#" class="header-auth" onClick={(e) => { e.preventDefault(); setAuthError(''); setPage('login'); }}>Login</a>
           }>
-            {(u) => (<>
-              <a href="#" class="header-auth" onClick={(e) => { e.preventDefault(); loadProfile(); }}>{u().username}</a>
-              <a href="#" class="header-auth muted" onClick={(e) => { e.preventDefault(); handleLogout(); }}>logout</a>
-            </>)}
+            <div class="header-menu-wrapper">
+              <button class="header-hamburger" onClick={() => setMenuOpen(m => !m)}>☰</button>
+              <Show when={menuOpen()}>
+                <div class="header-dropdown" onClick={() => setMenuOpen(false)}>
+                  <div class="header-dropdown-name">{user()!.username}</div>
+                  <a href="#" onClick={(e) => { e.preventDefault(); setProfileTab('games'); loadProfile(); }}>My Games</a>
+                  <a href="#" onClick={(e) => { e.preventDefault(); setProfileTab('stats'); loadProfile(); }}>Stats</a>
+                  <a href="#" onClick={(e) => { e.preventDefault(); handleLogout(); }}>Logout</a>
+                </div>
+              </Show>
+            </div>
           </Show>
         </div>
       </header>
@@ -350,22 +397,71 @@ function App() {
           {(u) => {
             const winRate = () => u().gamesPlayed > 0 ? Math.round(u().gamesWon / u().gamesPlayed * 100) : 0;
             const capLabel = () => { const c = u().luckCapitalisation; if (c >= 10) return 'Opportunist'; if (c >= 3) return 'Resilient'; if (c <= -10) return 'Wasteful'; if (c <= -3) return 'Unlucky'; return 'Average'; };
+            const inProgressGames = () => gameHistory().filter((g: any) => g.status === 'in_progress');
+            const completedGames = () => gameHistory().filter((g: any) => g.status === 'completed');
             return (
               <div class="profile-page">
                 <h2>{u().username}</h2>
-                <div class="stat-grid">
-                  <div class="stat-card"><div class="stat-value">{u().gamesPlayed}</div><div class="stat-label">Games</div></div>
-                  <div class="stat-card"><div class="stat-value">{winRate()}%</div><div class="stat-label">Win rate</div></div>
-                  <div class="stat-card"><div class="stat-value" style={{ color: u().totalLuck >= 0 ? '#4caf50' : '#e53935' }}>{u().totalLuck >= 0 ? '+' : ''}{u().totalLuck.toFixed(1)}</div><div class="stat-label">Lifetime luck</div></div>
-                  <div class="stat-card"><div class="stat-value">{u().luckCapitalisation.toFixed(0)}</div><div class="stat-label">{capLabel()}</div></div>
+                <div class="profile-tabs">
+                  <button class={`profile-tab ${profileTab() === 'stats' ? 'active' : ''}`} onClick={() => setProfileTab('stats')}>Stats</button>
+                  <button class={`profile-tab ${profileTab() === 'games' ? 'active' : ''}`} onClick={() => setProfileTab('games')}>My Games</button>
                 </div>
-                <h3 style={{ "font-size": "14px", "margin-bottom": "8px" }}>Recent Games</h3>
-                <Show when={gameHistory().length > 0} fallback={<p style={{ color: 'var(--text-muted)', "font-size": "12px" }}>No games yet</p>}>
-                  <table class="game-history-table">
-                    <thead><tr><th>Date</th><th>White</th><th>Black</th><th>Result</th></tr></thead>
-                    <tbody><For each={gameHistory()}>{(g) => (<tr><td>{new Date(g.createdAt).toLocaleDateString()}</td><td>{g.whiteUsername || '?'}</td><td>{g.blackUsername || '?'}</td><td>{g.winner === 'w' ? 'W' : 'B'} ({g.resultType})</td></tr>)}</For></tbody>
-                  </table>
+
+                <Show when={profileTab() === 'stats'}>
+                  <div class="stat-grid">
+                    <div class="stat-card"><div class="stat-value">{u().gamesPlayed}</div><div class="stat-label">Games</div></div>
+                    <div class="stat-card"><div class="stat-value">{winRate()}%</div><div class="stat-label">Win rate</div></div>
+                    <div class="stat-card"><div class="stat-value" style={{ color: u().totalLuck >= 0 ? '#4caf50' : '#e53935' }}>{u().totalLuck >= 0 ? '+' : ''}{u().totalLuck.toFixed(1)}</div><div class="stat-label">Lifetime luck</div></div>
+                    <div class="stat-card"><div class="stat-value">{u().luckCapitalisation.toFixed(0)}</div><div class="stat-label">{capLabel()}</div></div>
+                  </div>
                 </Show>
+
+                <Show when={profileTab() === 'games'}>
+                  <div class="games-list">
+                    <Show when={inProgressGames().length > 0}>
+                      <h3 class="games-section-title">In Progress</h3>
+                      <For each={inProgressGames()}>
+                        {(g: any) => (
+                          <div class="game-card" onClick={() => handleGameAction(g)}>
+                            <div class="game-card-left">
+                              <span class="game-card-icon">{g.mode === 'ai' ? '🤖' : '🦆'}</span>
+                              <div>
+                                <div class="game-card-opponent">vs {g.mode === 'ai' ? `AI (${g.aiDifficulty || 'expert'})` : (g.whiteUsername || g.blackUsername || 'opponent')}</div>
+                                <div class="game-card-meta">
+                                  {g.moveCount || 0} moves · {timeAgo(g.updatedAt)}
+                                  {g.currentTurn ? ` · ${g.currentTurn === 'w' ? (g.whiteUsername || 'White') : (g.blackUsername || 'Black')}'s turn` : ''}
+                                </div>
+                              </div>
+                            </div>
+                            <div class="game-card-date">{new Date(g.createdAt).toLocaleDateString()}</div>
+                            <button class="btn btn-small game-card-action">{(g.mode === 'ai' || g.mode === 'local') ? '→' : '👁'}</button>
+                          </div>
+                        )}
+                      </For>
+                    </Show>
+                    <h3 class="games-section-title">Completed</h3>
+                    <Show when={completedGames().length > 0} fallback={<p style={{ color: 'var(--text-muted)', "font-size": "12px" }}>No completed games yet</p>}>
+                      <For each={completedGames()}>
+                        {(g: any) => (
+                          <div class="game-card" onClick={() => handleGameAction(g)}>
+                            <div class="game-card-left">
+                              <span class="game-card-icon">{g.mode === 'ai' ? '🤖' : '🦆'}</span>
+                              <div>
+                                <div class="game-card-opponent">vs {g.mode === 'ai' ? 'AI' : (g.whiteUsername || g.blackUsername || 'opponent')}</div>
+                                <div class="game-card-meta">
+                                  {g.winner === (g.whiteId === u().id ? 'w' : 'b') ? 'Won' : 'Lost'} ({g.resultType || 'single'}) · {g.moveCount || 0} moves
+                                </div>
+                              </div>
+                            </div>
+                            <div class="game-card-date">{new Date(g.createdAt).toLocaleDateString()}</div>
+                            <button class="btn btn-small game-card-action">👁</button>
+                          </div>
+                        )}
+                      </For>
+                    </Show>
+                  </div>
+                </Show>
+
                 <button class="btn btn-small" style={{ "margin-top": "16px" }} onClick={() => setPage('landing')}>Back</button>
               </div>
             );
@@ -501,9 +597,20 @@ function App() {
           </Show>
         </Show>
 
-        {/* Game */}
-        <Show when={page() === 'game'}>
-          <GameView onExit={handleExit} mode={gameMode()} devPreset={devPreset()} onlineGameId={onlineGameId()} />
+        {/* Game — keyed by gameKey to force fresh instance on each start */}
+        <Show when={page() === 'game' ? gameKey() : false} keyed>
+          {(_key) => (
+            <GameView
+              onExit={handleExit}
+              mode={gameMode()}
+              devPreset={devPreset()}
+              onlineGameId={onlineGameId()}
+              resumeGameId={resumeData()?.gameId}
+              resumeMoves={resumeData()?.moves}
+              resumeAiDifficulty={resumeData()?.aiDifficulty}
+              reviewMoves={reviewMoves() ?? undefined}
+            />
+          )}
         </Show>
       </div>
     </>

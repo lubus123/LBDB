@@ -47,7 +47,13 @@ export async function setupTestDb() {
       luck_white REAL,
       luck_black REAL,
       time_control INTEGER,
-      created_at TIMESTAMP DEFAULT NOW()
+      created_at TIMESTAMP DEFAULT NOW(),
+      status VARCHAR(15) DEFAULT 'completed' NOT NULL,
+      mode VARCHAR(10),
+      ai_difficulty VARCHAR(10),
+      current_turn VARCHAR(1) DEFAULT 'w',
+      move_count INTEGER DEFAULT 0 NOT NULL,
+      updated_at TIMESTAMP DEFAULT NOW()
     );
     CREATE TABLE IF NOT EXISTS sessions (
       id SERIAL PRIMARY KEY,
@@ -55,6 +61,12 @@ export async function setupTestDb() {
       token VARCHAR(64) UNIQUE NOT NULL,
       expires_at TIMESTAMP NOT NULL
     );
+    ALTER TABLE games ADD COLUMN IF NOT EXISTS status VARCHAR(15) DEFAULT 'completed' NOT NULL;
+    ALTER TABLE games ADD COLUMN IF NOT EXISTS mode VARCHAR(10);
+    ALTER TABLE games ADD COLUMN IF NOT EXISTS ai_difficulty VARCHAR(10);
+    ALTER TABLE games ADD COLUMN IF NOT EXISTS current_turn VARCHAR(1) DEFAULT 'w';
+    ALTER TABLE games ADD COLUMN IF NOT EXISTS move_count INTEGER DEFAULT 0 NOT NULL;
+    ALTER TABLE games ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW();
   `);
 
   const db = drizzle(pool, { schema });
