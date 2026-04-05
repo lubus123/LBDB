@@ -1072,6 +1072,20 @@ const GameView: Component<{
   function handleExit() {
     clearAiTimeouts();
     if (isOnline()) socket.disconnect();
+    // Save current state to DB before exiting
+    const id = dbGameId();
+    if (id && currentState().phase !== 'gameOver') {
+      gameApiFetch(`/api/games/${id}/state`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          board: currentState().board,
+          turn: currentState().turn,
+          whiteOff: currentState().whiteOff,
+          blackOff: currentState().blackOff,
+          moves: history(),
+        }),
+      });
+    }
     props.onExit();
   }
 
