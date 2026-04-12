@@ -201,9 +201,14 @@ export function undoMove(state: GameState): GameState {
   }
 
   // Reverse hit: restore opponent from bar
+  // opponentBar holds negative values for black (B_BAR) and positive for white (W_BAR).
+  // To REMOVE one opponent checker from bar: decrement the magnitude, i.e. add the
+  // opposite-sign unit for that player's encoding.
+  // To RESTORE the blot on the destination square: subtract our own sign so the square
+  // reflects the opponent's checker.
   if (lastMove.hit) {
-    newBoard[opponentBar] += (state.turn === 'w' ? -1 : 1);
-    newBoard[lastMove.to] -= (state.turn === 'w' ? 1 : -1);
+    newBoard[opponentBar] -= (state.turn === 'w' ? -1 : 1); // remove opponent from bar
+    newBoard[lastMove.to] -= sign;                           // restore opponent blot on dest
   }
 
   // Restore checker to source
