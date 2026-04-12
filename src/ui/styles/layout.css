@@ -69,3 +69,17 @@ html, body {
     align-items: stretch;
   }
 }
+
+/* Landscape / short-height: collapse header to icons only. Setting font-size
+   on .header-logo zeroes its text children ("duck" and "Gammon") while the
+   inline-SVG duck logo keeps its explicit width/height attributes and stays
+   visible. The mode badge and auth link text are also hidden. */
+@media (max-height: 500px) {
+  .header-logo {
+    font-size: 0;
+    letter-spacing: 0;
+  }
+  .header-mode {
+    display: none;
+  }
+}
