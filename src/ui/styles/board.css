@@ -1738,3 +1738,20 @@
   min-height: 32px;
   padding: 4px 10px;
 }
+
+/* ─── Orientation-lock simulation (landscape phones): swap vw/vh inside
+   the rotated #app so board/container sizing refers to the app's
+   pre-rotation frame (width = viewport short edge, height = long edge).
+   These overrides must come AFTER the mobile block above, and because
+   board.css is imported after layout.css, they also override any
+   equivalent rules there. */
+@media (orientation: landscape) and (max-height: 500px) {
+  .board-container {
+    height: calc(100vw - var(--header-height));
+  }
+  .board-wrapper {
+    width: calc(100vw - var(--header-height) - 90px);
+    height: 100dvh;
+    max-width: calc(100dvh * 780 / 640);
+  }
+}
