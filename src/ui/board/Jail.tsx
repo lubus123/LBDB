@@ -64,6 +64,13 @@ const Jail: Component<JailProps> = (props) => {
     }
   }
 
+  function handlePointerCancel() {
+    // Browser cancelled the pointer stream (iOS gesture arbitration, etc.)
+    if (!isDragging()) return;
+    setIsDragging(false);
+    setDidDrag(false);
+  }
+
   function renderCell(color: Color) {
     const isActive = () => props.canMoveFromBar && props.turn === color;
     const isSelected = () => props.isSelected && props.turn === color;
@@ -72,9 +79,11 @@ const Jail: Component<JailProps> = (props) => {
       <div
         ref={(el) => { cellRef = el; }}
         class={`jail-cell ${isActive() ? 'jail-can-play' : ''} ${isSelected() ? 'jail-selected' : ''}`}
+        style={isActive() ? { "touch-action": "none" } : undefined}
         onPointerDown={(e) => isActive() ? handlePointerDown(e, e.currentTarget) : undefined}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerCancel}
       >
         <div class={`jail-checker ${color === 'w' ? 'white' : 'black'}`} />
         <div class={`jail-bars-overlay ${isActive() ? 'bars-opening' : ''}`}>

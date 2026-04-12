@@ -105,6 +105,10 @@ const Board: Component<BoardProps> = (props) => {
     if (!dragState.dragging && Math.hypot(dx, dy) > DRAG_THRESHOLD) {
       dragState.dragging = true;
       props.onDragStart?.(dragState.point);
+      // Seed the ghost at the current pointer position immediately so it never
+      // flashes at (0,0) if later move events are lost (iOS Safari gesture
+      // arbitration, pointer capture loss, etc.)
+      props.onDragMove?.(e.clientX, e.clientY);
     }
     if (dragState.dragging) {
       const x = e.clientX, y = e.clientY;
@@ -123,6 +127,20 @@ const Board: Component<BoardProps> = (props) => {
     } else {
       // Tap — use click handler
       props.onPointClick(dragState.point);
+    }
+    dragState = null;
+  }
+
+  function handlePointerCancel() {
+    // Browser cancelled the pointer (e.g. gesture conflict, touch interrupted).
+    // Clean up drag state so the UI doesn't get stuck showing a ghost.
+    if (dragRafId) {
+      cancelAnimationFrame(dragRafId);
+      dragRafId = undefined;
+    }
+    if (dragState?.dragging) {
+      // Signal cancellation to the consumer so it clears the ghost.
+      props.onDragEnd?.(-1, -1);
     }
     dragState = null;
   }
@@ -263,10 +281,12 @@ const Board: Component<BoardProps> = (props) => {
                         opacity={isTopAndHidden() ? 0 : 1}
                         class={`checker ${isClickable ? 'movable' : ''} ${pd.isSelected && i === pd.checkers - 1 ? 'selected' : ''}`}
                         data-testid={isClickable ? `checker-${pd.point}` : undefined}
+                        style={isClickable ? { "touch-action": "none" } : undefined}
                         onClick={isClickable && !props.onDragStart ? () => props.onPointClick(pd.point) : undefined}
                         onPointerDown={isClickable ? (e: PointerEvent) => handlePointerDown(pd.point, e) : undefined}
                         onPointerMove={isClickable ? handlePointerMove : undefined}
                         onPointerUp={isClickable ? handlePointerUp : undefined}
+                        onPointerCancel={isClickable ? handlePointerCancel : undefined}
                       />
                       <Show when={pd.checkers > 5 && i === pd.checkers - 1}>
                         <text
