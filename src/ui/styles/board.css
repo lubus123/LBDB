@@ -1210,6 +1210,18 @@
   background: none !important;
 }
 
+/* On short viewports (landscape phones), cap heatmap size so it
+   doesn't dominate the side panel — users can still read equities. */
+@media (max-height: 500px) {
+  .heatmap-grid {
+    max-width: 200px;
+    margin: 0 auto;
+  }
+  .heatmap-cell {
+    font-size: 8px;
+  }
+}
+
 /* ─── Opponent move arrows ─── */
 /* ─── Options panel ─── */
 .option-row {
