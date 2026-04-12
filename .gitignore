@@ -9,6 +9,7 @@ screenshots/mobile-diag
 screenshots/luck-check
 screenshots/drag-check
 screenshots/landscape-match
+screenshots/orientation-lock
 test-results
 playwright-report
 training/td-gammon-rs/target/
