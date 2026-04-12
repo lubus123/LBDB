@@ -3,6 +3,8 @@ dist
 .env
 *.local
 screenshots/results
+screenshots/e2e
+screenshots/verify
 test-results
 playwright-report
 training/td-gammon-rs/target/

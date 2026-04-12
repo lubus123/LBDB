@@ -215,7 +215,7 @@ const Board: Component<BoardProps> = (props) => {
           }
 
           return (
-            <g>
+            <g data-testid={`point-${pd.point}`}>
               <polygon points={triPoints} fill={fillColor} opacity={0.85} />
 
               {/* Legal destination: blue circle highlight */}
@@ -262,6 +262,7 @@ const Board: Component<BoardProps> = (props) => {
                         stroke-width={pd.isSelected && i === pd.checkers - 1 ? 3 : 1.5}
                         opacity={isTopAndHidden() ? 0 : 1}
                         class={`checker ${isClickable ? 'movable' : ''} ${pd.isSelected && i === pd.checkers - 1 ? 'selected' : ''}`}
+                        data-testid={isClickable ? `checker-${pd.point}` : undefined}
                         onClick={isClickable && !props.onDragStart ? () => props.onPointClick(pd.point) : undefined}
                         onPointerDown={isClickable ? (e: PointerEvent) => handlePointerDown(pd.point, e) : undefined}
                         onPointerMove={isClickable ? handlePointerMove : undefined}
@@ -285,6 +286,7 @@ const Board: Component<BoardProps> = (props) => {
                   x={x - POINT_W / 2} y={pd.top ? MARGIN : BOARD_H / 2}
                   width={POINT_W} height={(BOARD_H - MARGIN * 2) / 2}
                   fill="transparent"
+                  data-testid={`dest-${pd.point}`}
                   onClick={() => props.onPointClick(pd.point)}
                   style={{ cursor: 'pointer' }}
                 />
@@ -306,6 +308,7 @@ const Board: Component<BoardProps> = (props) => {
               width={24} height={BOARD_H - MARGIN * 2}
               fill={COLORS.highlight} rx={3}
               stroke={COLORS.highlightStroke} stroke-width={2}
+              data-testid="bearoff"
               onClick={() => props.onBearOffClick()}
               style={{ cursor: 'pointer' }}
             />
