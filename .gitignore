@@ -10,6 +10,8 @@ screenshots/luck-check
 screenshots/drag-check
 screenshots/landscape-match
 screenshots/orientation-lock
+screenshots/landscape-strips
+screenshots/peek
 test-results
 playwright-report
 training/td-gammon-rs/target/

@@ -259,6 +259,17 @@ function App() {
   const showSecondDuck = () => headerMode() === 'online' || headerMode() === 'local';
   const showBinary = () => headerMode() === 'ai';
 
+  const LoginIcon = (props: { class?: string }) => (
+    <svg class={props.class} viewBox="0 0 24 24" width="18" height="18"
+         style={{ "flex-shrink": "0" }}>
+      <circle cx="12" cy="8" r="4" fill="none"
+              stroke="currentColor" stroke-width="1.8"/>
+      <path d="M4 20 C4 15, 8 14, 12 14 S20 15, 20 20"
+            fill="none" stroke="currentColor" stroke-width="1.8"
+            stroke-linecap="round"/>
+    </svg>
+  );
+
   const HeaderLogo = () => (<span style={{ display: "inline-flex", "align-items": "center", "vertical-align": "middle", "margin-top": "-2px" }}>
     {/* Main duck — ALWAYS present, never hidden */}
     <svg viewBox="0 0 80 64" width="26" height="21" style={{ "flex-shrink": "0", "margin-left": "7px" }}>
@@ -303,7 +314,10 @@ function App() {
         </Show>
         <div style={{ "margin-left": "auto", display: "flex", "align-items": "center", gap: "10px" }}>
           <Show when={user()} fallback={
-            <a href="#" class="header-auth" onClick={(e) => { e.preventDefault(); setAuthError(''); setPage('login'); }}>Login</a>
+            <a href="#" class="header-auth" onClick={(e) => { e.preventDefault(); setAuthError(''); setPage('login'); }}>
+              <span class="auth-label">Login</span>
+              <LoginIcon class="auth-icon" />
+            </a>
           }>
             <div class="header-menu-wrapper">
               <button class="header-hamburger" onClick={() => setMenuOpen(m => !m)}>☰</button>

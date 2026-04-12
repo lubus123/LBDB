@@ -1400,9 +1400,26 @@ const GameView: Component<{
       {/* Mobile action bar — hidden on desktop */}
       <div class="mobile-action-bar">
         <Show when={currentState().phase === 'waiting' && !isAiTurn() && !waitingForOpponent() && isMyTurn()}>
-          <button class="btn btn-primary mobile-action-btn" data-testid="btn-roll" onClick={handleRoll} disabled={isRolling()}>Roll</button>
+          <button class="btn btn-primary mobile-action-btn" data-testid="btn-roll" onClick={handleRoll} disabled={isRolling()}>
+            <span class="roll-label">Roll</span>
+            <span class="roll-icon" aria-hidden="true">
+              <svg viewBox="0 0 52 60" width="40" height="46">
+                <rect x="8" y="6" width="36" height="36" rx="6"
+                      fill="#f5f0e8" stroke="#c4b8a4" stroke-width="1.5"/>
+                <circle cx="18" cy="16" r="2.5" fill="#1a1a1a"/>
+                <circle cx="26" cy="24" r="2.5" fill="#1a1a1a"/>
+                <circle cx="34" cy="32" r="2.5" fill="#1a1a1a"/>
+                <path d="M26 48 L26 56 M20 52 L26 58 L32 52"
+                      stroke="#4caf50" stroke-width="2.5"
+                      stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              </svg>
+            </span>
+          </button>
           <Show when={canDouble(currentState().cube, currentState().turn)}>
-            <button class="btn mobile-action-btn" onClick={handleDouble}>Double</button>
+            <button class="btn mobile-action-btn" onClick={handleDouble}>
+              <span class="double-label">Double</span>
+              <span class="double-icon">×2</span>
+            </button>
           </Show>
         </Show>
         <Show when={currentState().phase === 'moving' && !isAiTurn()}>

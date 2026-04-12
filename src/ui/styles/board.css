@@ -1739,19 +1739,87 @@
   padding: 4px 10px;
 }
 
-/* ─── Orientation-lock simulation (landscape phones): swap vw/vh inside
-   the rotated #app so board/container sizing refers to the app's
-   pre-rotation frame (width = viewport short edge, height = long edge).
-   These overrides must come AFTER the mobile block above, and because
-   board.css is imported after layout.css, they also override any
-   equivalent rules there. */
+
+/* ─── Landscape phones: mobile action bar becomes a vertical strip
+   on the right, board-container offsets by both strip widths ─── */
 @media (orientation: landscape) and (max-height: 500px) {
   .board-container {
-    height: calc(100vw - var(--header-height));
+    margin-left: 48px;
+    margin-right: 60px;
   }
-  .board-wrapper {
-    width: calc(100vw - var(--header-height) - 90px);
+
+  .mobile-action-bar {
+    position: fixed;
+    right: 0;
+    top: 0;
+    width: 60px;
     height: 100dvh;
-    max-width: calc(100dvh * 780 / 640);
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: stretch;
+    padding: 8px 6px;
+    padding-top: calc(8px + env(safe-area-inset-top, 0));
+    padding-bottom: calc(8px + env(safe-area-inset-bottom, 0));
+    gap: 8px;
+    border-top: none;
+    border-left: 1px solid rgba(255, 255, 255, 0.08);
+    z-index: 10;
+  }
+
+  .mobile-action-bar button {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  /* Info strip hidden in landscape — pip counts shown elsewhere if needed */
+  .mobile-info-strip {
+    display: none;
+  }
+}
+
+/* ─── Icon/label swap inside the mobile action bar ───
+   Default (portrait): labels visible, icons hidden. */
+.mobile-action-bar .roll-label,
+.mobile-action-bar .double-label {
+  display: inline;
+}
+.mobile-action-bar .roll-icon,
+.mobile-action-bar .double-icon {
+  display: none;
+}
+
+/* ─── Landscape: icons visible, labels hidden ─── */
+@media (orientation: landscape) and (max-height: 500px) {
+  .mobile-action-bar .roll-label,
+  .mobile-action-bar .double-label {
+    display: none;
+  }
+  .mobile-action-bar .roll-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    animation: dice-pulse 1.6s ease-in-out infinite;
+  }
+  .mobile-action-bar .double-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  /* Stop pulsing when the roll button is disabled */
+  .mobile-action-bar [data-testid="btn-roll"][disabled] .roll-icon {
+    animation: none;
+    opacity: 0.6;
+  }
+}
+
+@keyframes dice-pulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 2px rgba(76, 175, 80, 0.35));
+  }
+  50% {
+    filter: drop-shadow(0 0 10px rgba(76, 175, 80, 0.85));
   }
 }
