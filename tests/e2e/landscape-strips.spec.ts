@@ -50,10 +50,11 @@ for (const [name, viewport] of Object.entries(LANDSCAPE)) {
       await expect(label).toBeHidden();
     });
 
-    test('login icon visible, text hidden', async ({ page }) => {
+    test('login icon visible, text hidden (in-game only)', async ({ page }) => {
       await page.goto('http://localhost:8080');
       await page.waitForSelector('.main-content', { timeout: 5000 });
-      await page.waitForTimeout(300);
+      await page.locator('button', { hasText: /Play vs AI/i }).first().click();
+      await page.waitForTimeout(500);
 
       const icon = page.locator('.auth-icon').first();
       await expect(icon).toBeVisible();
@@ -61,8 +62,76 @@ for (const [name, viewport] of Object.entries(LANDSCAPE)) {
       const label = page.locator('.auth-label').first();
       await expect(label).toBeHidden();
     });
+
+    test('roll button has transparent background in landscape', async ({ page }) => {
+      await page.goto('http://localhost:8080');
+      await page.waitForSelector('.main-content', { timeout: 5000 });
+      await page.locator('button', { hasText: /Play vs AI/i }).first().click();
+      await page.waitForTimeout(500);
+
+      const bg = await page.locator('[data-testid="btn-roll"]').first().evaluate(
+        (el) => getComputedStyle(el).backgroundColor
+      );
+      expect(bg).toBe('rgba(0, 0, 0, 0)');
+    });
+
+    test('undo button in bottom half of strip (move phase)', async ({ page }) => {
+      await page.goto('http://localhost:8080');
+      await page.waitForSelector('.main-content', { timeout: 5000 });
+      await page.locator('button', { hasText: /Play vs AI/i }).first().click();
+      await page.waitForTimeout(500);
+      const rolls = page.locator('[data-testid="btn-roll"]');
+      const c = await rolls.count();
+      for (let i = 0; i < c; i++) {
+        if (await rolls.nth(i).isVisible({ timeout: 200 }).catch(() => false)) {
+          await rolls.nth(i).click();
+          break;
+        }
+      }
+      await page.waitForTimeout(1000);
+
+      const undoBox = await page.locator('[data-testid="btn-undo"]').first().boundingBox();
+      expect(undoBox).not.toBeNull();
+      // Bottom edge of Undo must be below the vertical midpoint of the viewport
+      expect(undoBox!.y + undoBox!.height).toBeGreaterThan(viewport.height * 0.5);
+    });
   });
 }
+
+test.describe('No fixed-right strip on non-game pages (landscape Pixel 7)', () => {
+  test.use({ viewport: { width: 915, height: 412 } });
+
+  async function assertNoRightStrip(page: Page) {
+    const bar = page.locator('.mobile-action-bar');
+    const count = await bar.count();
+    if (count > 0) {
+      const box = await bar.first().boundingBox();
+      if (box) {
+        const isFixedRightStrip =
+          (box.x + box.width >= 913) && (box.width <= 70);
+        expect(isFixedRightStrip, 'mobile-action-bar should not be a 60-px right strip on non-game pages').toBe(false);
+      }
+    }
+  }
+
+  test('landing: no fixed-right strip', async ({ page }) => {
+    await page.goto('http://localhost:8080');
+    await page.waitForSelector('.main-content');
+    await page.waitForTimeout(300);
+    await assertNoRightStrip(page);
+  });
+
+  test('login: no fixed-right strip', async ({ page }) => {
+    await page.goto('http://localhost:8080');
+    await page.waitForSelector('.main-content');
+    const loginLink = page.locator('.header-auth').first();
+    if (await loginLink.isVisible({ timeout: 300 }).catch(() => false)) {
+      await loginLink.click();
+      await page.waitForTimeout(300);
+    }
+    await assertNoRightStrip(page);
+  });
+});
 
 test.describe('Portrait regression (Pixel 7 412x915)', () => {
   test.use({ viewport: { width: 412, height: 915 } });

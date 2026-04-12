@@ -53,6 +53,38 @@ const MARGIN = 16;
 
 interface DevPreset { board: number[]; whiteOff: number; blackOff: number; }
 
+const UndoIcon = () => (
+  <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" style={{ "flex-shrink": "0" }}>
+    <path d="M8 7 L4 11 L8 15 M4 11 L16 11 C19 11 20 14 20 16 C20 18 19 20 16 20 L11 20"
+          fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+);
+
+const CheckIcon = () => (
+  <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" style={{ "flex-shrink": "0" }}>
+    <path d="M5 12 L10 17 L19 7"
+          fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+);
+
+const CrossIcon = () => (
+  <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" style={{ "flex-shrink": "0" }}>
+    <path d="M6 6 L18 18 M18 6 L6 18"
+          fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round"/>
+  </svg>
+);
+
+const FlagIcon = () => (
+  <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" style={{ "flex-shrink": "0" }}>
+    <path d="M5 3 L5 21 M5 4 L16 4 L14 8 L17 12 L5 12"
+          fill="none" stroke="currentColor" stroke-width="1.8"
+          stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+);
+
 const WS_URL = import.meta.env.VITE_WS_URL ||
   (window.location.protocol === 'https:'
     ? `wss://${window.location.host}`
@@ -1423,17 +1455,32 @@ const GameView: Component<{
           </Show>
         </Show>
         <Show when={currentState().phase === 'moving' && !isAiTurn()}>
-          <button class="btn btn-small mobile-action-btn" data-testid="btn-undo" onClick={handleUndo} disabled={!canUndo()}>Undo</button>
+          <button class="btn btn-small mobile-action-btn" data-testid="btn-undo" onClick={handleUndo} disabled={!canUndo()}>
+            <span class="undo-label">Undo</span>
+            <span class="undo-icon" aria-hidden="true"><UndoIcon /></span>
+          </button>
           <Show when={canConfirmTurn()}>
-            <button class="btn btn-primary mobile-action-btn" data-testid="btn-confirm" onClick={handleConfirm}>Confirm</button>
+            <button class="btn btn-primary mobile-action-btn" data-testid="btn-confirm" onClick={handleConfirm}>
+              <span class="confirm-label">Confirm</span>
+              <span class="confirm-icon" aria-hidden="true"><CheckIcon /></span>
+            </button>
           </Show>
         </Show>
         <Show when={currentState().phase === 'cubeOffered' && !isAiTurn()}>
-          <button class="btn btn-primary mobile-action-btn" onClick={handleAcceptDouble}>Accept</button>
-          <button class="btn btn-danger mobile-action-btn" onClick={handleDropDouble}>Drop</button>
+          <button class="btn btn-primary mobile-action-btn" onClick={handleAcceptDouble}>
+            <span class="accept-label">Accept</span>
+            <span class="accept-icon" aria-hidden="true"><CheckIcon /></span>
+          </button>
+          <button class="btn btn-danger mobile-action-btn" onClick={handleDropDouble}>
+            <span class="drop-label">Drop</span>
+            <span class="drop-icon" aria-hidden="true"><CrossIcon /></span>
+          </button>
         </Show>
         <Show when={isOnline() && currentState().phase !== 'gameOver'}>
-          <button class="btn mobile-action-btn" style={{ color: '#e53935' }} onClick={handleResign}>Resign</button>
+          <button class="btn mobile-action-btn" style={{ color: '#e53935' }} onClick={handleResign}>
+            <span class="resign-label">Resign</span>
+            <span class="resign-icon" aria-hidden="true"><FlagIcon /></span>
+          </button>
         </Show>
         <Show when={isReview()}>
           <span style={{ color: 'var(--text-muted)', "font-size": "12px" }}>Review mode · ← → to navigate</span>

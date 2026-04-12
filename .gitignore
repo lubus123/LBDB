@@ -12,6 +12,8 @@ screenshots/landscape-match
 screenshots/orientation-lock
 screenshots/landscape-strips
 screenshots/peek
+screenshots/ls-audit
+screenshots/spot
 test-results
 playwright-report
 training/td-gammon-rs/target/

@@ -146,6 +146,10 @@ function App() {
   function sendLobbyMsg(msg: any) { if (lobbyWs?.readyState === WebSocket.OPEN) lobbyWs.send(JSON.stringify(msg)); }
 
   createEffect(() => { if (user() && page() !== 'game') { connectLobbyWs(); loadFriends(); } });
+  createEffect(() => {
+    const root = document.getElementById('app');
+    if (root) root.setAttribute('data-page', page());
+  });
   onCleanup(() => disconnectLobbyWs());
 
   onMount(async () => {

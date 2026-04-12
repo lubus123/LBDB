@@ -74,9 +74,9 @@ html, body {
 }
 
 
-/* ─── Landscape phones: header becomes a vertical strip on the left ─── */
+/* ─── Landscape phones (in-game only): header becomes a vertical strip on the left ─── */
 @media (orientation: landscape) and (max-height: 500px) {
-  .header {
+  #app[data-page="game"] .header {
     position: fixed;
     left: 0;
     top: 0;
@@ -92,32 +92,33 @@ html, body {
     gap: 10px;
   }
 
-  /* The auth-link container (currently uses margin-left: auto) should
-     collapse to block-level stacking inside the vertical strip */
-  .header > div {
+  #app[data-page="game"] .header > div {
     margin-left: 0 !important;
     flex-direction: column;
   }
 
-  /* Hide the "vs AI" / "Local" / "Online" text badge — the mode icons
-     inside HeaderLogo already convey the mode */
-  .header-mode {
+  #app[data-page="game"] .header-mode {
     display: none;
   }
 
-  .auth-icon { display: inline-flex; align-items: center; color: var(--text-primary); }
-  .auth-label { display: none; }
+  #app[data-page="game"] .auth-icon {
+    display: inline-flex;
+    align-items: center;
+    color: var(--text-primary);
+  }
+  #app[data-page="game"] .auth-label {
+    display: none;
+  }
 
-  /* Stack header-logo children vertically in the 48-px strip */
-  .header-logo {
+  #app[data-page="game"] .header-logo {
     display: flex;
     flex-direction: column;
     align-items: center;
-    font-size: 0;         /* hide "duck" and <span>Gammon</span> text nodes */
+    font-size: 0;
     letter-spacing: 0;
     gap: 6px;
   }
-  .header-logo::before {
+  #app[data-page="game"] .header-logo::before {
     content: "DG";
     font-size: 14px;
     font-weight: 700;
