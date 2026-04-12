@@ -88,8 +88,10 @@
   }
 }
 
-/* ─── Portrait-only: rotate board 90° so points run vertically ─── */
-@media (max-width: 768px) and (orientation: portrait) {
+/* ─── Mobile (portrait + landscape): rotate board 90° so points run vertically.
+   Landscape renders the same portrait-style layout as portrait — only the
+   header compacts to icons-only (see layout.css). The board stays identical. */
+@media (max-width: 768px), (max-height: 500px) {
   .board-wrapper {
     /* Pre-rotation: landscape dims that become portrait after rotate(90deg) */
     /* width (→ visual height) = available vertical space; use dvh so board
@@ -117,28 +119,9 @@
   }
 }
 
-/* ─── Landscape phones / compact height: natural orientation ─── */
-@media (max-height: 500px) {
-  .board-wrapper {
-    /* Natural landscape — no rotation needed */
-    height: calc(100vh - var(--header-height) - 70px);
-    height: calc(100dvh - var(--header-height) - 70px);
-    width: auto;
-    max-width: 100vw;
-    position: relative;
-    flex-shrink: 0;
-  }
-
-  .board-wrapper .board-svg {
-    height: 100%;
-    width: auto;
-    max-width: 100vw;
-  }
-}
-
-/* ─── Portrait-only: jail overlay + counter-rotated dice ─── */
-@media (max-width: 768px) and (orientation: portrait) {
-  /* Jail strip: position as overlay on portrait board */
+/* ─── Mobile (portrait + landscape): jail overlay + counter-rotated dice ─── */
+@media (max-width: 768px), (max-height: 500px) {
+  /* Jail strip: position as overlay on rotated board */
   .jail-strip {
     position: absolute;
     bottom: 0;
@@ -150,7 +133,7 @@
     max-width: 90%;
   }
 
-  /* Counter-rotate dice so they appear upright in portrait */
+  /* Counter-rotate dice so they appear upright relative to the rotated board */
   .dice-group {
     transform-origin: 390px 320px;
     transform: rotate(-90deg);
