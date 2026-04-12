@@ -972,6 +972,12 @@ const GameView: Component<{
     const sel = selectedPoint();
     setDragGhost(null);
     if (sel === null) return;
+    // Cancellation sentinel from Board.handlePointerCancel — clear selection
+    // too so a ghost-less stale "selected" state doesn't confuse the next tap.
+    if (clientX < 0 || clientY < 0) {
+      setSelectedPoint(null);
+      return;
+    }
 
     const point = clientCoordsToPoint(clientX, clientY);
     if (point !== null) {

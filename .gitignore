@@ -7,6 +7,7 @@ screenshots/e2e
 screenshots/verify
 screenshots/mobile-diag
 screenshots/luck-check
+screenshots/drag-check
 test-results
 playwright-report
 training/td-gammon-rs/target/
