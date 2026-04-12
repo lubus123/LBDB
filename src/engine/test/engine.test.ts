@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { cloneBoard, checkersAt, isBlot, isBlocked, hasBarCheckers, allInHome, furthestChecker, applyMove, countCheckers } from '../board';
 import { generateAllTurns, legalDestinations, movableCheckers, hasAnyMoves } from '../moves';
-import { newGame, doRoll, doMove, doDouble, doAcceptDouble, doDropDouble, undoMove, getGameResult } from '../game';
+import { newGame, doRoll, doMove, doDouble, doAcceptDouble, doDropDouble, undoMove, getGameResult, confirmTurn, newGameFromPosition } from '../game';
 import { pipCount } from '../pip';
 import { canDouble, offerDouble, acceptDouble, resetCube } from '../cube';
 import { newMatch, updateMatch, isMatchOver, matchWinner } from '../match';
 import { INITIAL_BOARD, W_BAR, B_BAR, createInitialGameState } from '../../shared/constants';
-import type { BoardArray, CheckerMove, Color, CubeState } from '../../shared/types';
+import type { BoardArray, CheckerMove, Color, CubeState, GameState } from '../../shared/types';
 
 // Helper to create a custom board
 function board(setup: Record<number, number>): BoardArray {
@@ -493,6 +493,270 @@ describe('Game Flow', () => {
     expect(result).not.toBeNull();
     expect(result!.winner).toBe('w'); // white offered, so white wins on drop
     expect(result!.type).toBe('single');
+  });
+
+  // ── undoMove fallback path (no boardAtTurnStart) ──────────────────────────
+
+  it('undoMove fallback: reverses a normal move without boardAtTurnStart', () => {
+    const g = newGame();
+    const rolled = doRoll(g);
+    if (rolled.phase !== 'moving' || !rolled.dice) return;
+
+    const movable = movableCheckers(rolled.board, rolled.movesLeft, 'w');
+    if (movable.length === 0) return;
+    const from = movable[0];
+    const dests = legalDestinations(rolled.board, from, rolled.movesLeft, 'w');
+    if (dests.length === 0) return;
+    const to = dests[0];
+    const die = rolled.movesLeft[0];
+    const move: CheckerMove = { from, to, die, hit: false };
+
+    const afterMove = doMove(rolled, move);
+    // Strip boardAtTurnStart to force the incremental-reversal path
+    const stripped = { ...afterMove, boardAtTurnStart: undefined };
+
+    const afterUndo = undoMove(stripped);
+    expect(afterUndo.board).toEqual(rolled.board);
+    expect(afterUndo.movesLeft.length).toBe(rolled.movesLeft.length);
+    expect(afterUndo.turnMoves.length).toBe(0);
+  });
+
+  it('undoMove fallback: decrements whiteOff on bear-off reversal', () => {
+    // White all in home, one checker on point 3 — can bear off with die 3
+    const b = board({ 3: 1, 1: 14 }); // 15 white checkers total in home
+    const state: GameState = {
+      board: b,
+      turn: 'w',
+      dice: [3, 1],
+      movesLeft: [3, 1],
+      cube: { value: 1, owner: 'center', offered: false },
+      whiteOff: 0,
+      blackOff: 0,
+      phase: 'moving',
+      gameId: 'test',
+      ply: 0,
+      turnMoves: [],
+      // no boardAtTurnStart → forces fallback path
+    };
+
+    const bearOffMove: CheckerMove = { from: 3, to: 0, die: 3, hit: false };
+    const afterBearOff = doMove(state, bearOffMove);
+    expect(afterBearOff.whiteOff).toBe(1);
+
+    // Strip boardAtTurnStart from the post-move state
+    const stripped = { ...afterBearOff, boardAtTurnStart: undefined };
+    const afterUndo = undoMove(stripped);
+
+    expect(afterUndo.whiteOff).toBe(0);
+    expect(afterUndo.board[3]).toBe(1); // checker restored
+  });
+
+  it('undoMove fallback: restores opponent from bar on hit reversal', () => {
+    // White on 6, black blot on 3 — white can hit with die 3
+    const b = board({ 6: 1, 3: -1 });
+    const state: GameState = {
+      board: b,
+      turn: 'w',
+      dice: [3, 1],
+      movesLeft: [3, 1],
+      cube: { value: 1, owner: 'center', offered: false },
+      whiteOff: 0,
+      blackOff: 0,
+      phase: 'moving',
+      gameId: 'test',
+      ply: 0,
+      turnMoves: [],
+    };
+
+    const hitMove: CheckerMove = { from: 6, to: 3, die: 3, hit: true };
+    // Apply the hit manually so the move is recorded in turnMoves
+    const boardAfterHit = [...b] as BoardArray;
+    boardAfterHit[6] = 0;  // white leaves 6
+    boardAfterHit[3] = 1;  // white lands on 3
+    boardAfterHit[B_BAR] = -1; // black sent to bar
+
+    const afterHit: GameState = {
+      ...state,
+      board: boardAfterHit,
+      movesLeft: [1],
+      turnMoves: [hitMove],
+      // no boardAtTurnStart → fallback path
+    };
+
+    const afterUndo = undoMove(afterHit);
+    expect(afterUndo.board[3]).toBe(-1);   // black restored to point 3
+    expect(afterUndo.board[B_BAR]).toBe(0); // bar cleared
+    expect(afterUndo.board[6]).toBe(1);    // white back on 6
+  });
+
+  // ── getGameResult ─────────────────────────────────────────────────────────
+
+  it('getGameResult gammon: loser has 0 borne off, not in winner home → 2x cube', () => {
+    // White wins, black has 0 borne off and is NOT in white's home (1-6) or on bar
+    const b = board({ 12: -15 }); // all black checkers on point 12 (mid-board)
+    const state: GameState = {
+      board: b,
+      turn: 'w',
+      dice: null,
+      movesLeft: [],
+      cube: { value: 1, owner: 'center', offered: false },
+      whiteOff: 15,
+      blackOff: 0,
+      phase: 'gameOver',
+      gameId: 'test',
+      ply: 10,
+      turnMoves: [],
+    };
+    const result = getGameResult(state);
+    expect(result).not.toBeNull();
+    expect(result!.winner).toBe('w');
+    expect(result!.type).toBe('gammon');
+    expect(result!.points).toBe(2); // 2 × cube(1)
+  });
+
+  it('getGameResult backgammon: loser has checker on bar → 3x cube', () => {
+    // White wins, black has 0 borne off and has a checker on bar (index 25)
+    const b = board({ [B_BAR]: -1, 12: -14 });
+    const state: GameState = {
+      board: b,
+      turn: 'w',
+      dice: null,
+      movesLeft: [],
+      cube: { value: 1, owner: 'center', offered: false },
+      whiteOff: 15,
+      blackOff: 0,
+      phase: 'gameOver',
+      gameId: 'test',
+      ply: 10,
+      turnMoves: [],
+    };
+    const result = getGameResult(state);
+    expect(result).not.toBeNull();
+    expect(result!.winner).toBe('w');
+    expect(result!.type).toBe('backgammon');
+    expect(result!.points).toBe(3); // 3 × cube(1)
+  });
+
+  it('getGameResult backgammon: loser has checker in winner home board → 3x cube, respects cube multiplier', () => {
+    // White wins, black has 0 borne off, black checker on point 3 (white's home 1-6)
+    const b = board({ 3: -1, 12: -14 });
+    const state: GameState = {
+      board: b,
+      turn: 'w',
+      dice: null,
+      movesLeft: [],
+      cube: { value: 2, owner: 'b', offered: false },
+      whiteOff: 15,
+      blackOff: 0,
+      phase: 'gameOver',
+      gameId: 'test',
+      ply: 10,
+      turnMoves: [],
+    };
+    const result = getGameResult(state);
+    expect(result).not.toBeNull();
+    expect(result!.winner).toBe('w');
+    expect(result!.type).toBe('backgammon');
+    expect(result!.cubeValue).toBe(2);
+    expect(result!.points).toBe(6); // 3 × cube(2)
+  });
+
+  it('getGameResult null: neither player borne off all but phase is gameOver → null', () => {
+    const state: GameState = {
+      board: [...INITIAL_BOARD],
+      turn: 'w',
+      dice: null,
+      movesLeft: [],
+      cube: { value: 1, owner: 'center', offered: false },
+      whiteOff: 10,
+      blackOff: 5,
+      phase: 'gameOver',
+      gameId: 'test',
+      ply: 5,
+      turnMoves: [],
+    };
+    // Neither side has 15 borne off and cube is not offered
+    expect(getGameResult(state)).toBeNull();
+  });
+
+  it('getGameResult gammon with cube=2 → 4 points', () => {
+    const b = board({ 12: -15 });
+    const state: GameState = {
+      board: b,
+      turn: 'w',
+      dice: null,
+      movesLeft: [],
+      cube: { value: 2, owner: 'w', offered: false },
+      whiteOff: 15,
+      blackOff: 0,
+      phase: 'gameOver',
+      gameId: 'test',
+      ply: 10,
+      turnMoves: [],
+    };
+    const result = getGameResult(state);
+    expect(result).not.toBeNull();
+    expect(result!.type).toBe('gammon');
+    expect(result!.cubeValue).toBe(2);
+    expect(result!.points).toBe(4); // 2 × cube(2)
+  });
+
+  // ── confirmTurn ───────────────────────────────────────────────────────────
+
+  it('confirmTurn ends turn, switches player, and increments ply', () => {
+    const g = newGame();
+    const rolled = doRoll(g);
+    if (rolled.phase !== 'moving') return;
+
+    const confirmed = confirmTurn(rolled);
+    expect(confirmed.phase).toBe('waiting');
+    expect(confirmed.turn).toBe('b'); // switched from 'w'
+    expect(confirmed.ply).toBe(rolled.ply + 1);
+    expect(confirmed.dice).toBeNull();
+    expect(confirmed.movesLeft).toHaveLength(0);
+  });
+
+  // ── Phase guards ──────────────────────────────────────────────────────────
+
+  it('doRoll in moving phase returns unchanged state', () => {
+    const g = newGame();
+    const rolled = doRoll(g);
+    if (rolled.phase !== 'moving') return;
+    const again = doRoll(rolled);
+    expect(again).toBe(rolled); // same reference — no mutation
+  });
+
+  it('doMove in waiting phase returns unchanged state', () => {
+    const g = newGame();
+    const move: CheckerMove = { from: 24, to: 23, die: 1, hit: false };
+    const result = doMove(g, move);
+    expect(result).toBe(g);
+  });
+
+  it('doDouble in moving phase returns unchanged state', () => {
+    const g = newGame();
+    const rolled = doRoll(g);
+    if (rolled.phase !== 'moving') return;
+    const result = doDouble(rolled);
+    expect(result).toBe(rolled);
+  });
+
+  it('doAcceptDouble in waiting phase returns unchanged state', () => {
+    const g = newGame();
+    const result = doAcceptDouble(g);
+    expect(result).toBe(g);
+  });
+
+  it('doDropDouble in waiting phase returns unchanged state', () => {
+    const g = newGame();
+    const result = doDropDouble(g);
+    expect(result).toBe(g);
+  });
+
+  it('confirmTurn in waiting phase returns unchanged state', () => {
+    const g = newGame();
+    const result = confirmTurn(g);
+    expect(result).toBe(g);
   });
 });
 

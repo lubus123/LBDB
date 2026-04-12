@@ -239,6 +239,28 @@ export async function handleApiRoute(req: IncomingMessage, res: ServerResponse):
       return true;
     }
 
+    // Save full game state (on exit/pause)
+    const stateMatch = url.match(/^\/api\/games\/(\d+)\/state$/);
+    if (method === 'PATCH' && stateMatch) {
+      const user = await requireAuth(req, res);
+      if (!user) return true;
+      const db = getDb();
+      if (!db) { json(res, 500, { error: 'DB unavailable' }); return true; }
+      const gameId = parseInt(stateMatch[1]);
+      const [game] = await db.select().from(games).where(eq(games.id, gameId)).limit(1);
+      if (!game) { json(res, 404, { error: 'Game not found' }); return true; }
+      if (game.whiteId !== user.id && game.blackId !== user.id) { json(res, 403, { error: 'Not your game' }); return true; }
+      const { moves, turn } = await parseBody(req);
+      await db.update(games).set({
+        moves: moves || [],
+        moveCount: Array.isArray(moves) ? moves.length : 0,
+        currentTurn: turn || 'w',
+        updatedAt: new Date(),
+      }).where(eq(games.id, gameId));
+      json(res, 200, { ok: true });
+      return true;
+    }
+
     const completeMatch = url.match(/^\/api\/games\/(\d+)\/complete$/);
     if (method === 'PATCH' && completeMatch) {
       const user = await requireAuth(req, res);

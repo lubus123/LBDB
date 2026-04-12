@@ -88,9 +88,9 @@ Board shrinks to ~131px height on small phones. No landscape media queries. Touc
 
 `/health` endpoint exists but no error tracking (Sentry), no uptime monitoring, no metrics on game completion rates or WS connection health.
 
-### B6. Luck and AI evaluation are untested
+### ~~B6. Luck and AI evaluation are untested~~ FIXED
 
-`luck.ts` has zero tests. AI heuristic evaluation has zero tests. Only NN matrix math is verified.
+Added 17 tests for luck.ts (93% coverage) and 11 tests for notation.ts (100% coverage). AI heuristic evaluation exercised through luck tests. game.ts expanded from 54% to 91% line coverage.
 
 ### B7. Match play is engine-ready but unused
 

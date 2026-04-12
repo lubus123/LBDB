@@ -1072,6 +1072,20 @@ const GameView: Component<{
   function handleExit() {
     clearAiTimeouts();
     if (isOnline()) socket.disconnect();
+    // Save current state to DB before exiting
+    const id = dbGameId();
+    if (id && currentState().phase !== 'gameOver') {
+      gameApiFetch(`/api/games/${id}/state`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          board: currentState().board,
+          turn: currentState().turn,
+          whiteOff: currentState().whiteOff,
+          blackOff: currentState().blackOff,
+          moves: history(),
+        }),
+      });
+    }
     props.onExit();
   }
 
@@ -1380,15 +1394,15 @@ const GameView: Component<{
       {/* Mobile action bar — hidden on desktop */}
       <div class="mobile-action-bar">
         <Show when={currentState().phase === 'waiting' && !isAiTurn() && !waitingForOpponent() && isMyTurn()}>
-          <button class="btn btn-primary mobile-action-btn" onClick={handleRoll} disabled={isRolling()}>Roll</button>
+          <button class="btn btn-primary mobile-action-btn" data-testid="btn-roll" onClick={handleRoll} disabled={isRolling()}>Roll</button>
           <Show when={canDouble(currentState().cube, currentState().turn)}>
             <button class="btn mobile-action-btn" onClick={handleDouble}>Double</button>
           </Show>
         </Show>
         <Show when={currentState().phase === 'moving' && !isAiTurn()}>
-          <button class="btn btn-small mobile-action-btn" onClick={handleUndo} disabled={!canUndo()}>Undo</button>
+          <button class="btn btn-small mobile-action-btn" data-testid="btn-undo" onClick={handleUndo} disabled={!canUndo()}>Undo</button>
           <Show when={canConfirmTurn()}>
-            <button class="btn btn-primary mobile-action-btn" onClick={handleConfirm}>Confirm</button>
+            <button class="btn btn-primary mobile-action-btn" data-testid="btn-confirm" onClick={handleConfirm}>Confirm</button>
           </Show>
         </Show>
         <Show when={currentState().phase === 'cubeOffered' && !isAiTurn()}>
@@ -1495,7 +1509,7 @@ const GameView: Component<{
               </div>
             </Show>
             <Show when={currentState().phase === 'waiting' && !isAiTurn() && !waitingForOpponent() && isMyTurn()}>
-              <button class="btn btn-primary" onClick={handleRoll} disabled={isRolling()}>
+              <button class="btn btn-primary" data-testid="btn-roll" onClick={handleRoll} disabled={isRolling()}>
                 Roll <span class="shortcut-hint">Enter</span>
               </button>
               <Show when={canDouble(currentState().cube, currentState().turn)}>
@@ -1521,11 +1535,11 @@ const GameView: Component<{
                   ? `Move (${currentState().movesLeft.join(', ')} left)`
                   : 'All dice used'}
               </span>
-              <button class="btn btn-small" onClick={handleUndo} disabled={!canUndo()}>
+              <button class="btn btn-small" data-testid="btn-undo" onClick={handleUndo} disabled={!canUndo()}>
                 Undo <span class="shortcut-hint">Z</span>
               </button>
               <Show when={canConfirmTurn()}>
-                <button class="btn btn-primary btn-small" onClick={handleConfirm}>
+                <button class="btn btn-primary btn-small" data-testid="btn-confirm" onClick={handleConfirm}>
                   Confirm <span class="shortcut-hint">Enter</span>
                 </button>
               </Show>
@@ -1674,7 +1688,7 @@ const GameView: Component<{
             return (result.winner === 'w' ? 'White' : 'Black') + ' Wins!';
           };
           return (
-            <div class="game-over-overlay" onClick={isOnline() ? undefined : handleNewGame}>
+            <div class="game-over-overlay" data-testid="game-over" onClick={isOnline() ? undefined : handleNewGame}>
               <div class="game-over-modal" onClick={(e) => e.stopPropagation()}>
                 <h2>{winnerLabel()}</h2>
                 <Show when={result}>
