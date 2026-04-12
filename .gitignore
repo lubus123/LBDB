@@ -14,6 +14,8 @@ screenshots/landscape-strips
 screenshots/peek
 screenshots/ls-audit
 screenshots/spot
+screenshots/ls-walkthrough
+screenshots/jail-ls
 test-results
 playwright-report
 training/td-gammon-rs/target/

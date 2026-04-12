@@ -1802,6 +1802,15 @@
     background: transparent;
     border: none;
   }
+
+  /* Jail strip: the mobile rule positions this absolute bottom:0 of
+     .board-and-jail, which spans full viewport height in landscape
+     and leaves the jail floating in dead space below the board.
+     The board SVG itself already renders the jail on the central
+     bar, so this below-board strip is redundant in landscape. */
+  #app[data-page="game"] .jail-strip {
+    display: none;
+  }
   #app[data-page="game"] .connection-indicator > span {
     display: none;
   }
