@@ -50,8 +50,9 @@
 .mobile-backdrop { display: none; }
 .mobile-info-strip { display: none; }
 
-/* ─── Mobile: board-first layout with floating action bar ─── */
-@media (max-width: 768px) {
+/* ─── Mobile/compact: board-first layout with floating action bar ─── */
+/* Triggers on narrow viewports OR short viewports (landscape phones) */
+@media (max-width: 768px), (max-height: 500px) {
   .board-container {
     display: grid;
     grid-template-rows: 1fr auto auto;
@@ -75,7 +76,15 @@
     position: relative;
   }
 
-  /* ─── Portrait rotation: board rotated 90° so points run vertically ─── */
+  .board-svg {
+    display: block;
+    margin: 0;
+    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.4));
+  }
+}
+
+/* ─── Portrait-only: rotate board 90° so points run vertically ─── */
+@media (max-width: 768px) and (orientation: portrait) {
   .board-wrapper {
     /* Pre-rotation: landscape dims that become portrait after rotate(90deg) */
     /* width (→ visual height) = available vertical space */
@@ -90,19 +99,37 @@
     transform-origin: center;
   }
 
-  .board-svg {
-    display: block;
+  .board-wrapper .board-svg {
     width: 100%;
     height: 100%;
-    margin: 0;
-    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.4));
   }
 
   /* Hide point number labels — rotated text is illegible */
   .board-svg text {
     display: none;
   }
+}
 
+/* ─── Landscape phones / compact height: natural orientation ─── */
+@media (max-height: 500px) {
+  .board-wrapper {
+    /* Natural landscape — no rotation needed */
+    height: calc(100vh - var(--header-height) - 70px);
+    width: auto;
+    max-width: 100vw;
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .board-wrapper .board-svg {
+    height: 100%;
+    width: auto;
+    max-width: 100vw;
+  }
+}
+
+/* ─── Portrait-only: jail overlay + counter-rotated dice ─── */
+@media (max-width: 768px) and (orientation: portrait) {
   /* Jail strip: position as overlay on portrait board */
   .jail-strip {
     position: absolute;
@@ -124,6 +151,9 @@
     transform-origin: 390px 320px;
     transform: rotate(-90deg);
   }
+}
+
+@media (max-width: 768px), (max-height: 500px) {
 
   /* Compact turn/pip info strip below board on mobile */
   .mobile-info-strip {

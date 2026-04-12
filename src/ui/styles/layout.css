@@ -63,8 +63,8 @@ html, body {
   overflow: hidden;
 }
 
-/* On mobile, don't center — align to top so board isn't pushed above viewport */
-@media (max-width: 768px) {
+/* On mobile/compact, don't center — align to top so board isn't pushed above viewport */
+@media (max-width: 768px), (max-height: 500px) {
   .main-content {
     align-items: stretch;
   }

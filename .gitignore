@@ -5,6 +5,7 @@ dist
 screenshots/results
 screenshots/e2e
 screenshots/verify
+screenshots/mobile-diag
 test-results
 playwright-report
 training/td-gammon-rs/target/
