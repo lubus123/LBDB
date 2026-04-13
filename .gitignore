@@ -16,6 +16,7 @@ screenshots/ls-audit
 screenshots/spot
 screenshots/ls-walkthrough
 screenshots/jail-ls
+screenshots/verify-changes
 test-results
 playwright-report
 training/td-gammon-rs/target/

@@ -1746,6 +1746,9 @@
   #app[data-page="game"] .board-container {
     margin-left: 48px;
     margin-right: 60px;
+    /* Header is position:fixed-left in landscape — does NOT consume vertical
+       space. Override the portrait height calc that subtracts the header. */
+    height: 100dvh;
   }
 
   #app[data-page="game"] .mobile-action-bar {
@@ -1810,6 +1813,30 @@
      bar, so this below-board strip is redundant in landscape. */
   #app[data-page="game"] .jail-strip {
     display: none;
+  }
+
+  /* Dice rotate with the board in landscape (no counter-rotation). The
+     board keeps the same CSS rotation as in portrait so its shape is
+     identical between orientations, but the DICE re-orient with the
+     phone — reading along the board's bar instead of across it. */
+  #app[data-page="game"] .dice-group {
+    transform: none;
+  }
+  #app[data-page="game"] .dice-swap-btn {
+    transform: none;
+  }
+
+  /* Landscape board sizing: the shared portrait rule caps pre-rotation
+     width at `100dvh - header - 90px` which in a 412-tall viewport
+     becomes 274, leaving the visual board at ~225x274 — tiny. Override
+     so the pre-rotation box is 100dvh wide (→ visual height after
+     rotation = full viewport height) and height is set to preserve the
+     780:640 board aspect (→ visual width = 100dvh * 640/780). The SVG
+     inside then fills the wrapper exactly because aspects match. */
+  #app[data-page="game"] .board-wrapper {
+    width: 100dvh;
+    height: calc(100dvh * 640 / 780);
+    max-width: none;
   }
   #app[data-page="game"] .connection-indicator > span {
     display: none;

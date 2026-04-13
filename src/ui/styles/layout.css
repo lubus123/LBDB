@@ -94,6 +94,8 @@ html, body {
 
   #app[data-page="game"] .header > div {
     margin-left: 0 !important;
+    /* Push the auth wrapper (Login icon) to the bottom of the vertical strip */
+    margin-top: auto !important;
     flex-direction: column;
   }
 
