@@ -1739,19 +1739,161 @@
   padding: 4px 10px;
 }
 
-/* ─── Orientation-lock simulation (landscape phones): swap vw/vh inside
-   the rotated #app so board/container sizing refers to the app's
-   pre-rotation frame (width = viewport short edge, height = long edge).
-   These overrides must come AFTER the mobile block above, and because
-   board.css is imported after layout.css, they also override any
-   equivalent rules there. */
+
+/* ─── Landscape phones: mobile action bar becomes a vertical strip
+   on the right, board-container offsets by both strip widths ─── */
 @media (orientation: landscape) and (max-height: 500px) {
-  .board-container {
-    height: calc(100vw - var(--header-height));
+  #app[data-page="game"] .board-container {
+    margin-left: 48px;
+    margin-right: 60px;
   }
-  .board-wrapper {
-    width: calc(100vw - var(--header-height) - 90px);
+
+  #app[data-page="game"] .mobile-action-bar {
+    position: fixed;
+    right: 0;
+    top: 0;
+    width: 60px;
     height: 100dvh;
-    max-width: calc(100dvh * 780 / 640);
+    flex-direction: column-reverse;
+    justify-content: flex-start;
+    align-items: stretch;
+    padding: 8px 6px;
+    padding-top: calc(8px + env(safe-area-inset-top, 0));
+    padding-bottom: calc(8px + env(safe-area-inset-bottom, 0));
+    gap: 8px;
+    border-top: none;
+    border-left: 1px solid rgba(255, 255, 255, 0.08);
+    z-index: 10;
+  }
+
+  #app[data-page="game"] .mobile-action-bar button {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  /* The JSX includes a <div style="flex:1" /> spacer that pushes menu/chat
+     to the end of the row in portrait. In landscape we want contiguous
+     stacking, so hide the spacer. */
+  #app[data-page="game"] .mobile-action-bar > div[style*="flex"] {
+    display: none;
+  }
+
+  /* Reset the portrait margin-left:auto on menu/chat — in column layout it
+     becomes margin-top:auto and breaks contiguous stacking. */
+  #app[data-page="game"] .mobile-action-bar .mobile-menu-btn,
+  #app[data-page="game"] .mobile-action-bar .mobile-chat-btn {
+    margin: 0;
+  }
+
+  #app[data-page="game"] .mobile-info-strip {
+    display: none;
+  }
+
+  /* Online connection indicator: hide the "Waiting for opponent" text,
+     keep only the dot, reposition to bottom-left corner of viewport. */
+  #app[data-page="game"] .connection-indicator {
+    position: fixed;
+    left: 8px;
+    bottom: 8px;
+    right: auto;
+    top: auto;
+    font-size: 0;
+    padding: 4px;
+    background: transparent;
+    border: none;
+  }
+
+  /* Jail strip: the mobile rule positions this absolute bottom:0 of
+     .board-and-jail, which spans full viewport height in landscape
+     and leaves the jail floating in dead space below the board.
+     The board SVG itself already renders the jail on the central
+     bar, so this below-board strip is redundant in landscape. */
+  #app[data-page="game"] .jail-strip {
+    display: none;
+  }
+  #app[data-page="game"] .connection-indicator > span {
+    display: none;
+  }
+}
+
+/* ─── Icon/label swap inside the mobile action bar ───
+   Default (portrait): labels visible, icons hidden. */
+/* Default (portrait): landscape-icon buttons show text, hide icons */
+.mobile-action-bar .roll-label,
+.mobile-action-bar .double-label,
+.mobile-action-bar .undo-label,
+.mobile-action-bar .confirm-label,
+.mobile-action-bar .accept-label,
+.mobile-action-bar .drop-label,
+.mobile-action-bar .resign-label {
+  display: inline;
+}
+.mobile-action-bar .roll-icon,
+.mobile-action-bar .double-icon,
+.mobile-action-bar .undo-icon,
+.mobile-action-bar .confirm-icon,
+.mobile-action-bar .accept-icon,
+.mobile-action-bar .drop-icon,
+.mobile-action-bar .resign-icon {
+  display: none;
+}
+
+/* ─── Landscape: icons visible, labels hidden ─── */
+@media (orientation: landscape) and (max-height: 500px) {
+  #app[data-page="game"] .mobile-action-bar .roll-label,
+  #app[data-page="game"] .mobile-action-bar .double-label,
+  #app[data-page="game"] .mobile-action-bar .undo-label,
+  #app[data-page="game"] .mobile-action-bar .confirm-label,
+  #app[data-page="game"] .mobile-action-bar .accept-label,
+  #app[data-page="game"] .mobile-action-bar .drop-label,
+  #app[data-page="game"] .mobile-action-bar .resign-label {
+    display: none;
+  }
+  #app[data-page="game"] .mobile-action-bar .roll-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    animation: dice-pulse 1.6s ease-in-out infinite;
+  }
+  #app[data-page="game"] .mobile-action-bar .double-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  #app[data-page="game"] .mobile-action-bar [data-testid="btn-roll"][disabled] .roll-icon {
+    animation: none;
+    opacity: 0.6;
+  }
+
+  #app[data-page="game"] .mobile-action-bar .undo-icon,
+  #app[data-page="game"] .mobile-action-bar .confirm-icon,
+  #app[data-page="game"] .mobile-action-bar .accept-icon,
+  #app[data-page="game"] .mobile-action-bar .drop-icon,
+  #app[data-page="game"] .mobile-action-bar .resign-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Primary action buttons in landscape: transparent — the dice glow /
+     check icon is the visual signal, not a coloured box. */
+  #app[data-page="game"] .mobile-action-bar [data-testid="btn-roll"],
+  #app[data-page="game"] .mobile-action-bar [data-testid="btn-confirm"] {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+  }
+}
+
+@keyframes dice-pulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 2px rgba(76, 175, 80, 0.35));
+  }
+  50% {
+    filter: drop-shadow(0 0 10px rgba(76, 175, 80, 0.85));
   }
 }

@@ -1,0 +1,45 @@
+{
+  "planPath": "docs/superpowers/plans/2026-04-12-landscape-side-strips.md",
+  "tasks": [
+    {
+      "id": 0,
+      "nativeId": "9",
+      "subject": "Task 0: Revert app-rotation changes in CSS",
+      "status": "pending",
+      "description": "**Goal:** Remove the #app rotation rule and the landscape viewport-unit-swap overrides from both CSS files.\n\n**Files:** layout.css:73-127 (delete), board.css tail (delete)\n\n```json:metadata\n{\"files\": [\"src/ui/styles/layout.css\", \"src/ui/styles/board.css\"], \"verifyCommand\": \"npm run build && npm test\", \"acceptanceCriteria\": [\"rotation rules removed\", \"build clean\", \"278 tests pass\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 1,
+      "nativeId": "10",
+      "subject": "Task 1: Landscape layout — header and action bar as fixed vertical strips",
+      "status": "pending",
+      "blockedBy": [0],
+      "description": "**Goal:** In landscape, .header fixed-left 48px strip, .mobile-action-bar fixed-right 60px strip, .board-container margins.\n\n```json:metadata\n{\"files\": [\"src/ui/styles/layout.css\", \"src/ui/styles/board.css\"], \"verifyCommand\": \"npm run build && npm test\", \"acceptanceCriteria\": [\"header fixed-left 48px\", \"action bar fixed-right 60px\", \"board-container margins set\", \"portrait unchanged\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 2,
+      "nativeId": "11",
+      "subject": "Task 2: Login user icon + landscape header content",
+      "status": "pending",
+      "blockedBy": [1],
+      "description": "**Goal:** Add LoginIcon SVG, toggle text/icon per orientation, vertical stack in landscape header.\n\n```json:metadata\n{\"files\": [\"src/ui/index.tsx\", \"src/ui/styles/layout.css\"], \"verifyCommand\": \"npm run build && npm test\", \"acceptanceCriteria\": [\"LoginIcon SVG component\", \"text/icon toggle via CSS\", \"vertical stacking in landscape\", \"portrait unchanged\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 3,
+      "nativeId": "12",
+      "subject": "Task 3: Roll button dice+arrow icon with green pulse glow",
+      "status": "pending",
+      "blockedBy": [1],
+      "description": "**Goal:** Roll becomes dice+green-arrow SVG with pulse animation in landscape, Double becomes ×2.\n\n```json:metadata\n{\"files\": [\"src/ui/game/GameView.tsx\", \"src/ui/styles/board.css\"], \"verifyCommand\": \"npm run build && npm test\", \"acceptanceCriteria\": [\"dice+arrow SVG\", \"×2 glyph\", \"label/icon swap\", \"pulse animation\", \"portrait unchanged\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 4,
+      "nativeId": "13",
+      "subject": "Task 4: E2E landscape layout test + visual verification",
+      "status": "pending",
+      "blockedBy": [2, 3],
+      "description": "**Goal:** Permanent Playwright test asserting strip positions, icon visibility, portrait regression.\n\n```json:metadata\n{\"files\": [\"tests/e2e/landscape-strips.spec.ts\"], \"verifyCommand\": \"npx playwright test --config tests/e2e/e2e.config.ts\", \"acceptanceCriteria\": [\"strip bounding boxes verified\", \"icon visibility verified\", \"portrait regression verified\", \"all E2E pass\"], \"requiresUserVerification\": false}\n```"
+    }
+  ],
+  "lastUpdated": "2026-04-12T16:00:00Z"
+}

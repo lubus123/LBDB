@@ -43,6 +43,9 @@ html, body {
   color: var(--accent);
 }
 
+.auth-icon { display: none; }
+.auth-label { display: inline; }
+
 .header-duo {
   display: inline-flex;
   align-items: center;
@@ -70,58 +73,56 @@ html, body {
   }
 }
 
-/* ─── Orientation-lock simulation for landscape phones ───
-   When the phone rotates to landscape, we rotate the #app element -90° so
-   the portrait layout appears as-if the phone were orientation-locked. From
-   the user's perspective, the header becomes a vertical strip on the left,
-   the mobile action bar becomes a vertical strip on the right, and the
-   board keeps its exact portrait proportions in the centre — unchanged from
-   the portrait experience. Child elements that used viewport units now need
-   those units *swapped* because the rotated #app's internal width is the
-   viewport's short edge (dvh) and its internal height is the long edge (vw). */
+
+/* ─── Landscape phones (in-game only): header becomes a vertical strip on the left ─── */
 @media (orientation: landscape) and (max-height: 500px) {
-  html, body {
-    overflow: hidden;
-  }
-  #app {
+  #app[data-page="game"] .header {
     position: fixed;
-    top: 0;
     left: 0;
-    /* Swap dimensions: the rotated #app renders as portrait-shaped content
-       (width = phone's short edge, height = phone's long edge) */
-    width: 100vh;
-    width: 100dvh;
-    height: 100vw;
-    transform-origin: 0 0;
-    /* Rotate -90° (counter-clockwise) about the top-left corner, then
-       translate down by the viewport height so the rotated box fills the
-       physical landscape viewport. */
-    transform: translate(0, 100vh) rotate(-90deg);
-    transform: translate(0, 100dvh) rotate(-90deg);
+    top: 0;
+    width: 48px;
+    height: 100dvh;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 8px 4px;
+    border-bottom: none;
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+    z-index: 10;
+    gap: 10px;
   }
 
-  /* (Viewport-unit swap overrides for .board-container and .board-wrapper
-     live in board.css so they cascade after that file's mobile rules.) */
+  #app[data-page="game"] .header > div {
+    margin-left: 0 !important;
+    flex-direction: column;
+  }
 
-  /* Header text compacts to "DG" — the full "duckGammon" wordmark is too
-     long for a narrow vertical strip. Font-size 0 hides the "duck" +
-     <span>Gammon</span> children; the inline-SVG icons keep explicit
-     dimensions and remain visible; the ::before injects "DG" in its place. */
-  .header-logo {
+  #app[data-page="game"] .header-mode {
+    display: none;
+  }
+
+  #app[data-page="game"] .auth-icon {
+    display: inline-flex;
+    align-items: center;
+    color: var(--text-primary);
+  }
+  #app[data-page="game"] .auth-label {
+    display: none;
+  }
+
+  #app[data-page="game"] .header-logo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     font-size: 0;
     letter-spacing: 0;
+    gap: 6px;
   }
-  .header-logo::before {
+  #app[data-page="game"] .header-logo::before {
     content: "DG";
-    font-size: 18px;
+    font-size: 14px;
     font-weight: 700;
     letter-spacing: -0.5px;
     color: var(--text-primary);
-    margin-right: 4px;
-  }
-  /* The "vs AI" / "Online" / "Local" badge is already represented by the
-     HeaderLogo icons (robot, duo-duck) — drop the redundant text badge. */
-  .header-mode {
-    display: none;
   }
 }
