@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Image Blender</title>
+<style>
+  :root {
+    --bg: #12131a;
+    --panel: #1c1f2b;
+    --panel2: #242838;
+    --border: #2f3447;
+    --text: #e6e8ef;
+    --muted: #8a91a5;
+    --accent: #6cb4ff;
+    --accent2: #ffce6c;
+    --danger: #ff6c6c;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  header h1 { margin: 0; font-size: 20px; font-weight: 600; }
+  header p { margin: 0; color: var(--muted); font-size: 13px; }
+  main {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    gap: 20px;
+    padding: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+  @media (max-width: 900px) {
+    main { grid-template-columns: 1fr; }
+  }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+  }
+  .drop-zone {
+    border: 2px dashed var(--border);
+    border-radius: 10px;
+    padding: 28px 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    color: var(--muted);
+  }
+  .drop-zone:hover, .drop-zone.dragover {
+    border-color: var(--accent);
+    background: rgba(108, 180, 255, 0.05);
+    color: var(--text);
+  }
+  .drop-zone strong { color: var(--text); }
+  .url-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  input[type="url"], input[type="text"] {
+    flex: 1;
+    padding: 9px 12px;
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 13px;
+  }
+  input[type="url"]:focus, input[type="text"]:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  button {
+    padding: 9px 14px;
+    background: var(--accent);
+    color: #0a1220;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 13px;
+    transition: opacity 0.15s;
+  }
+  button:hover:not(:disabled) { opacity: 0.9; }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  button.secondary {
+    background: var(--panel2);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  button.danger {
+    background: transparent;
+    color: var(--danger);
+    border: 1px solid var(--border);
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+  .layers {
+    margin-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .layer {
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .layer .thumb {
+    width: 52px;
+    height: 52px;
+    border-radius: 6px;
+    object-fit: cover;
+    background: #000;
+    flex-shrink: 0;
+  }
+  .layer-body { flex: 1; min-width: 0; }
+  .layer-name {
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 6px;
+  }
+  .layer-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .layer-controls select {
+    flex: 1;
+    padding: 5px 6px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-size: 12px;
+  }
+  .layer-controls input[type="range"] {
+    flex: 1;
+    accent-color: var(--accent);
+  }
+  .opacity-val {
+    font-size: 11px;
+    color: var(--muted);
+    min-width: 32px;
+    text-align: right;
+  }
+  .layer-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .layer-actions button {
+    padding: 3px 7px;
+    font-size: 11px;
+    background: var(--bg);
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
+  .layer-actions button:hover { color: var(--text); }
+  .preview-wrap {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    min-height: 400px;
+  }
+  .preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .preview-header h2 { margin: 0; font-size: 15px; }
+  .canvas-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background:
+      linear-gradient(45deg, #2a2e3d 25%, transparent 25%),
+      linear-gradient(-45deg, #2a2e3d 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #2a2e3d 75%),
+      linear-gradient(-45deg, transparent 75%, #2a2e3d 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0;
+    background-color: #1a1d28;
+    border-radius: 6px;
+    overflow: auto;
+    min-height: 300px;
+    padding: 12px;
+  }
+  canvas { max-width: 100%; height: auto; display: block; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+  .empty-state {
+    color: var(--muted);
+    text-align: center;
+    padding: 40px 20px;
+    font-size: 14px;
+  }
+  .section-title {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin: 16px 0 8px;
+  }
+  .section-title:first-child { margin-top: 0; }
+  .bg-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+  .bg-controls label { font-size: 12px; color: var(--muted); }
+  .error {
+    color: var(--danger);
+    font-size: 12px;
+    margin-top: 8px;
+    min-height: 16px;
+  }
+  .hint { font-size: 11px; color: var(--muted); margin-top: 4px; }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Image Blender</h1>
+    <p>Blend multiple images with adjustable modes & opacity. Runs entirely in your browser.</p>
+  </div>
+  <div>
+    <button id="downloadBtn" disabled>Download PNG</button>
+  </div>
+</header>
+
+<main>
+  <section class="panel">
+    <div class="section-title">Add images</div>
+    <div class="drop-zone" id="dropZone">
+      <div><strong>Click to pick files</strong> or drop here</div>
+      <div class="hint">PNG / JPG / WEBP / GIF — multiple allowed</div>
+      <input type="file" id="fileInput" accept="image/*" multiple hidden />
+    </div>
+
+    <div class="url-row">
+      <input type="url" id="urlInput" placeholder="or paste an image URL" />
+      <button id="addUrlBtn" class="secondary">Add</button>
+    </div>
+    <div class="error" id="urlError"></div>
+
+    <div class="section-title">Output</div>
+    <div class="bg-controls">
+      <label for="bgColor">Background:</label>
+      <input type="color" id="bgColor" value="#000000" />
+      <label style="display:flex;align-items:center;gap:4px;">
+        <input type="checkbox" id="bgTransparent" checked /> transparent
+      </label>
+    </div>
+    <div class="hint">Canvas sizes to the largest image; smaller ones are centered.</div>
+
+    <div class="section-title">Layers <span id="layerCount" style="font-weight:400;opacity:0.6;"></span></div>
+    <div id="layers" class="layers"></div>
+  </section>
+
+  <section class="preview-wrap">
+    <div class="preview-header">
+      <h2>Preview</h2>
+      <div id="sizeInfo" style="font-size:12px;color:var(--muted);"></div>
+    </div>
+    <div class="canvas-container" id="canvasContainer">
+      <div class="empty-state" id="emptyState">
+        Add two or more images to see the blend.
+      </div>
+      <canvas id="canvas" style="display:none;"></canvas>
+    </div>
+  </section>
+</main>
+
+<script>
+(() => {
+  const BLEND_MODES = [
+    'source-over', 'multiply', 'screen', 'overlay', 'darken', 'lighten',
+    'color-dodge', 'color-burn', 'hard-light', 'soft-light',
+    'difference', 'exclusion', 'hue', 'saturation', 'color', 'luminosity'
+  ];
+  const MODE_LABELS = {
+    'source-over': 'normal'
+  };
+
+  /** @type {Array<{id:string,img:HTMLImageElement,name:string,opacity:number,mode:string}>} */
+  const layers = [];
+  let nextId = 1;
+
+  const $ = (id) => document.getElementById(id);
+  const dropZone = $('dropZone');
+  const fileInput = $('fileInput');
+  const urlInput = $('urlInput');
+  const addUrlBtn = $('addUrlBtn');
+  const urlError = $('urlError');
+  const layersEl = $('layers');
+  const layerCountEl = $('layerCount');
+  const canvas = $('canvas');
+  const ctx = canvas.getContext('2d');
+  const emptyState = $('emptyState');
+  const sizeInfo = $('sizeInfo');
+  const downloadBtn = $('downloadBtn');
+  const bgColor = $('bgColor');
+  const bgTransparent = $('bgTransparent');
+
+  dropZone.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', (e) => {
+    addFiles(e.target.files);
+    fileInput.value = '';
+  });
+
+  ['dragenter', 'dragover'].forEach(ev => {
+    dropZone.addEventListener(ev, (e) => {
+      e.preventDefault();
+      dropZone.classList.add('dragover');
+    });
+  });
+  ['dragleave', 'drop'].forEach(ev => {
+    dropZone.addEventListener(ev, (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+    });
+  });
+  dropZone.addEventListener('drop', (e) => {
+    if (e.dataTransfer?.files?.length) addFiles(e.dataTransfer.files);
+  });
+
+  addUrlBtn.addEventListener('click', () => addUrl(urlInput.value.trim()));
+  urlInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') addUrl(urlInput.value.trim());
+  });
+
+  bgColor.addEventListener('input', render);
+  bgTransparent.addEventListener('change', render);
+
+  downloadBtn.addEventListener('click', () => {
+    if (!layers.length) return;
+    const link = document.createElement('a');
+    link.download = 'blend.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  });
+
+  function addFiles(fileList) {
+    Array.from(fileList).forEach(file => {
+      if (!file.type.startsWith('image/')) return;
+      const url = URL.createObjectURL(file);
+      loadImage(url, file.name).catch(err => console.warn(err));
+    });
+  }
+
+  function addUrl(url) {
+    urlError.textContent = '';
+    if (!url) return;
+    const name = url.split('/').pop()?.split('?')[0] || 'image';
+    loadImage(url, name, true).then(() => {
+      urlInput.value = '';
+    }).catch(err => {
+      urlError.textContent = err.message || 'Failed to load image (CORS or network error).';
+    });
+  }
+
+  function loadImage(src, name, crossOrigin = false) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      if (crossOrigin) img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        layers.push({
+          id: 'l' + (nextId++),
+          img,
+          name,
+          opacity: 1,
+          mode: 'source-over'
+        });
+        renderLayers();
+        render();
+        resolve();
+      };
+      img.onerror = () => reject(new Error('Could not load: ' + name));
+      img.src = src;
+    });
+  }
+
+  function renderLayers() {
+    layersEl.innerHTML = '';
+    layerCountEl.textContent = layers.length ? `(${layers.length})` : '';
+
+    layers.forEach((layer, idx) => {
+      const el = document.createElement('div');
+      el.className = 'layer';
+      el.innerHTML = `
+        <img class="thumb" src="${layer.img.src}" alt="" />
+        <div class="layer-body">
+          <div class="layer-name" title="${escapeHtml(layer.name)}">${escapeHtml(layer.name)}</div>
+          <div class="layer-controls">
+            <select data-action="mode">
+              ${BLEND_MODES.map(m => `<option value="${m}"${m===layer.mode?' selected':''}>${MODE_LABELS[m] || m}</option>`).join('')}
+            </select>
+          </div>
+          <div class="layer-controls" style="margin-top:6px;">
+            <input type="range" min="0" max="1" step="0.01" value="${layer.opacity}" data-action="opacity" />
+            <span class="opacity-val">${Math.round(layer.opacity * 100)}%</span>
+          </div>
+        </div>
+        <div class="layer-actions">
+          <button data-action="up" title="Move up" ${idx===0?'disabled':''}>▲</button>
+          <button data-action="down" title="Move down" ${idx===layers.length-1?'disabled':''}>▼</button>
+          <button data-action="remove" class="danger" title="Remove">✕</button>
+        </div>
+      `;
+      el.querySelector('[data-action="mode"]').addEventListener('change', (e) => {
+        layer.mode = e.target.value;
+        render();
+      });
+      const range = el.querySelector('[data-action="opacity"]');
+      const opVal = el.querySelector('.opacity-val');
+      range.addEventListener('input', (e) => {
+        layer.opacity = parseFloat(e.target.value);
+        opVal.textContent = Math.round(layer.opacity * 100) + '%';
+        render();
+      });
+      el.querySelector('[data-action="up"]').addEventListener('click', () => moveLayer(idx, -1));
+      el.querySelector('[data-action="down"]').addEventListener('click', () => moveLayer(idx, 1));
+      el.querySelector('[data-action="remove"]').addEventListener('click', () => removeLayer(idx));
+      layersEl.appendChild(el);
+    });
+  }
+
+  function moveLayer(i, dir) {
+    const j = i + dir;
+    if (j < 0 || j >= layers.length) return;
+    [layers[i], layers[j]] = [layers[j], layers[i]];
+    renderLayers();
+    render();
+  }
+
+  function removeLayer(i) {
+    layers.splice(i, 1);
+    renderLayers();
+    render();
+  }
+
+  function render() {
+    if (!layers.length) {
+      canvas.style.display = 'none';
+      emptyState.style.display = '';
+      sizeInfo.textContent = '';
+      downloadBtn.disabled = true;
+      return;
+    }
+    const w = Math.max(...layers.map(l => l.img.naturalWidth));
+    const h = Math.max(...layers.map(l => l.img.naturalHeight));
+    canvas.width = w;
+    canvas.height = h;
+    canvas.style.display = '';
+    emptyState.style.display = 'none';
+    sizeInfo.textContent = `${w} × ${h}`;
+
+    ctx.clearRect(0, 0, w, h);
+    if (!bgTransparent.checked) {
+      ctx.fillStyle = bgColor.value;
+      ctx.fillRect(0, 0, w, h);
+    }
+
+    layers.forEach((layer, idx) => {
+      ctx.globalCompositeOperation = idx === 0 ? 'source-over' : layer.mode;
+      ctx.globalAlpha = layer.opacity;
+      const iw = layer.img.naturalWidth;
+      const ih = layer.img.naturalHeight;
+      const x = (w - iw) / 2;
+      const y = (h - ih) / 2;
+      ctx.drawImage(layer.img, x, y);
+    });
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
+
+    downloadBtn.disabled = false;
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+})();
+</script>
+</body>
+</html>
