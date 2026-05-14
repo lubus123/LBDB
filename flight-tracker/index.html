@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Flight Tracker</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 2 L18.5 14 L30 18 L30 21 L18.5 19 L18.5 26 L22 28 L22 30 L16 28.5 L10 30 L10 28 L13.5 26 L13.5 19 L2 21 L2 18 L13.5 14 Z' fill='%23f5d300'/%3E%3C/svg%3E" />
+<title>duckTrack</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cellipse cx='16' cy='18' rx='13' ry='4' fill='%23d4a800'/%3E%3Cellipse cx='16' cy='18' rx='4.5' ry='8' fill='%23f5d300'/%3E%3Cellipse cx='16' cy='9' rx='3.5' ry='3.5' fill='%23f5d300'/%3E%3Cpath d='M13 7 L16 2.5 L19 7 Z' fill='%23ff8c1a'/%3E%3Ccircle cx='14.2' cy='8' r='0.7' fill='%23000'/%3E%3Ccircle cx='17.8' cy='8' r='0.7' fill='%23000'/%3E%3C/svg%3E" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
       integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 <style>
@@ -37,7 +37,10 @@
     margin: 0; font-size: 17px; font-weight: 600;
     display: flex; align-items: center; gap: 8px;
   }
-  h1 .plane { font-size: 20px; }
+  h1 .duck { font-size: 22px; }
+  h1 .brand { color: var(--muted); font-weight: 500; letter-spacing: -0.2px; }
+  h1 .brand .quack { color: var(--accent); font-weight: 700; }
+  h1 .sep { color: #444; margin: 0 2px; }
   h1 .code { color: var(--accent); letter-spacing: 0.5px; }
   .meta { display: flex; gap: 14px; font-size: 12px; flex-wrap: wrap; }
   .meta > div { display: flex; gap: 6px; }
@@ -80,7 +83,7 @@
     background: rgba(0,0,0,0.6) !important; color: #888 !important;
   }
   .leaflet-control-attribution a { color: #aaa !important; }
-  .plane-icon { background: transparent; border: none; }
+  .duck-icon { background: transparent; border: none; }
   .toast {
     position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
     background: rgba(20,20,20,0.95); color: var(--text);
@@ -100,8 +103,13 @@
 <body>
 <div id="app">
   <header>
-    <h1><span class="plane">&#9992;&#65039;</span> <span class="code" id="callsign">BA910</span></h1>
-    <span class="status idle" id="status">Loading&hellip;</span>
+    <h1>
+      <span class="duck">&#129418;</span>
+      <span class="brand"><span class="quack">duck</span>Track</span>
+      <span class="sep">&middot;</span>
+      <span class="code" id="callsign">BA910</span>
+    </h1>
+    <span class="status idle" id="status">Quacking&hellip;</span>
     <div class="meta">
       <div><span class="label">Alt</span> <span class="value" id="alt">&mdash;</span></div>
       <div><span class="label">Spd</span> <span class="value" id="spd">&mdash;</span></div>
@@ -158,20 +166,31 @@ function flightToCallsign(flight) {
   return icao + num;
 }
 
-function planeIcon(heading) {
+function duckIcon(heading) {
   const h = (heading == null) ? 0 : heading;
-  // top-down plane silhouette pointing up at 0deg, rotated to heading
-  const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="40" height="40" '
+  // top-down rubber-duck silhouette, bill pointing up at 0deg, rotated to heading
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="44" height="44" '
     + 'style="transform: rotate(' + h + 'deg); transform-origin: 50% 50%; '
-    + 'filter: drop-shadow(0 2px 3px rgba(0,0,0,0.8));">'
-    + '<path d="M16 2 L18.5 14 L30 18 L30 21 L18.5 19 L18.5 26 L22 28 L22 30 L16 28.5 L10 30 L10 28 L13.5 26 L13.5 19 L2 21 L2 18 L13.5 14 Z" '
-    + 'fill="#f5d300" stroke="#1a1a1a" stroke-width="0.8" stroke-linejoin="round"/>'
+    + 'filter: drop-shadow(0 2px 3px rgba(0,0,0,0.85));">'
+    // wings (spread, darker yellow)
+    + '<ellipse cx="16" cy="18" rx="13" ry="4" fill="#d4a800" stroke="#5a4500" stroke-width="0.6"/>'
+    // body
+    + '<ellipse cx="16" cy="18" rx="4.8" ry="8" fill="#f5d300" stroke="#5a4500" stroke-width="0.6"/>'
+    // tail tip
+    + '<path d="M13 25 L16 28 L19 25 Z" fill="#c79f00" stroke="#5a4500" stroke-width="0.5"/>'
+    // head
+    + '<circle cx="16" cy="9" r="3.6" fill="#f5d300" stroke="#5a4500" stroke-width="0.6"/>'
+    // bill
+    + '<path d="M13 7 L16 2.5 L19 7 Z" fill="#ff8c1a" stroke="#7a3a00" stroke-width="0.5" stroke-linejoin="round"/>'
+    // eyes
+    + '<circle cx="14.2" cy="8.2" r="0.7" fill="#111"/>'
+    + '<circle cx="17.8" cy="8.2" r="0.7" fill="#111"/>'
     + '</svg>';
   return L.divIcon({
     html: svg,
-    className: 'plane-icon',
-    iconSize: [40, 40],
-    iconAnchor: [20, 20]
+    className: 'duck-icon',
+    iconSize: [44, 44],
+    iconAnchor: [22, 22]
   });
 }
 
@@ -205,11 +224,11 @@ function updatePlane(state) {
   if (lat == null || lon == null) return;
   const pos = [lat, lon];
   if (!marker) {
-    marker = L.marker(pos, { icon: planeIcon(hdg) }).addTo(map);
+    marker = L.marker(pos, { icon: duckIcon(hdg) }).addTo(map);
     map.setView(pos, 6, { animate: true });
   } else {
     marker.setLatLng(pos);
-    marker.setIcon(planeIcon(hdg));
+    marker.setIcon(duckIcon(hdg));
   }
   // append to trail if moved
   const last = trail[trail.length - 1];
@@ -261,7 +280,7 @@ function setFlight() {
   if (marker) { map.removeLayer(marker); marker = null; }
   if (pathLine) { map.removeLayer(pathLine); pathLine = null; }
   clearMeta();
-  setStatus('Loading…', 'idle');
+  setStatus('Quacking…', 'idle');
   const url = new URL(window.location.href);
   url.searchParams.set('flight', v);
   window.history.replaceState({}, '', url.toString());
@@ -295,7 +314,7 @@ function init() {
   currentFlight = (params.get('flight') || 'BA910').toUpperCase();
   document.getElementById('callsign').textContent = currentFlight;
   document.getElementById('flight-input').value = currentFlight;
-  document.title = currentFlight + ' · Flight Tracker';
+  document.title = currentFlight + ' · duckTrack';
 
   map = L.map('map', {
     zoomControl: true,
