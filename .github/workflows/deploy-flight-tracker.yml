@@ -1,0 +1,40 @@
+name: Deploy flight tracker
+
+on:
+  push:
+    branches: [main, claude/flight-tracking-website-lj1cE]
+    paths:
+      - 'flight-tracker/index.html'
+      - '.github/workflows/deploy-flight-tracker.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: deploy-flight-tracker
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Stage site
+        run: |
+          mkdir _site
+          cp flight-tracker/index.html _site/index.html
+          touch _site/.nojekyll
+
+      - name: Publish to gh-pages
+        run: |
+          cd _site
+          git init -b gh-pages
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "Deploy ${GITHUB_SHA::7}"
+          git push --force "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" gh-pages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
