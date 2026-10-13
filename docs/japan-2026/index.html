@@ -181,7 +181,7 @@ footer{margin-top:40px;color:var(--muted);font-size:13px;border-top:1px solid va
   <section id="brief">
     <div class="eyebrow">Mission briefing</div>
     <h2>Two weeks, six bases, a Hiroshima strike, a 17 km pilgrim trail and a night in the hot water</h2>
-    <p class="lead">Tokyo for four nights, the Tokaido shinkansen to Kyoto for five with a day trip to Hiroshima and Miyajima, then south into the Kii mountains for the Kumano Kodo: a warm-up climb, a full-day march to Tsugizakura, a hot-spring night at Hongu, and the pagoda and waterfall at Nachi. Back up the coast to Osaka for one night, and a last night at Haneda for the 09:35 flight.</p>
+    <p class="lead">Tokyo for four nights, the Tokaido shinkansen to Kyoto for four with a day trip to Hiroshima and Miyajima, Nara on the way down to Osaka for an evening, then south into the Kii mountains for the Kumano Kodo: a warm-up climb, a full-day march to Tsugizakura, a hot-spring night at Hongu, and the pagoda and waterfall at Nachi. Back up the coast to the same Osaka hotel for a second night, and a last night at Haneda for the 09:35 flight.</p>
     <div class="grid tiles">
       <div class="tile"><b>14</b><small>Days in theatre</small></div>
       <div class="tile"><b>13</b><small>Nights</small></div>
@@ -239,14 +239,15 @@ footer{margin-top:40px;color:var(--muted);font-size:13px;border-top:1px solid va
       <tr><th>Date</th><th>Leg</th><th>Train</th><th class="num">Time</th><th class="num">Cost</th><th>Note</th></tr>
       <tr><td class="num">1 Nov</td><td>Tokyo → Kyoto</td><td>Nozomi</td><td class="num">2h15</td><td class="num">¥14,400</td><td>SmartEX. Seats D/E for Fuji on the right</td></tr>
       <tr><td class="num">4 Nov</td><td>Kyoto → Shin-Osaka → Hiroshima and back</td><td>JR rapid + Nozomi</td><td class="num">2h05</td><td class="num">pass</td><td>Pass day 1. Reserve both Nozomi seats at Kyoto Station on pickup</td></tr>
-      <tr><td class="num">6 Nov</td><td>Kyoto → Kii-Tanabe</td><td>Kuroshio limited express</td><td class="num">2h45</td><td class="num">pass</td><td>Pass day 3. Some Kuroshio start at Kyoto; otherwise change at Shin-Osaka. Reserve seats</td></tr>
+      <tr><td class="num">5 Nov</td><td>Kyoto → Nara → Osaka</td><td>JR rapids</td><td class="num">1h40</td><td class="num">pass</td><td>Pass day 2. Yamatoji Rapid from Nara to Osaka, 50 min</td></tr>
+      <tr><td class="num">6 Nov</td><td>Shin-Osaka → Kii-Tanabe</td><td>Kuroshio limited express</td><td class="num">2h15</td><td class="num">pass</td><td>Pass day 3. Kuroshio 1 at 07:33 is the one; reserve seats on 4 Nov</td></tr>
       <tr><td class="num">8 Nov</td><td>Kii-Katsuura → Shin-Osaka</td><td>Kuroshio</td><td class="num">3h50</td><td class="num">pass</td><td>Pass day 5. Only 6 Kuroshio a day run this far; check the 15:00–17:00 departures and reserve</td></tr>
       <tr><td class="num">9 Nov</td><td>Shin-Osaka → Shinagawa</td><td>Nozomi</td><td class="num">2h20</td><td class="num">¥14,700</td><td>SmartEX. Get off at Shinagawa, not Tokyo; Keikyu to Haneda in 15 min</td></tr>
     </table></div>
     <h3 style="margin-top:20px">Kumano Kodo logistics</h3>
     <ul class="plain">
       <li><b>Buses.</b> Kumano Kotsu runs Kii-Tanabe ⇄ Takijiri ⇄ Takahara ⇄ Chikatsuyu ⇄ Nonaka ⇄ Hongu ⇄ Yunomine about every 1 to 2 hours. Not covered by any JR pass; pay with cash or IC card. Screenshot the timetable from tb-kumano.jp the week before; the last bus from Nonaka toward Hongu is late afternoon and that is the one that matters on 7 Nov.</li>
-      <li><b>Bags.</b> Send the main suitcases from the Kyoto hotel to the Osaka hotel by takkyubin on 6 Nov morning (about ¥2,500 each, arrives 7 Nov, the hotel holds them). Carry a daypack each for the three trail nights. Backup: Kumano Travel's luggage shuttle moves a bag from Tanabe to a Hongu inn for about ¥2,000.</li>
+      <li><b>Bags.</b> Suitcases stay in storage at the Osaka hotel from the morning of 6 Nov to the evening of 8 Nov, free, since you are back for a second night. Carry a daypack each for the two trail nights. Backup: Kumano Travel's luggage shuttle moves a bag from Tanabe to a Hongu inn for about ¥2,000.</li>
       <li><b>Trail.</b> Nakahechi route, waymarked every 500 m with numbered posts; no navigation skill needed. Takijiri → Takahara 3.7 km with 300 m of climb, Takahara → Chikatsuyu 9.6 km over Jujo-toge, Chikatsuyu → Tsugizakura 3.9 km. Water at villages only; carry 2 litres.</li>
       <li><b>Hongu side.</b> Tsuboyu at Yunomine is the only UNESCO-listed hot spring you can bathe in: a two-person rock bath, 30-minute slots, ¥800, first come. The 90 °C yutsubo next to it cooks eggs and sweet potatoes bought at the shop.</li>
       <li><b>Nachi.</b> From Hongu there is no direct bus to Nachi; it is bus to Shingu (1h, ¥1,540), then JR to Nachi or Kii-Katsuura, then bus to Daimon-zaka (20 min). Kumano Hayatama Taisha is a 15-minute walk from Shingu station and completes the three grand shrines.</li>
@@ -511,7 +512,8 @@ var BUDGET=150, STEP_MIN=15000, STEPS_PER_KM=1350;
 
 var PHASES=[
  {n:"Tokyo",d:"28 Oct – 1 Nov",c:"#5b6b3a"},
- {n:"Kyoto",d:"1 – 6 Nov",c:"#8a5a2b"},
+ {n:"Kyoto",d:"1 – 5 Nov",c:"#8a5a2b"},
+ {n:"Osaka",d:"5 – 6 Nov",c:"#2f5f6f"},
  {n:"Kumano",d:"6 – 8 Nov",c:"#2f6b5a"},
  {n:"Osaka",d:"8 – 9 Nov",c:"#2f5f6f"},
  {n:"Haneda",d:"9 – 10 Nov",c:"#555c4a"}
@@ -623,33 +625,35 @@ var DAYS=[
   eat:"<b>Grilled oysters</b> and <b>anago-meshi</b> (conger eel rice, Ueno at Miyajimaguchi) at lunch; <b>Hiroshima okonomiyaki</b> with soba noodles layered in for dinner; a fried <b>momiji manju</b> for the ferry.",
   map:"Itsukushima Shrine", route:["Kyoto Station","Hiroshima Station","Miyajimaguchi Station","Itsukushima Shrine","Hiroshima Peace Memorial Park","Okonomimura"],
   check:["Pass activated, seats reserved","Torii seen","Museum visited","Okonomiyaki eaten"]},
- {code:"D8",img:"p_todaiji",date:"2026-11-05",dow:"Thu",name:"Nara & Uji",city:"Kyoto",ph:"Kyoto",km:15,
-  wp:[["08:30","Miyakoji Rapid to Nara","45 min, pass day 2."],
+ {code:"D8",img:"p_todaiji",date:"2026-11-05",dow:"Thu",name:"Nara, then shift to Osaka",city:"Osaka",ph:"Osaka",km:15,
+  wp:[["08:00","Check out, bags into Kyoto Station lockers","Or carry the daypacks and send suitcases ahead; see Logistics."],
+      ["08:30","Miyakoji Rapid to Nara","45 min, pass day 2."],
       ["09:30","Nara Park, Todai-ji","Great Buddha, deer crackers ¥200. Bow to the deer, they bow back."],
       ["11:30","Kasuga Taisha","Lantern paths through the forest."],
-      ["13:00","Nakatanidou mochi, lunch","Then JR back north."],
-      ["14:30","Uji","30 min from Nara. Byodo-in, the temple on the ¥10 coin."],
-      ["16:00","Matcha at Nakamura Tokichi","Uji bridge at dusk, then 20 min back to Kyoto."],
-      ["19:00","Pack for the mountains","Daypacks only for 3 nights. Suitcases ready for takkyubin at 08:00 tomorrow."]],
-  transport:"<b>JR</b> Nara line all day, pass day 2.",
-  eat:"<b>Kakinoha-zushi</b> (mackerel sushi in persimmon leaf) in Nara, <b>Nakatanidou pounded mochi</b>, <b>matcha soba and parfait</b> in Uji. Dinner: <b>Kyoto ramen</b> at Honke Daiichi-Asahi by the station.",
-  map:"Todai-ji", route:["Kyoto Station","Todai-ji","Kasuga Taisha","Byodo-in","Nakamura Tokichi Honten"],
-  alt:"<b>Alt.</b> Imperial Palace (free, 09:00) and a slow Nishiki lunch if legs want a lighter day before the mountains.",
-  check:["Todai-ji","Byodo-in","Daypacks packed, cash withdrawn"]},
+      ["13:00","Nakatanidou mochi, lunch","Kakinoha-zushi on Sanjo-dori."],
+      ["14:30","Back via Kyoto for the bags, or straight on","JR Yamatoji Rapid Nara → Osaka 50 min on the pass; via Kyoto adds an hour."],
+      ["16:30","Osaka check-in","Midosuji line to the hotel. Ask them to hold the suitcases over 6 to 8 Nov."],
+      ["17:30","Shinsekai, Tsutenkaku","Kushikatsu at Daruma. No double dipping."],
+      ["19:30","Dotonbori, Hozenji Yokocho","Glico sign, takoyaki standing up, moss-covered Fudo statue. Pack the daypacks; 07:00 train."]],
+  transport:"<b>JR</b> Nara line and Yamatoji line, pass day 2. <b>Midosuji</b> in Osaka.",
+  eat:"<b>Kakinoha-zushi</b> (mackerel sushi in persimmon leaf) and <b>Nakatanidou pounded mochi</b> in Nara; <b>kushikatsu</b> in Shinsekai; <b>takoyaki</b> at Wanaka on Dotonbori.",
+  map:"Todai-ji", route:["Kyoto Station","Todai-ji","Kasuga Taisha","Nara Station","Tsutenkaku","Dotonbori"],
+  alt:"<b>Alt.</b> Skip Nara, do the Imperial Palace and Nishiki in the morning and reach Osaka by 14:00 for Osaka Castle before Shinsekai.",
+  check:["Todai-ji","Osaka check-in, suitcases stored","Shinsekai kushikatsu","Dotonbori","Daypacks packed, cash withdrawn"]},
  {code:"D9",img:"p_takahara",date:"2026-11-06",dow:"Fri",name:"Into the Kii mountains",city:"Tanabe",ph:"Kumano",km:11,
-  wp:[["08:00","Suitcases to takkyubin at the hotel desk","Addressed to the Osaka hotel for 8 Nov. Keep passports, meds, chargers."],
-      ["08:30","Kuroshio from Kyoto (or change at Shin-Osaka)","Reserved seats on the pass, day 3. 2h45 down the coast; sea on the right."],
-      ["11:15","Kii-Tanabe","Drop daypacks at the hotel or take them. Kumano Kotsu bus to Takijiri, 40 min, from stop 2 outside the station."],
-      ["12:15","Kumano Kodo Kan Pilgrimage Center, Takijiri-oji","Maps, stamps, the start of the Nakahechi. Lunch here."],
-      ["13:00","Warm-up: Takijiri-oji → Takahara","3.7 km, 300 m up through the cedar forest, 1h45. Tainai-kuguri rock squeeze on the way."],
-      ["15:00","Takahara","Kiri-no-Sato terrace, view over the cloud valley, 11th-century Kumano shrine."],
-      ["16:00","Down to Takijiri and bus back","3.7 km down, 1h15. Bus to Tanabe about 17:30, or walk to SEN RETREAT if staying at the trailhead."],
+  wp:[["06:45","Suitcases to hotel storage, daypacks on","Midosuji line to Shin-Osaka, 20 min. Konbini breakfast on the platform."],
+      ["07:33","Kuroshio from Shin-Osaka","Reserved seats on the pass, day 3. 2h15 down the coast; sea on the right."],
+      ["09:50","Kii-Tanabe","Drop daypacks at the hotel or take them. Kumano Kotsu bus to Takijiri, 40 min, from stop 2 outside the station."],
+      ["10:45","Kumano Kodo Kan Pilgrimage Center, Takijiri-oji","Maps, stamps, the start of the Nakahechi."],
+      ["11:30","Warm-up: Takijiri-oji → Takahara","3.7 km, 300 m up through the cedar forest, 1h45. Tainai-kuguri rock squeeze on the way."],
+      ["13:15","Takahara","Lunch on the Kiri-no-Sato terrace, view over the cloud valley, 11th-century Kumano shrine."],
+      ["14:30","Down to Takijiri and bus back","3.7 km down, 1h15. Bus to Tanabe about 16:30, or walk to SEN RETREAT if staying at the trailhead."],
       ["19:00","Ajikoji alley, Tanabe","Two hundred izakaya in a few blocks. Kishu plum wine, local fish."]],
   transport:"<b>Kuroshio</b> on the pass. <b>Kumano Kotsu bus</b> Tanabe ⇄ Takijiri, cash or IC.",
   eat:"<b>Mehari-zushi</b> (rice wrapped in pickled mustard leaf, the pilgrim's lunch), <b>umeshu</b> and <b>umeboshi</b> (Tanabe is Japan's plum capital), <b>Kishu-style</b> grilled fish on Ajikoji.",
-  map:"Takijiri-oji", route:["Kyoto Station","Kii-Tanabe Station","Takijiri-oji","Takahara Kumano Shrine","Ajikoji Tanabe"],
+  map:"Takijiri-oji", route:["Shin-Osaka Station","Kii-Tanabe Station","Takijiri-oji","Takahara Kumano Shrine","Ajikoji Tanabe"],
   alt:"<b>Alt.</b> Softer: skip the warm-up, walk Tanabe's Tokei Shrine and the harbour, early night. Harder: stay at SEN RETREAT Takijiri and be on the trail at 07:00 tomorrow without the bus.",
-  check:["Suitcases sent","Kuroshio boarded","Pilgrimage Center stamp","Takahara view","Ajikoji"]},
+  check:["Suitcases in storage","Kuroshio boarded","Pilgrimage Center stamp","Takahara view","Ajikoji"]},
  {code:"D10",img:"p_nakahechi",date:"2026-11-07",dow:"Sat",name:"The march: Takijiri to Tsugizakura",city:"Hongu",ph:"Kumano",km:19,
   wp:[["06:35","Bus Kii-Tanabe → Takijiri","First bus. From SEN RETREAT, walk 10 min to the trailhead instead."],
       ["07:20","Takijiri-oji → Takahara","3.7 km, the same climb as yesterday, now with fresh legs. 1h30."],
@@ -674,17 +678,17 @@ var DAYS=[
       ["13:30","Kumano Nachi Taisha and Seiganto-ji","The three-storey vermilion pagoda with the waterfall behind it. This is the photo."],
       ["14:30","Nachi Falls, Hiro Shrine","133 m, tallest single drop in Japan. ¥300 for the close platform."],
       ["15:30","Bus to Kii-Katsuura","Kuroshio about 16:00 → Shin-Osaka about 20:00, pass. Reserve the seats at Shingu in the morning."],
-      ["20:30","Osaka hotel","Suitcases waiting. Late Dotonbori ramen; make up the steps."]],
+      ["20:30","Osaka hotel, same one","Suitcases out of storage. Late ramen in Namba; make up the steps."]],
   transport:"<b>Bus</b> Hongu → Shingu (cash). <b>JR</b> Shingu → Nachi and <b>Kuroshio</b> Kii-Katsuura → Shin-Osaka on the pass. <b>Midosuji</b> to the hotel.",
   eat:"<b>Onsen tamago</b> at Yunomine, <b>sanma-zushi</b> in Shingu, <b>maguro</b> (Katsuura is a tuna port) at the station if time, <b>late ramen</b> in Osaka.",
   map:"Kumano Nachi Taisha", route:["Yunomine Onsen","Kumano Hongu Taisha","Oyunohara","Kumano Hayatama Taisha","Daimon-zaka","Kumano Nachi Taisha","Nachi Falls","Kii-Katsuura Station"],
   intel:"<b>Trains.</b> Only six Kuroshio a day run from Kii-Katsuura. Miss the 16:00 and the next is about 17:30, Osaka at 21:30.",
   alt:"<b>Alt.</b> Sleep in Kii-Katsuura at Hotel Urashima (cave onsen on the Pacific, tuna breakfast) and do the 7-hour haul to Haneda on 9 Nov, dropping Osaka.",
-  check:["Tsuboyu","Oyunohara torii","Hayatama Taisha","Pagoda and falls photo","Kuroshio boarded","Suitcases collected"]},
+  check:["Tsuboyu","Oyunohara torii","Hayatama Taisha","Pagoda and falls photo","Kuroshio boarded","Suitcases out of storage"]},
  {code:"D12",img:"p_dotonbori",date:"2026-11-09",dow:"Mon",name:"Osaka, then exfil to Haneda",city:"Osaka",ph:"Osaka",km:11,
   wp:[["08:30","Osaka Castle","Loop line to Osakajokoen. Park and the keep from outside; the museum inside is optional."],
       ["10:30","Kuromon Market brunch","Scallops, uni, wagyu skewers, fruit."],
-      ["12:00","Dotonbori and Hozenji Yokocho","Glico sign in daylight, moss-covered Fudo statue, takoyaki standing up."],
+      ["12:00","Umeda or Amerikamura","Umeda Sky Building's floating garden, or Amerikamura's vintage shops, whichever you did not get to on the 5th."],
       ["13:30","Nozomi Shin-Osaka → Shinagawa","2h20, SmartEX, ¥14,700. Left side for Fuji this direction."],
       ["16:00","Keikyu Shinagawa → Haneda","15 min. Tenkubashi for the Metropolitan, Otorii for MONday."],
       ["17:00","Haneda hotel","Bags ready for 06:45. Early dinner, early night."]],
@@ -711,13 +715,13 @@ var STAYS=[
    {tier:"Upgrade",name:"APA Hotel Pride Akasaka Kokkaigijidomae",price:170,score:8.5,reviews:"10,907",
     blurb:"The hotel from the visa itinerary. Rooftop open-air bath, one minute from Tameike-sanno, Ginza and Namboku lines.",
     perks:["Rooftop open-air bath","Tameike-sanno 1 min"],slug:"apahoterupuraido-guo-hui-yi-shi-tang-qian",map:"APA Hotel Pride Akasaka Kokkaigijidomae"}]},
- {id:"kyoto",name:"Kyoto",dates:"1 – 6 Nov",nights:5,ci:"2026-11-01",co:"2026-11-06",
+ {id:"kyoto",name:"Kyoto",dates:"1 – 5 Nov",nights:4,ci:"2026-11-01",co:"2026-11-05",
   opts:[
-   {tier:"Standard",name:"Vessel Hotel Campana Kyoto Gojo",price:106,score:8.7,reviews:"1,109",
-    blurb:"4-star for the price of a business hotel. Public bath and sauna, Gojo subway stop, 10 min walk to Kyoto Station for the early Hiroshima, Nara and Kuroshio departures.",
+   {tier:"Standard",name:"Vessel Hotel Campana Kyoto Gojo",price:130,score:8.7,reviews:"1,109",
+    blurb:"4-star for the price of a business hotel. Public bath and sauna, Gojo subway stop, 10 min walk to Kyoto Station for the early Hiroshima and Nara departures.",
     perks:["Public bath + sauna","Karasuma line"],slug:"vessel-campana-kyoto-gojyo",map:"Vessel Hotel Campana Kyoto Gojo"},
-   {tier:"Upgrade",name:"Dormy Inn Premium Kyoto Ekimae Natural Hot Spring",price:188,score:8.7,reviews:"2,511",
-    blurb:"Real onsen on the roof with an open-air bath, free late-night ramen, opposite Kyoto Station. Over the line but the onsen every night is the point, and it is 3 min from the 06:15 trains.",
+   {tier:"Upgrade",name:"Dormy Inn Premium Kyoto Ekimae Natural Hot Spring",price:182,score:8.7,reviews:"2,511",
+    blurb:"Real onsen on the roof with an open-air bath, free late-night ramen, opposite Kyoto Station. Over the line but the onsen every night is the point, and it is 3 min from the 06:15 Hiroshima train.",
     perks:["Rooftop onsen","Free night ramen","Kyoto Station"],slug:"dormy-inn-premium-kyoto-ekimae",map:"Dormy Inn Premium Kyoto Ekimae"}]},
  {id:"tanabe",name:"Tanabe / Takijiri",dates:"6 – 7 Nov",nights:1,ci:"2026-11-06",co:"2026-11-07",
   opts:[
@@ -735,13 +739,13 @@ var STAYS=[
    {tier:"Upgrade",name:"Sansuikan Kawayu Midoriya",price:310,score:8.6,reviews:"991",
     blurb:"Ryokan on the Oto river at Kawayu Onsen, where the river bed itself is hot: dig a pool on the gravel or use the hotel's riverside open-air bath. Dinner and breakfast, free shuttle to Hongu.",
     perks:["River open-air bath","Dinner + breakfast","Free shuttle"],slug:"sansuikan-kawayu-midoriya",map:"Sansuikan Kawayu Midoriya"}]},
- {id:"osaka",name:"Osaka",dates:"8 – 9 Nov",nights:1,ci:"2026-11-08",co:"2026-11-09",
+ {id:"osaka",name:"Osaka, two bookings",dates:"5 – 6 and 8 – 9 Nov",nights:2,ci:"2026-11-05",co:"2026-11-06",ci2:"2026-11-08",co2:"2026-11-09",
   opts:[
-   {tier:"Standard",name:"Hotel Sobial Namba Daikokucho",price:98,score:8.8,reviews:"3,077",
-    blurb:"4-star with an open-air bath, Daikokucho station on the Midosuji line, direct from Shin-Osaka at 20:00 and back to it at 13:00.",
-    perks:["Open-air bath","Midosuji direct"],slug:"hotel-sobial-namba-daikokucho",map:"Hotel Sobial Namba Daikokucho"},
-   {tier:"Upgrade",name:"APA Hotel & Resort Osaka Namba Ekimae Tower",price:85,score:8.4,reviews:"12,492",
-    blurb:"Tower hotel by Namba station with a rooftop pool, open-air bath, spa and bar. Cheaper than the Standard on this Sunday night. Pool is seasonal and may be shut in November; the bath and bar are open.",
+   {tier:"Standard",name:"Hotel Sobial Namba Daikokucho",price:95,score:8.8,reviews:"3,077",
+    blurb:"4-star with an open-air bath, Daikokucho on the Midosuji line, 20 min to Shin-Osaka for the 07:33 Kuroshio. €92 on the 5th, €98 on the 8th. Book both nights and ask them to hold the suitcases in between.",
+    perks:["Open-air bath","Midosuji direct","Holds bags"],slug:"hotel-sobial-namba-daikokucho",map:"Hotel Sobial Namba Daikokucho"},
+   {tier:"Upgrade",name:"APA Hotel & Resort Osaka Namba Ekimae Tower",price:88,score:8.4,reviews:"12,492",
+    blurb:"Tower hotel by Namba station with a rooftop pool, open-air bath, spa and bar. €91 on the 5th, €85 on the 8th, so cheaper than the Standard. Pool is seasonal and may be shut in November; the bath and bar are open.",
     perks:["Rooftop pool (seasonal)","Open-air bath","Bar"],slug:"apahoterurizotoda-ban-nanbayi-qian-tawa",map:"APA Hotel & Resort Osaka Namba Ekimae Tower"}]},
  {id:"haneda",name:"Haneda",dates:"9 – 10 Nov",nights:1,ci:"2026-11-09",co:"2026-11-10",
   opts:[
@@ -759,7 +763,6 @@ var LOGI=[
  ["Welcome Suica","¥0 + top-up","Arrival airport, 28 Oct.","All metro, JR local, buses (Kumano Kotsu included), konbini. 28-day validity, balance not refundable."],
  ["Narita Express","¥3,070 pp","Narita T2 on arrival.","Airport → Tokyo Station, 60 min."],
  ["Kumano Kotsu buses","about ¥4,500 pp total","On board, cash or IC. Tanabe ⇄ Takijiri ¥1,000, Nonaka → Hongu ¥1,600, Hongu → Shingu ¥1,540.","Trail access. Not on any JR pass."],
- ["Takkyubin suitcase transfer","about ¥2,500 per bag","Kyoto hotel desk, 6 Nov 08:00.","Suitcases to the Osaka hotel, arrive 7 Nov, held until 8 Nov."],
  ["Tsuboyu bath","¥800 pp","Yunomine ticket office, 8 Nov 06:00.","30-minute private slot in the UNESCO bath."],
  ["Shibuya Sky","about ¥2,500 pp","Online, 16:30 slot for 29 Oct.","Rooftop deck, sunset."],
  ["Peace Memorial Museum","¥200 pp","On the door, 4 Nov.","No reservation needed."],
@@ -770,10 +773,10 @@ var LOGI=[
 
 var OPEN=[
  "Tokyo: Roppongi SIX at €149 or Pride Akasaka with the rooftop bath at €170",
- "Kyoto: Vessel Campana Gojo at €106 or Dormy Inn with the rooftop onsen at €188",
+ "Kyoto: Vessel Campana Gojo at €130 or Dormy Inn with the rooftop onsen at €182",
  "6 Nov: Comfort Hotel in Tanabe town at €110 or SEN RETREAT at the trailhead at €192",
  "7 Nov: Cottage Kirihata at €112 plus Tsuboyu, or Kawayu Midoriya ryokan with river onsen at €310. Try Adumaya in Yunomine direct first.",
- "8 Nov: Osaka night (Sobial €98 or APA Namba Tower €85) or Hotel Urashima cave onsen in Kii-Katsuura at €180 with a long 9 Nov",
+ "Osaka, 5 and 8 Nov: Sobial at €95 average or APA Namba Tower with pool and bar at €88, same hotel both nights so it holds the suitcases",
  "Haneda: MONday at €93 or Metropolitan at Tenkubashi at €129",
  "7 Nov march: standard 17 km to Tsugizakura, or the 25 km push toward Kobiro-oji"
 ];
@@ -870,7 +873,7 @@ function renderStays(){
         '<div class="price"><b>'+eur(o.price)+'</b> / night · '+eur(o.price*s.nights)+' total <span class="chip '+(over?'warn':'ok')+'">'+(over?'over €'+BUDGET:'in budget')+'</span></div>'+
         '<div class="price">Score '+o.score+' · '+o.reviews+' reviews</div><p>'+esc(o.blurb)+'</p>'+
         '<div class="perks">'+o.perks.map(function(p){return '<span class="chip">'+esc(p)+'</span>'}).join("")+'</div>'+
-        '<div class="links"><a class="btn primary" target="_blank" rel="noopener" href="'+bookUrl(o,s)+'">Booking.com</a><a class="btn" target="_blank" rel="noopener" href="'+mapUrl(o.map)+'">Map</a></div></label>'}).join("")+'</div></div>'});
+        '<div class="links"><a class="btn primary" target="_blank" rel="noopener" href="'+bookUrl(o,s)+'">Booking.com'+(s.ci2?' '+s.ci.slice(8)+' Nov':'')+'</a>'+(s.ci2?'<a class="btn primary" target="_blank" rel="noopener" href="'+bookUrl(o,{ci:s.ci2,co:s.co2})+'">Booking.com '+s.ci2.slice(8)+' Nov</a>':'')+'<a class="btn" target="_blank" rel="noopener" href="'+mapUrl(o.map)+'">Map</a></div></label>'}).join("")+'</div></div>'});
   document.getElementById("stays").innerHTML=html;
   document.getElementById("selTotal").textContent=eur(tot);
   document.getElementById("minTotal").textContent=eur(min);
@@ -913,7 +916,6 @@ var BUYJP=[
  ["Welcome Suica x2, charge ¥5,000 each","Narita T2 B1, JR East Travel Service Center","28-day card, no deposit."],
  ["Narita Express ticket","Same counter","¥3,070, reserved seat."],
  ["Umbrella","Any konbini, ¥500","Cities only; rain shell on the trail."],
- ["Takkyubin for the suitcases","Kyoto hotel desk, 6 Nov 08:00","About ¥2,500 per bag to the Osaka hotel."],
  ["Trail lunch","Kii-Tanabe konbini or the inn, 7 Nov 06:00","Onigiri, mehari-zushi, nuts. Nothing on the trail until Chikatsuyu."],
  ["Goshuin stamp book","Kumano Hongu Taisha, ¥1,500","Collect the three grand shrine stamps plus Nachi's pagoda temple."],
  ["Tsuboyu ticket","Yunomine office, 8 Nov 06:00","¥800, 30 minutes, first come."],
