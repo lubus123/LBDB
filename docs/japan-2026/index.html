@@ -154,6 +154,7 @@ footer{margin-top:40px;color:var(--muted);font-size:13px;border-top:1px solid va
     <button role="tab" aria-selected="false" data-tab="billet" type="button">Billeting</button>
     <button role="tab" aria-selected="false" data-tab="logi" type="button">Logistics</button>
     <button role="tab" aria-selected="false" data-tab="intel" type="button">Intel</button>
+    <button role="tab" aria-selected="false" data-tab="hand" type="button">Handbook</button>
   </nav>
 
   <section id="brief">
@@ -168,7 +169,9 @@ footer{margin-top:40px;color:var(--muted);font-size:13px;border-top:1px solid va
       <div class="tile"><b id="tileTotal">—</b><small>Hotels, selected (EUR)</small></div>
     </div>
     <div class="phases" id="phases"></div>
-    <div class="note"><b>Flights.</b> Out: BA3449 Frankfurt 20:05 Tue 27 Oct, lands Narita 17:05 Wed 28 Oct (booking ZASD8Q). Home: Haneda 09:35 Tue 10 Nov, lands Heathrow 15:35.</div>
+    <div class="note"><b>Lubo inbound.</b> BA3449 Frankfurt 20:05 Tue 27 Oct, lands Narita 17:05 Wed 28 Oct (booking ZASD8Q). <b>Home, both.</b> Haneda 09:35 Tue 10 Nov, lands Heathrow 15:35.</div>
+    <div class="note"><b>Elah inbound.</b> Departs London at a similar time, separate flight. <label for="elahFlight" style="display:block;margin-top:6px">Flight, arrival airport and time</label><input id="elahFlight" type="text" placeholder="e.g. JL44 LHR 19:00 → HND 15:30 28 Oct" style="width:100%;max-width:420px;padding:6px 8px;border:1px solid var(--line);background:var(--bg);color:var(--fg);font-family:var(--mono)">
+      <div style="margin-top:8px"><b>Rendezvous SOP.</b> Both go straight to the Tokyo hotel independently; whoever lands first checks in and messages the room number. From <b>Narita</b>: Narita Express to Tokyo Station, 60 min, then taxi. From <b>Haneda</b>: Keikyu to Shinagawa, 15 min, then taxi 15 min, or Tokyo Monorail to Hamamatsucho and Ginza line via Shimbashi. Share live location on WhatsApp from landing until you meet.</div></div>
     <h3 style="margin-top:18px">Decisions still open</h3>
     <ul class="plain" id="openItems"></ul>
     <h3 style="margin-top:18px">Deadlines</h3>
@@ -244,6 +247,70 @@ footer{margin-top:40px;color:var(--muted);font-size:13px;border-top:1px solid va
     <p class="lead">Dashboard prepared 13 Oct 2026. Hotel prices from Booking.com on that date. Rail fares from JR West, JR Central (SmartEX) and Odakyu, October 2026.</p>
   </section>
 
+  <section id="hand" hidden>
+    <div class="eyebrow">Handbook</div>
+    <h2>Quick reference, SOPs, shopping list</h2>
+    <p class="lead">The stuff you look up at a station gate or in a ryokan corridor. Shopping list ticks are remembered on this device.</p>
+
+    <h3>Buy before departure</h3>
+    <div class="scroll"><table id="buyTable">
+      <tr><th></th><th>Item</th><th>Who</th><th>Note</th></tr>
+    </table></div>
+
+    <h3 style="margin-top:20px">Buy in Japan</h3>
+    <div class="scroll"><table id="buyJpTable">
+      <tr><th></th><th>Item</th><th>Where</th><th>Note</th></tr>
+    </table></div>
+
+    <h3 style="margin-top:20px">Standard operating procedures</h3>
+    <div class="grid" id="sops" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))"></div>
+
+    <h3 style="margin-top:20px">Phrases</h3>
+    <div class="scroll"><table>
+      <tr><th>Say</th><th>Means</th></tr>
+      <tr><td><b>Sumimasen</b></td><td>Excuse me, sorry, and the way to call a waiter. The most useful word in Japan.</td></tr>
+      <tr><td><b>Arigatou gozaimasu</b></td><td>Thank you (polite).</td></tr>
+      <tr><td><b>Onegaishimasu</b></td><td>Please (when asking for something).</td></tr>
+      <tr><td><b>Kore o kudasai</b></td><td>This one, please. Point at the menu or the plastic food.</td></tr>
+      <tr><td><b>Futari desu</b></td><td>Table for two.</td></tr>
+      <tr><td><b>Osusume wa?</b></td><td>What do you recommend?</td></tr>
+      <tr><td><b>Eigo no menyuu arimasu ka?</b></td><td>Is there an English menu?</td></tr>
+      <tr><td><b>Ikura desu ka?</b></td><td>How much is it?</td></tr>
+      <tr><td><b>Toire wa doko desu ka?</b></td><td>Where is the toilet?</td></tr>
+      <tr><td><b>Daijoubu desu</b></td><td>I'm fine / no thanks (for the bag at the konbini, for the receipt).</td></tr>
+      <tr><td><b>Kanpai</b></td><td>Cheers.</td></tr>
+      <tr><td><b>Gochisousama deshita</b></td><td>Thank you for the meal, said when leaving.</td></tr>
+      <tr><td><b>Eki / deguchi / noriba</b></td><td>Station / exit / platform or stop.</td></tr>
+    </table></div>
+
+    <h3 style="margin-top:20px">Numbers and facts</h3>
+    <div class="scroll"><table>
+      <tr><td><b>Police</b></td><td class="num">110</td><td><b>Ambulance and fire</b></td><td class="num">119</td></tr>
+      <tr><td><b>Japan Visitor Hotline (JNTO, 24h, English)</b></td><td class="num">050-3816-2787</td><td><b>Lost IC card or item on JR East</b></td><td class="num">050-2016-1603</td></tr>
+      <tr><td><b>Power</b></td><td>100 V, Type A flat two-pin</td><td><b>Tap water</b></td><td>Drinkable everywhere</td></tr>
+      <tr><td><b>Tipping</b></td><td>None, anywhere. Leaving coins confuses people.</td><td><b>Tax-free</b></td><td>¥5,000+ in one shop, passport shown, goods stay sealed</td></tr>
+      <tr><td><b>Escalators</b></td><td>Stand left in Tokyo, right in Osaka</td><td><b>Trains</b></td><td>No calls, phone on silent, bags on lap or rack</td></tr>
+      <tr><td><b>Big luggage on shinkansen</b></td><td>Bags over 160 cm total need the oversized-baggage seat, booked free in SmartEX</td><td><b>Konbini ATMs</b></td><td>7-Eleven and Lawson take foreign cards, 24h</td></tr>
+    </table></div>
+
+    <h3 style="margin-top:20px">Tips from the field</h3>
+    <ul class="plain">
+      <li>• Carry a small hand towel. Public toilets often have no dryers.</li>
+      <li>• Carry a zip bag for your rubbish. Bins are rare; take it back to the hotel or a konbini.</li>
+      <li>• Konbini breakfast is the move: onigiri, egg sandwiches, hot coffee. 7-Eleven, Lawson, FamilyMart, all open 24h.</li>
+      <li>• Lunch sets (teishoku) at 11:30 are half the price of the same restaurant at night.</li>
+      <li>• Queue for the train at the floor markings. Let people off first.</li>
+      <li>• Shoes off wherever there is a step up and slippers waiting: ryokan, temples, some restaurants. Wear socks without holes.</li>
+      <li>• Do not eat while walking, except at festival stalls and Miyajima's street where everyone does.</li>
+      <li>• Temples close around 17:00. Plan the big ones for the morning and markets or neighbourhoods for the late afternoon.</li>
+      <li>• A coin purse earns its keep: ¥1, ¥5, ¥10, ¥50, ¥100, ¥500 pile up fast.</li>
+      <li>• Google Maps transit directions are accurate to the minute, including which car to board for the exit you want.</li>
+      <li>• Pharmacies (Matsumoto Kiyoshi, Welcia) sell most things. Bring prescription meds with the prescription; pseudoephedrine products are banned.</li>
+      <li>• Izakaya charge a small seating fee (otoshi), usually ¥300 to ¥500 per person, with a small dish. It is not a scam.</li>
+      <li>• Haneda and Narita both have free luggage-wrapping and coin lockers; Kyoto Station lockers fill by 10:00, use the staffed luggage counter instead.</li>
+    </ul>
+  </section>
+
   <footer>Operation Rising Sun · Lubo &amp; Elah · Hosted on GitHub Pages. Ticks and hotel choices are stored only in this browser.</footer>
 </div>
 
@@ -265,8 +332,9 @@ var PHASES=[
 
 var DAYS=[
  {code:"D-1",date:"2026-10-27",dow:"Tue",name:"Launch",city:"Frankfurt",ph:"Tokyo",
-  wp:[["20:05","BA3449 departs Frankfurt","13h overnight. Sleep on the plane; Japan is 8 hours ahead of CET."]],
-  transport:"<b>Air</b> FRA → NRT. Eat before boarding, set watches to JST at take-off.",
+  wp:[["20:05","Lubo: BA3449 departs Frankfurt","13h overnight. Sleep on the plane; Japan is 8 hours ahead of CET."],
+      ["evening","Elah: departs London","Separate flight, details on the Briefing tab. Rendezvous at the Tokyo hotel."]],
+  transport:"<b>Air</b> FRA → NRT and LHR → Tokyo. Eat before boarding, set watches to JST at take-off, live location on in the group.",
   map:"Frankfurt Airport", route:["Frankfurt Airport"],
   check:["Passports, visa, printed hotel list","Visit Japan Web QR screenshots","SmartEX app installed, card added","eSIM activated","Offline maps downloaded"]},
  {code:"D0",date:"2026-10-28",dow:"Wed",name:"Insertion",city:"Tokyo",ph:"Tokyo",
@@ -496,7 +564,7 @@ function routeUrl(r){ if(r.length<2) return mapUrl(r[0]);
 var tabs=document.querySelectorAll(".tabs button");
 function showTab(id,push){
   tabs.forEach(function(b){b.setAttribute("aria-selected",String(b.dataset.tab===id))});
-  ["brief","ops","billet","logi","intel"].forEach(function(s){document.getElementById(s).hidden=(s!==id)});
+  ["brief","ops","billet","logi","intel","hand"].forEach(function(s){document.getElementById(s).hidden=(s!==id)});
   if(push){try{history.replaceState(null,"","#"+id)}catch(e){}}
 }
 tabs.forEach(function(b){b.addEventListener("click",function(){showTab(b.dataset.tab,true)})});
@@ -560,6 +628,56 @@ document.getElementById("logiTable").insertAdjacentHTML("beforeend",LOGI.map(fun
   return '<tr><td><input type="checkbox" id="lg-'+i+'" data-i="'+i+'"'+(logiDone[i]?' checked':'')+' aria-label="done"></td><td><b>'+esc(r[0])+'</b></td><td class="num">'+esc(r[1])+'</td><td>'+esc(r[2])+'</td><td>'+esc(r[3])+'</td></tr>'}).join(""));
 document.getElementById("logiTable").addEventListener("change",function(e){var el=e.target;if(el.type!=="checkbox")return;logiDone[el.dataset.i]=el.checked;store("ors.logi",logiDone)});
 
+/* ---------- handbook ---------- */
+var BUY=[
+ ["Travel insurance with medical cover","both","Print the policy number into the Numbers table in your head, or screenshot it."],
+ ["eSIM, 10 GB or more (Ubigi, Airalo)","both","Install before departure, activate on landing."],
+ ["Kansai-Hiroshima Area Pass","both","JR West online shop, collect at Kyoto Station on 5 Nov with passports."],
+ ["SmartEX account and the three shinkansen tickets","Lubo","See deadlines on the Briefing tab. Book 2 seats together, oversized-bag seat if needed."],
+ ["Hotels, all five bases","Lubo","Free-cancellation rates where offered. Ryokan usually charge 100% inside 7 days."],
+ ["Shibuya Sky tickets, 29 Oct 16:30","Elah","Official site only."],
+ ["Yen cash, about €300 each","both","Better rates at a 7-Eleven ATM in Japan than at a European bank."],
+ ["Type A power adapter and a 2-port USB charger","both","Japan is 100 V; EU plugs do not fit."],
+ ["Power bank, 10,000 mAh","both","Maps and Suica top-ups drain the phone."],
+ ["Broken-in walking shoes","both","25,000 steps a day is normal. Slip-on if possible for temples and ryokan."],
+ ["Small day bag, coin purse, hand towel, zip bags","both","See tips."],
+ ["Medication for the trip plus a copy of prescriptions","both","Check the banned list for anything with pseudoephedrine."],
+ ["Visit Japan Web registration","both","Immigration and customs QR, done on the phone before flying."],
+ ["WhatsApp group 'Rising Sun' with live location sharing","Elah","For the rendezvous on 28 Oct and any separation."]
+];
+var BUYJP=[
+ ["Welcome Suica x2, charge ¥5,000","Narita T2 B1, JR East Travel Service Center","28-day card, no deposit. Elah buys hers at her arrival airport."],
+ ["Narita Express ticket","Same counter","¥3,070, reserved seat."],
+ ["Umbrella","Any konbini, ¥500","Only if it rains. Do not pack one."],
+ ["Hakone Freepass, 2-day from Odawara","Odawara station, Odakyu counter, 8 Nov","¥6,000. Only if doing the full loop on 9 Nov."],
+ ["Peace Memorial Museum entry","On the door, 7 Nov","¥200."],
+ ["Miyajima visitor tax","Ferry pier, 7 Nov","¥100, cash or IC."],
+ ["Takkyubin luggage transfer (optional)","Hotel front desk, 1 Nov","About ¥2,500 per bag Tokyo to Kyoto, arrives next day."],
+ ["Gifts, tax-free","Don Quijote, Bic Camera, department stores","Show passport, keep the sealed bag closed until home."]
+];
+var SOPS=[
+ ["Morning","Check the day card the night before. Out by 08:30. Konbini breakfast on the move. Phone charged, power bank packed, Suica balance over ¥2,000."],
+ ["Rail","At the platform 15 min early. Check car number on the SmartEX QR or the pass reservation. Stand at the floor marking for that car. Big bags in the rack behind the last row or the oversized seat. Silent phones."],
+ ["Separated","Stop, do not wander. Message in the group with the station or landmark. Default meeting point is the hotel lobby. If no signal within 30 min, both go to the hotel."],
+ ["Onsen","Shoes off at the entrance. Undress fully in the changing room. Wash sitting down at a tap before entering. Small towel on your head, not in the water. No photos. 10 min in, cool off, repeat. Hydrate after."],
+ ["Ryokan","Arrive by 17:00. Shoes off at the genkan. Yukata left side over right. Dinner at the stated time, no exceptions. Futons are laid out while you eat. Breakfast time agreed at check-in. Check out by 10:00."],
+ ["Shrine and temple","Bow once at the gate. Rinse hands at the water basin (left, right, mouth from the hand, never the ladle). At a shrine: coin, bow twice, clap twice, pray, bow once. At a temple: coin, bow, no clapping. Hats off indoors."],
+ ["Earthquake","Drop, cover under a table, hold on. Do not run outside during shaking. After: check each other, follow hotel staff, phones switch to the J-Alert tone. Shinkansen stop automatically and resume."],
+ ["Lost or stolen","Passport: nearest police box (koban) for a report, then the embassy in Tokyo. Cards: block in the banking app, cash from the other person. IC card: cannot be replaced, keep the balance low. Items left on a train: station office, they are usually found."],
+ ["Illness","Pharmacy first (Matsumoto Kiyoshi, Welcia) for colds and stomach. Hospital for anything worse: call the JNTO hotline 050-3816-2787 for an English-speaking clinic, insurance number ready, pay and claim back."],
+ ["Exfil, 10 Nov","Alarm 06:00. Leave 06:45. Terminal 3 by 07:30. Tax-free goods in hand luggage. Suica balances spent at the airport konbini since they cannot be refunded."]
+];
+var buyDone=store("ors.buy")||{};
+function buyRows(id,rows,prefix){
+  document.getElementById(id).insertAdjacentHTML("beforeend",rows.map(function(r,i){var k=prefix+i;
+    return '<tr><td><input type="checkbox" id="'+k+'" data-k="'+k+'"'+(buyDone[k]?' checked':'')+' aria-label="done"></td><td><b>'+esc(r[0])+'</b></td><td>'+esc(r[1])+'</td><td>'+esc(r[2])+'</td></tr>'}).join(""));
+  document.getElementById(id).addEventListener("change",function(e){var el=e.target;if(el.type!=="checkbox")return;buyDone[el.dataset.k]=el.checked;store("ors.buy",buyDone)});
+}
+buyRows("buyTable",BUY,"b-"); buyRows("buyJpTable",BUYJP,"j-");
+document.getElementById("sops").innerHTML=SOPS.map(function(s){return '<div class="tile"><div class="tier eyebrow">SOP · '+esc(s[0])+'</div><p style="margin:6px 0 0;font-size:14px">'+esc(s[1])+'</p></div>'}).join("");
+var ef=document.getElementById("elahFlight");ef.value=store("ors.elah")||"";
+ef.addEventListener("input",function(){store("ors.elah",ef.value)});
+
 /* ---------- clock, countdown, progress ---------- */
 function pad(n){return (n<10?"0":"")+n}
 function tick(){
@@ -589,7 +707,7 @@ var CITY={Tokyo:[35.68,139.69],Kyoto:[35.01,135.77],Osaka:[34.69,135.5],Hiroshim
 
 /* ---------- initial tab from hash ---------- */
 var h=(location.hash||"").replace("#","");
-if(["brief","ops","billet","logi","intel"].indexOf(h)>=0)showTab(h,false);
+if(["brief","ops","billet","logi","intel","hand"].indexOf(h)>=0)showTab(h,false);
 })();
 </script>
 </body>
