@@ -111,6 +111,26 @@ ul.plain{list-style:none;padding:0;margin:0;display:grid;gap:6px}
 .check label.done{color:var(--muted);text-decoration:line-through}
 .intel{margin-top:10px;font-size:14px;color:var(--muted)}
 .intel b{color:var(--warn)}
+.alt{margin-top:10px;font-size:14px;border-left:3px solid var(--line);padding-left:10px;color:var(--muted)}
+.alt b{color:var(--fg)}
+.eat{margin-top:10px;font-size:14px}
+.eat b{color:var(--accent)}
+.steps{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px;padding-top:10px;border-top:1px dashed var(--line);font-family:var(--cond);font-size:14px;letter-spacing:.02em}
+.steps input{width:90px;padding:4px 6px;border:1px solid var(--line);background:var(--bg);color:var(--fg);font-family:var(--mono);font-size:14px}
+.steps .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.qrh h3{margin-top:22px;color:var(--olive);border-bottom:2px solid var(--olive);padding-bottom:4px}
+.qrh ul.plain li{padding-left:0}
+.qrh .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.qrh .card{background:var(--panel);border:1px solid var(--line);padding:12px 14px;font-size:14px}
+.qrh .card h4{margin:0 0 6px;font-family:var(--cond);font-size:17px;letter-spacing:.02em}
+.qrh .card ul{margin:0;padding-left:18px}
+.qrh .card li{margin:3px 0}
+.hero{width:100%;aspect-ratio:16/9;object-fit:cover;border:1px solid var(--line);display:block;margin-bottom:8px;background:var(--panel2)}
+.dish{display:grid;grid-template-columns:72px 1fr;gap:10px;align-items:center;margin:6px 0;font-size:14px}
+.dish img{width:72px;height:56px;object-fit:cover;border:1px solid var(--line);background:var(--panel2)}
+.dish.noimg{grid-template-columns:1fr}
+.credits{font-size:12px;color:var(--muted);margin-top:16px}
+.credits a{color:var(--muted)}
 
 /* Billeting */
 .stay{background:var(--panel);border:1px solid var(--line);padding:14px 16px;margin-bottom:14px}
@@ -154,48 +174,50 @@ footer{margin-top:40px;color:var(--muted);font-size:13px;border-top:1px solid va
     <button role="tab" aria-selected="false" data-tab="billet" type="button">Billeting</button>
     <button role="tab" aria-selected="false" data-tab="logi" type="button">Logistics</button>
     <button role="tab" aria-selected="false" data-tab="intel" type="button">Intel</button>
-    <button role="tab" aria-selected="false" data-tab="hand" type="button">Handbook</button>
+    <button role="tab" aria-selected="false" data-tab="hand" type="button">SOP &amp; kit</button>
+    <button role="tab" aria-selected="false" data-tab="qrh" type="button">QRH</button>
   </nav>
 
   <section id="brief">
     <div class="eyebrow">Mission briefing</div>
-    <h2>Two weeks, five phases, one day trip to Hiroshima and one night in the hot water</h2>
-    <p class="lead">Tokyo first for five nights, the Tokaido shinkansen to Kyoto for four, two nights in Osaka with a Saturday strike on Hiroshima and Miyajima, then a ryokan night in Hakone on the way back and a final night at Haneda for the 09:35 flight home.</p>
+    <h2>Two weeks, six bases, a Hiroshima strike, a 17 km pilgrim trail and a night in the hot water</h2>
+    <p class="lead">Tokyo for four nights, the Tokaido shinkansen to Kyoto for five with a day trip to Hiroshima and Miyajima, then south into the Kii mountains for the Kumano Kodo: a warm-up climb, a full-day march to Tsugizakura, a hot-spring night at Hongu, and the pagoda and waterfall at Nachi. Back up the coast to Osaka for one night, and a last night at Haneda for the 09:35 flight.</p>
     <div class="grid tiles">
       <div class="tile"><b>14</b><small>Days in theatre</small></div>
       <div class="tile"><b>13</b><small>Nights</small></div>
-      <div class="tile"><b>5</b><small>Bases</small></div>
-      <div class="tile"><b>4</b><small>Shinkansen legs</small></div>
+      <div class="tile"><b>6</b><small>Bases</small></div>
+      <div class="tile"><b id="tilePlanned">—</b><small>Planned steps</small></div>
+      <div class="tile"><b id="tileLogged">—</b><small>Logged steps</small></div>
       <div class="tile"><b id="tileTotal">—</b><small>Hotels, selected (EUR)</small></div>
     </div>
     <div class="phases" id="phases"></div>
-    <div class="note"><b>Lubo inbound.</b> BA3449 Frankfurt 20:05 Tue 27 Oct, lands Narita 17:05 Wed 28 Oct (booking ZASD8Q). <b>Home, both.</b> Haneda 09:35 Tue 10 Nov, lands Heathrow 15:35.</div>
-    <div class="note"><b>Elah inbound.</b> Departs London at a similar time, separate flight. <label for="elahFlight" style="display:block;margin-top:6px">Flight, arrival airport and time</label><input id="elahFlight" type="text" placeholder="e.g. JL44 LHR 19:00 → HND 15:30 28 Oct" style="width:100%;max-width:420px;padding:6px 8px;border:1px solid var(--line);background:var(--bg);color:var(--fg);font-family:var(--mono)">
-      <div style="margin-top:8px"><b>Rendezvous SOP.</b> Both go straight to the Tokyo hotel independently; whoever lands first checks in and messages the room number. From <b>Narita</b>: Narita Express to Tokyo Station, 60 min, then taxi. From <b>Haneda</b>: Keikyu to Shinagawa, 15 min, then taxi 15 min, or Tokyo Monorail to Hamamatsucho and Ginza line via Shimbashi. Share live location on WhatsApp from landing until you meet.</div></div>
+    <div class="note"><b>Flights, both of us.</b> Out: BA3449 Frankfurt 20:05 Tue 27 Oct, lands Narita 17:05 Wed 28 Oct, 13 hours (booking ZASD8Q). Home: Haneda 09:35 Tue 10 Nov, lands Heathrow 15:35. In-flight plan is on the SOP &amp; kit tab.</div>
+    <div class="note"><b>Booking.com Genius Level 3.</b> Lubo's account carries 10 to 20% off at Genius-partner hotels, free breakfast or room upgrades at some, and priority support. Every price on the Billeting tab was quoted logged out, so book from the account and expect most Standard options to land under the cap with margin.</div>
+    <div class="note"><b>Step doctrine.</b> Minimum 15,000 a day. Planned figures below are walking estimates at 1,350 steps per km. Three days fall short by design: the two flight days and the Nachi day, which ends with four hours on a train. Make the Nachi day up in Dotonbori that night.</div>
     <h3 style="margin-top:18px">Decisions still open</h3>
     <ul class="plain" id="openItems"></ul>
     <h3 style="margin-top:18px">Deadlines</h3>
     <div class="scroll"><table>
       <tr><th>By</th><th>Action</th><th>Why</th></tr>
-      <tr><td class="num">18 Oct</td><td>Book Shin-Osaka → Odawara Hikari for 8 Nov in SmartEX</td><td>EX Hayatoku 21 early-bird fare closes 21 days out</td></tr>
-      <tr><td class="num">20 Oct</td><td>Lock hotel choices below and book, free-cancellation rates where offered</td><td>Early November is peak foliage season in Kyoto and Hakone</td></tr>
-      <tr><td class="num">26 Oct</td><td>Fill in Visit Japan Web, book Shibuya Sky slot for 29 Oct</td><td>Immigration QR and the sunset slots sell out</td></tr>
-      <tr><td class="num">30 Oct</td><td>Book Tokyo → Kyoto Nozomi for 2 Nov in SmartEX</td><td>EX Hayatoku needs 3 days; pick seats on the right side (D/E) for Mt Fuji</td></tr>
-      <tr><td class="num">2 Nov</td><td>Book Odawara → Shinagawa Kodama for 9 Nov</td><td>EX Hayatoku 7 for Hikari/Kodama closes 7 days out</td></tr>
+      <tr><td class="num">19 Oct</td><td>Book Shin-Osaka → Shinagawa Nozomi for 9 Nov in SmartEX</td><td>EX Hayatoku 21 early-bird fare closes 21 days out</td></tr>
+      <tr><td class="num">20 Oct</td><td>Lock hotel choices and book, free-cancellation rates where offered. Kumano beds go first.</td><td>Early November is peak foliage season; Kumano villages have a few dozen rooms in total</td></tr>
+      <tr><td class="num">20 Oct</td><td>Buy the Kansai-Hiroshima Area Pass online (JR West), pick up at Kyoto Station 4 Nov</td><td>Covers Hiroshima, Nara, Uji and both Kuroshio legs to the Kii peninsula</td></tr>
+      <tr><td class="num">26 Oct</td><td>Visit Japan Web, Shibuya Sky slot for 29 Oct, Kumano luggage shuttle booked</td><td>Immigration QR; sunset slots sell out; bags need a plan for 3 trail nights</td></tr>
+      <tr><td class="num">29 Oct</td><td>Book Tokyo → Kyoto Nozomi for 1 Nov in SmartEX</td><td>EX Hayatoku needs 3 days; seats D/E for Mt Fuji on the right</td></tr>
     </table></div>
   </section>
 
   <section id="ops" hidden>
     <div class="eyebrow">Daily operations</div>
     <h2>Day by day</h2>
-    <p class="lead">Each card has the route for the day, the transport call, and a checklist that remembers its ticks on this device. The card for today lights up automatically on Japan time. Maps embed on the GitHub Pages version; everywhere else use the Google Maps buttons.</p>
+    <p class="lead">Each card has the route, the transport call, the step estimate, the rations, an alternative where there is one, and a checklist that remembers its ticks on this device. Log your actual steps in the box at the bottom of each card. The card for today lights up on Japan time. Maps embed on the GitHub Pages version; elsewhere use the Google Maps buttons.</p>
     <div class="days" id="days"></div>
   </section>
 
   <section id="billet" hidden>
     <div class="eyebrow">Billeting</div>
     <h2>Where we sleep</h2>
-    <p class="lead">Two options per base: Standard holds the €150 line, Upgrade buys the rooftop bath, the pool or the kaiseki. Tap to choose; the total updates and the choice is remembered on this device. Prices are live Booking.com quotes from 13 Oct 2026 for 2 adults, taxes included.</p>
+    <p class="lead">Two options per base: Standard holds the €150 line where the market allows, Upgrade buys the rooftop bath, the trailhead lodge or the river onsen. Tap to choose; the total updates and the choice is remembered on this device. Prices are live Booking.com quotes from 13 Oct 2026 for 2 adults, taxes included, quoted logged out; Genius Level 3 will cut most of them by 10 to 20%, so book from Lubo's account. Yunomine's classic ryokan (Adumaya, Yoshinoya, J-Hoppers) show no availability on Booking for 7 Nov; try them direct before settling.</p>
     <div class="totals">
       <div><small>Selected total</small><b id="selTotal">—</b></div>
       <div><small>All standard</small><b id="minTotal">—</b></div>
@@ -208,25 +230,33 @@ footer{margin-top:40px;color:var(--muted);font-size:13px;border-top:1px solid va
   <section id="logi" hidden>
     <div class="eyebrow">Logistics</div>
     <h2>Tickets, passes, kit</h2>
-    <p class="lead">No national JR Pass: our four shinkansen legs cost about ¥48,000 at full fare against ¥80,000 for the 14-day pass. One regional pass covers the Hiroshima strike and pays for itself in a day.</p>
+    <p class="lead">No national JR Pass. Our shinkansen legs cost about ¥44,000 at full fare against ¥80,000 for the 14-day pass. One regional pass covers Hiroshima, Nara, Uji and both long train rides to and from the Kumano Kodo, which is about ¥45,000 of travel for ¥17,000.</p>
     <div class="scroll"><table id="logiTable">
       <tr><th></th><th>Item</th><th class="num">Price</th><th>When and where</th><th>Covers</th></tr>
     </table></div>
-    <h3 style="margin-top:20px">Shinkansen legs (SmartEX app)</h3>
+    <h3 style="margin-top:20px">Long-distance legs</h3>
     <div class="scroll"><table>
-      <tr><th>Date</th><th>Leg</th><th>Train</th><th class="num">Time</th><th class="num">Full fare</th><th>Note</th></tr>
-      <tr><td class="num">2 Nov</td><td>Tokyo → Kyoto</td><td>Nozomi</td><td class="num">2h15</td><td class="num">¥14,400</td><td>Seats D/E for Fuji on the right</td></tr>
-      <tr><td class="num">7 Nov</td><td>Shin-Osaka ⇄ Hiroshima</td><td>Nozomi</td><td class="num">1h25</td><td class="num">covered</td><td>Kansai-Hiroshima pass, reserve free at any JR West machine</td></tr>
-      <tr><td class="num">8 Nov</td><td>Shin-Osaka → Odawara</td><td>Hikari</td><td class="num">2h10</td><td class="num">¥13,000</td><td>Nozomi does not stop at Odawara; pick a Hikari that does</td></tr>
-      <tr><td class="num">9 Nov</td><td>Odawara → Shinagawa</td><td>Kodama</td><td class="num">0h30</td><td class="num">¥3,300</td><td>Then Keikyu to Haneda, 15 min</td></tr>
+      <tr><th>Date</th><th>Leg</th><th>Train</th><th class="num">Time</th><th class="num">Cost</th><th>Note</th></tr>
+      <tr><td class="num">1 Nov</td><td>Tokyo → Kyoto</td><td>Nozomi</td><td class="num">2h15</td><td class="num">¥14,400</td><td>SmartEX. Seats D/E for Fuji on the right</td></tr>
+      <tr><td class="num">4 Nov</td><td>Kyoto → Shin-Osaka → Hiroshima and back</td><td>JR rapid + Nozomi</td><td class="num">2h05</td><td class="num">pass</td><td>Pass day 1. Reserve both Nozomi seats at Kyoto Station on pickup</td></tr>
+      <tr><td class="num">6 Nov</td><td>Kyoto → Kii-Tanabe</td><td>Kuroshio limited express</td><td class="num">2h45</td><td class="num">pass</td><td>Pass day 3. Some Kuroshio start at Kyoto; otherwise change at Shin-Osaka. Reserve seats</td></tr>
+      <tr><td class="num">8 Nov</td><td>Kii-Katsuura → Shin-Osaka</td><td>Kuroshio</td><td class="num">3h50</td><td class="num">pass</td><td>Pass day 5. Only 6 Kuroshio a day run this far; check the 15:00–17:00 departures and reserve</td></tr>
+      <tr><td class="num">9 Nov</td><td>Shin-Osaka → Shinagawa</td><td>Nozomi</td><td class="num">2h20</td><td class="num">¥14,700</td><td>SmartEX. Get off at Shinagawa, not Tokyo; Keikyu to Haneda in 15 min</td></tr>
     </table></div>
+    <h3 style="margin-top:20px">Kumano Kodo logistics</h3>
+    <ul class="plain">
+      <li><b>Buses.</b> Kumano Kotsu runs Kii-Tanabe ⇄ Takijiri ⇄ Takahara ⇄ Chikatsuyu ⇄ Nonaka ⇄ Hongu ⇄ Yunomine about every 1 to 2 hours. Not covered by any JR pass; pay with cash or IC card. Screenshot the timetable from tb-kumano.jp the week before; the last bus from Nonaka toward Hongu is late afternoon and that is the one that matters on 7 Nov.</li>
+      <li><b>Bags.</b> Send the main suitcases from the Kyoto hotel to the Osaka hotel by takkyubin on 6 Nov morning (about ¥2,500 each, arrives 7 Nov, the hotel holds them). Carry a daypack each for the three trail nights. Backup: Kumano Travel's luggage shuttle moves a bag from Tanabe to a Hongu inn for about ¥2,000.</li>
+      <li><b>Trail.</b> Nakahechi route, waymarked every 500 m with numbered posts; no navigation skill needed. Takijiri → Takahara 3.7 km with 300 m of climb, Takahara → Chikatsuyu 9.6 km over Jujo-toge, Chikatsuyu → Tsugizakura 3.9 km. Water at villages only; carry 2 litres.</li>
+      <li><b>Hongu side.</b> Tsuboyu at Yunomine is the only UNESCO-listed hot spring you can bathe in: a two-person rock bath, 30-minute slots, ¥800, first come. The 90 °C yutsubo next to it cooks eggs and sweet potatoes bought at the shop.</li>
+      <li><b>Nachi.</b> From Hongu there is no direct bus to Nachi; it is bus to Shingu (1h, ¥1,540), then JR to Nachi or Kii-Katsuura, then bus to Daimon-zaka (20 min). Kumano Hayatama Taisha is a 15-minute walk from Shingu station and completes the three grand shrines.</li>
+    </ul>
     <h3 style="margin-top:20px">Getting around</h3>
     <ul class="plain">
-      <li><b>IC card.</b> Non-Japanese Android phones cannot run Mobile Suica. Buy two physical Welcome Suica cards at the JR East Travel Service Center in Narita T2 (28-day validity, no deposit). Works on every metro, JR local line, bus, and konbini nationwide.</li>
-      <li><b>Narita → hotel.</b> Narita Express to Tokyo Station, ¥3,070, 60 min, then taxi or Marunouchi line to Akasaka. Evening arrival, so the train beats the limousine bus.</li>
+      <li><b>IC card.</b> Non-Japanese Android phones cannot run Mobile Suica. Buy a physical Welcome Suica at the arrival airport (28-day validity, no deposit). Works on every metro, JR local line, bus and konbini nationwide, Kumano buses included.</li>
+      <li><b>Narita → hotel.</b> Narita Express to Tokyo Station, ¥3,070, 60 min, then taxi or Marunouchi line to Akasaka.</li>
       <li><b>Kyoto.</b> Buses are slow in November; use the Karasuma and Tozai subway lines, JR, and Keihan where possible. Fushimi Inari is two JR stops from Kyoto Station.</li>
-      <li><b>Luggage.</b> Optional: ship the big bag Tokyo → Kyoto by takkyubin from the hotel (about ¥2,500 per bag, next day) and travel light on the shinkansen.</li>
-      <li><b>Connectivity.</b> eSIM (Ubigi or Airalo) bought before departure; offline Google Maps for Tokyo, Kyoto, Osaka, Hiroshima, Hakone.</li>
+      <li><b>Connectivity.</b> eSIM bought before departure; offline Google Maps for Tokyo, Kyoto, Osaka, Hiroshima and the whole Kii peninsula. Signal is patchy on the trail.</li>
     </ul>
   </section>
 
@@ -236,21 +266,31 @@ footer{margin-top:40px;color:var(--muted);font-size:13px;border-top:1px solid va
     <ul class="plain">
       <li><b>Sat 31 Oct, Halloween.</b> Shibuya station area is barricaded, street drinking banned from 18:00. Shibuya is on 29 Oct instead; Shinjuku on the 31st.</li>
       <li><b>Tue 3 Nov, Culture Day.</b> National holiday. Fushimi Inari at 07:00 before the crowds, Arashiyama after, Kinkaku-ji late afternoon.</li>
-      <li><b>Ryokan timing.</b> Check in by 17:00, kaiseki dinner is served around 18:00 and cannot be moved. Leave Shin-Osaka by 12:00 on 8 Nov.</li>
-      <li><b>Onsen etiquette.</b> Wash before entering, no swimwear, hair up, small towel stays out of the water. Tattoos: ask at check-in or book a private bath.</li>
+      <li><b>Daylight.</b> Sunrise about 06:20, sunset about 16:55 in early November. The 7 Nov march must start by 07:30 to reach Tsugizakura with margin. Headtorch in the pack regardless.</li>
+      <li><b>Weather.</b> Kii peninsula is the wettest part of Honshu. Rain shell, not an umbrella, on the trail. Typhoon season is over by November.</li>
+      <li><b>Ryokan timing.</b> Check in by 17:00, dinner is served at the stated time and cannot be moved. On 7 Nov that means the 15:30-ish bus from Nonaka, not the next one.</li>
+      <li><b>Onsen etiquette.</b> Wash before entering, no swimwear, hair up, small towel stays out of the water. Tattoos: ask at check-in or book a private bath; Tsuboyu is private by design.</li>
       <li><b>Hiroshima.</b> Miyajima first, before 09:30, to beat the tour groups on the ferry. Peace Memorial Museum is open to 18:00, last entry 17:30, ¥200, no reservation. Miyajima charges a ¥100 visitor tax.</li>
       <li><b>Haneda exfil.</b> Flight 09:35 means at Terminal 3 by 07:30. From Tenkubashi it is one Keikyu stop; from the Kamata hotels it is 10 min.</li>
-      <li><b>Cash.</b> Cards work in cities, but shrines, small restaurants, and Miyajima stalls want yen. Withdraw at 7-Eleven ATMs.</li>
-      <li><b>Visa paperwork.</b> The visa itinerary was filed for 31 Oct to 13 Nov. The flights land two days earlier. A shift inside the visa's validity window is fine if it is already issued; if still pending, resubmit with the new dates.</li>
+      <li><b>Cash.</b> Cards work in cities. Kumano buses, minshuku, Tsuboyu, shrines and Miyajima stalls want yen. Withdraw at 7-Eleven in Kyoto before 6 Nov; there is one ATM in Hongu and none on the trail.</li>
+      <li><b>Visa paperwork.</b> The visa itinerary was filed for 31 Oct to 13 Nov. A shift inside the visa's validity window is fine if it is already issued; if still pending, resubmit with the new dates.</li>
+    </ul>
+    <h3 style="margin-top:18px">Alternatives held in reserve</h3>
+    <ul class="plain">
+      <li><b>Hakone instead of Kumano.</b> If the Kii trip gets cut: Osaka → Odawara Hikari, ryokan Fukuzumiro in Tonosawa (€399 with kaiseki, 9.4) or Hakone Miyanoshita Myojokan (€157, 9.2), Hakone loop next morning, Kodama to Shinagawa. Frees two Kyoto or Osaka nights.</li>
+      <li><b>Kii-Katsuura instead of Osaka on 8 Nov.</b> Hotel Urashima (€180, 8.3) has the Bokido cave onsen opening onto the Pacific and a tuna breakfast; Kumano-bettei Nakanoshima is the luxury version (€711, 9.5). Cost: 9 Nov becomes a 7-hour haul to Haneda and Osaka drops to a lunch stop.</li>
+      <li><b>Harder 7 Nov.</b> Skip the bus at Tsugizakura and walk on toward Kobiro-oji for a 25 km day; only with a 06:30 start and a dry forecast, and the inn must be told you will be late.</li>
+      <li><b>Softer 6 Nov.</b> Stay in Tanabe town, skip the warm-up climb, eat your way down Ajikoji alley and start fresh at 07:15 on the 7th.</li>
+      <li><b>Kyoto 5 Nov.</b> Imperial Palace and Nishiki Market instead of Nara and Uji if legs need a lighter day before the mountains.</li>
     </ul>
     <h3 style="margin-top:18px">Mission log</h3>
-    <p class="lead">Dashboard prepared 13 Oct 2026. Hotel prices from Booking.com on that date. Rail fares from JR West, JR Central (SmartEX) and Odakyu, October 2026.</p>
+    <p class="lead">Dashboard prepared 13 Oct 2026. Hotel prices from Booking.com on that date. Rail fares from JR West, JR Central (SmartEX) and Kumano Kotsu, October 2026. Trail distances from the Tanabe City Kumano Tourism Bureau.</p>
   </section>
 
   <section id="hand" hidden>
-    <div class="eyebrow">Handbook</div>
-    <h2>Quick reference, SOPs, shopping list</h2>
-    <p class="lead">The stuff you look up at a station gate or in a ryokan corridor. Shopping list ticks are remembered on this device.</p>
+    <div class="eyebrow">SOP &amp; kit</div>
+    <h2>Standard operating procedures and shopping lists</h2>
+    <p class="lead">Ticks are remembered on this device.</p>
 
     <h3>Buy before departure</h3>
     <div class="scroll"><table id="buyTable">
@@ -262,14 +302,148 @@ footer{margin-top:40px;color:var(--muted);font-size:13px;border-top:1px solid va
       <tr><th></th><th>Item</th><th>Where</th><th>Note</th></tr>
     </table></div>
 
+    <h3 style="margin-top:20px">Pre-trip checklist</h3>
+    <div class="scroll"><table id="preTable">
+      <tr><th></th><th>Item</th><th>When</th><th>Note</th></tr>
+    </table></div>
+
+    <h3 style="margin-top:20px">In-flight plan: 13 hours, Frankfurt to Narita</h3>
+    <p class="lead">The flight lands at 17:05 Tokyo time, which is 09:05 in Frankfurt, so the job on board is to sleep in the middle and arrive ready for an evening. Download everything before the airport; BA's seat-back selection is luck.</p>
+    <div class="grid2" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px">
+      <div class="tile"><div class="eyebrow">Watch, before sleeping</div><ul class="plain" style="margin-top:6px;font-size:14px">
+        <li><b>Tampopo</b> (1985). A "ramen western". The only correct film for the first bowl on 28 Oct.</li>
+        <li><b>Perfect Days</b> (2023). A Tokyo toilet cleaner's week. Quiet, beautiful, the city you will walk through.</li>
+        <li><b>Lost in Translation</b> (2003). Shinjuku's Park Hyatt bar is 15 min from the 31 Oct route.</li>
+        <li><b>Spirited Away</b> (2001). The bathhouse is every onsen you are about to enter.</li>
+      </ul></div>
+      <div class="tile"><div class="eyebrow">Watch, after waking</div><ul class="plain" style="margin-top:6px;font-size:14px">
+        <li><b>Drive My Car</b> (2021). Set in Hiroshima; three hours, so start it with breakfast.</li>
+        <li><b>Princess Mononoke</b> (1997). Forest kami, iron towns, the mood of the Kumano cedars.</li>
+        <li><b>Shogun</b> (2024 series). Two episodes, then the rest in Tokyo hotel evenings.</li>
+        <li><b>Midnight Diner: Tokyo Stories</b> (Netflix). 25-minute episodes, one dish each. Dangerous on an empty stomach.</li>
+        <li><b>Street Food: Asia, Osaka</b> (Netflix) and <b>Jiro Dreams of Sushi</b> for the rations briefing.</li>
+      </ul></div>
+      <div class="tile"><div class="eyebrow">Read</div><ul class="plain" style="margin-top:6px;font-size:14px">
+        <li><b>Hiroshima</b>, John Hersey. 150 pages, six survivors, written in 1946. Read it before 4 Nov, not after.</li>
+        <li><b>The Roads to Sata</b>, Alan Booth. A man walks the length of Japan in 1977 and complains about it beautifully. The patron saint of the 7 Nov march.</li>
+        <li><b>Japan's Kumano Kodo Pilgrimage</b>, Kat Davis (Cicerone). The trail guide; the Nakahechi chapter is the only one you need.</li>
+        <li><b>Rice, Noodle, Fish</b>, Matt Goulding. Seven regions, one food obsession each; the Osaka and Kyoto chapters are the rations tab in long form.</li>
+        <li><b>Convenience Store Woman</b>, Sayaka Murata. Short, strange, and you will never look at a 7-Eleven the same way.</li>
+        <li><b>Norwegian Wood</b> or <b>Kafka on the Shore</b>, Murakami, for whichever of you has not read them.</li>
+        <li><b>Lost Japan</b>, Alex Kerr. Kyoto and the Kii peninsula in the 1970s, by the man who restored the houses you will see.</li>
+      </ul></div>
+      <div class="tile"><div class="eyebrow">Listen and learn</div><ul class="plain" style="margin-top:6px;font-size:14px">
+        <li><b>Katakana in 90 minutes.</b> Menus, station signs and konbini labels use it for every foreign word; an app (Dr. Moku, or Duolingo's script course) on the first leg pays off for two weeks.</li>
+        <li><b>Abroad in Japan</b> podcast for the tone of the place; <b>Japan Eats</b> for the food.</li>
+        <li><b>Google Translate</b> offline Japanese pack and the camera mode, tested before boarding.</li>
+        <li>Build the trip playlist: Haruomi Hosono, Fishmans, Cornelius, Ryuichi Sakamoto, a bit of city pop for the shinkansen.</li>
+      </ul></div>
+    </div>
+
     <h3 style="margin-top:20px">Standard operating procedures</h3>
     <div class="grid" id="sops" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))"></div>
+  </section>
 
-    <h3 style="margin-top:20px">Phrases</h3>
+  <section id="qrh" class="qrh" hidden>
+    <div class="eyebrow">Quick reference handbook</div>
+    <h2>Culture, language, customs, rations</h2>
+    <p class="lead">Read once on the plane, then look things up at the gate.</p>
+
+    <h3>How Japan works</h3>
+    <div class="grid2">
+      <div class="card"><h4>The operating principle</h4><ul>
+        <li><b>Wa</b>, harmony: don't make a scene, don't make others uncomfortable. Volume down, patience up.</li>
+        <li><b>Omotenashi</b>, hospitality: service is impeccable and tipping is an insult. Say thank you, bow a little, that is the payment.</li>
+        <li>Rules are followed because everyone follows them, not because someone is watching. Red man, you wait, even at 02:00 on an empty road.</li>
+        <li>"Chotto..." ("a little...") with a head tilt means no. Nobody will say no outright.</li>
+        <li>Punctuality is absolute. A train that leaves at 09:02 leaves at 09:02.</li>
+      </ul></div>
+      <div class="card"><h4>Bowing and greeting</h4><ul>
+        <li>A nod of the head is enough from a visitor. Deeper bows are for apologies and formal thanks.</li>
+        <li>No handshakes unless offered. No hugging.</li>
+        <li>Shop staff shout "irasshaimase" (welcome) at you. Do not reply; it is not a question.</li>
+        <li>Receive anything handed to you with both hands, especially a business card or change on the tray.</li>
+      </ul></div>
+      <div class="card"><h4>Public behaviour</h4><ul>
+        <li>No phone calls on trains or buses. Texting is fine. Phones on silent ("manner mode").</li>
+        <li>No eating while walking in cities. Festival stalls and Miyajima's street are the exception.</li>
+        <li>No smoking on the street outside marked areas; fines apply.</li>
+        <li>Queue at the floor markings. Let people off before you board.</li>
+        <li>Carry your rubbish. Bins are at konbini and stations only.</li>
+        <li>Blowing your nose in public is rude; sniffing is fine. Masks if you have a cold.</li>
+        <li>Escalators: stand left in Tokyo and Kyoto, right in Osaka.</li>
+      </ul></div>
+      <div class="card"><h4>Shoes, floors, baths</h4><ul>
+        <li>Step up means shoes off: ryokan, temples, some restaurants, fitting rooms. Slippers are provided; toilet slippers are separate and stay in the toilet.</li>
+        <li>Never step on tatami in slippers or shoes. Socks or bare feet.</li>
+        <li>Yukata: left side over right. Right over left is how the dead are dressed.</li>
+        <li>Onsen: wash seated at the taps first, no swimwear, hair tied up, small towel on your head. No photos, ever.</li>
+      </ul></div>
+    </div>
+
+    <h3>Eating and drinking</h3>
+    <div class="grid2">
+      <div class="card"><h4>At the table</h4><ul>
+        <li>Say "itadakimasu" before eating and "gochisousama deshita" when you leave.</li>
+        <li>Chopsticks: never stand them upright in rice, never pass food chopstick to chopstick (both are funeral rites). Use the rest or the wrapper. Do not point with them.</li>
+        <li>Slurping noodles is correct. Lifting the bowl to your mouth is correct.</li>
+        <li>Soy sauce goes on the fish side of nigiri, not the rice. Wasabi is already in there.</li>
+        <li>The wet towel (oshibori) is for hands, not face.</li>
+        <li>Pour for others, let them pour for you. "Kanpai" and wait for everyone before drinking.</li>
+        <li>Izakaya add a seating charge (otoshi) of ¥300 to ¥500 per head with a small dish. Normal.</li>
+      </ul></div>
+      <div class="card"><h4>Ordering and paying</h4><ul>
+        <li>Ramen shops often use a ticket machine by the door: pay, take the ticket, hand it over.</li>
+        <li>Call staff with "sumimasen"; there is no hovering. A button on the table does the same job.</li>
+        <li>Pay at the register by the door, not at the table. Put cash or card on the tray.</li>
+        <li>No tipping, no splitting bills in small places; one person pays and you settle after.</li>
+        <li>Lunch sets (teishoku) at 11:30 are half the dinner price for the same kitchen.</li>
+        <li>Plastic food in the window is the menu. Point.</li>
+        <li>Konbini food is good, not a compromise. Egg sandwiches, onigiri, fried chicken, hot coffee.</li>
+      </ul></div>
+    </div>
+
+    <h3>Rations: must-eats by base</h3>
+    <div class="grid2" id="rations"></div>
+
+    <h3>Shrines, temples, sacred ground</h3>
+    <div class="grid2">
+      <div class="card"><h4>Shrine (Shinto, torii gate)</h4><ul>
+        <li>Bow once at the torii. Walk at the side of the path; the middle is for the kami.</li>
+        <li>At the water basin: ladle in right hand, rinse left, swap, rinse right, pour into the left hand to rinse the mouth, never the ladle.</li>
+        <li>At the hall: coin in the box (¥5 is lucky), ring the bell, bow twice, clap twice, pray, bow once.</li>
+        <li>Kumano's three grand shrines (Hongu, Hayatama, Nachi) are the point of the pilgrimage; collect the stamps (goshuin, ¥300 to ¥500) in a book bought at Hongu.</li>
+      </ul></div>
+      <div class="card"><h4>Temple (Buddhist)</h4><ul>
+        <li>Incense: light, wave out (never blow), place in the burner, waft the smoke over yourself.</li>
+        <li>Coin, bow, hands together, no clapping.</li>
+        <li>Hats off indoors. Photos usually fine outside, usually banned of the main image inside; look for the sign.</li>
+        <li>Most close at 17:00. Gardens are the reason to go early.</li>
+      </ul></div>
+    </div>
+
+    <h3>Trains</h3>
+    <div class="grid2">
+      <div class="card"><h4>Shinkansen</h4><ul>
+        <li>Reserved cars are numbered; find your car marking on the platform floor. Non-reserved cars are usually 1 to 3.</li>
+        <li>Bags over 160 cm total need the oversized-baggage seat, free to book in SmartEX. Daypacks go on the rack.</li>
+        <li>Eating is fine on the shinkansen; buy an ekiben and a beer on the concourse.</li>
+        <li>Trains stop for about 60 seconds. Be at the door with your bags before the station.</li>
+      </ul></div>
+      <div class="card"><h4>Local trains and metro</h4><ul>
+        <li>Tap the IC card in and out. Minimum balance to enter the gate is about ¥150; top up at any machine with cash.</li>
+        <li>Priority seats are for the elderly, pregnant, injured. Stand if in doubt.</li>
+        <li>Women-only cars run in rush hours on some lines, marked pink on the platform.</li>
+        <li>Google Maps tells you the platform, the car to board and the exit. Trust it.</li>
+        <li>Last trains are around midnight. Taxis after that are expensive but honest.</li>
+      </ul></div>
+    </div>
+
+    <h3>Language</h3>
     <div class="scroll"><table>
       <tr><th>Say</th><th>Means</th></tr>
       <tr><td><b>Sumimasen</b></td><td>Excuse me, sorry, and the way to call a waiter. The most useful word in Japan.</td></tr>
-      <tr><td><b>Arigatou gozaimasu</b></td><td>Thank you (polite).</td></tr>
+      <tr><td><b>Arigatou gozaimasu</b></td><td>Thank you (polite). "Domo" is the casual short form.</td></tr>
       <tr><td><b>Onegaishimasu</b></td><td>Please (when asking for something).</td></tr>
       <tr><td><b>Kore o kudasai</b></td><td>This one, please. Point at the menu or the plastic food.</td></tr>
       <tr><td><b>Futari desu</b></td><td>Table for two.</td></tr>
@@ -279,39 +453,52 @@ footer{margin-top:40px;color:var(--muted);font-size:13px;border-top:1px solid va
       <tr><td><b>Toire wa doko desu ka?</b></td><td>Where is the toilet?</td></tr>
       <tr><td><b>Daijoubu desu</b></td><td>I'm fine / no thanks (for the bag at the konbini, for the receipt).</td></tr>
       <tr><td><b>Kanpai</b></td><td>Cheers.</td></tr>
+      <tr><td><b>Oishii</b></td><td>Delicious. Say it to the cook.</td></tr>
       <tr><td><b>Gochisousama deshita</b></td><td>Thank you for the meal, said when leaving.</td></tr>
-      <tr><td><b>Eki / deguchi / noriba</b></td><td>Station / exit / platform or stop.</td></tr>
+      <tr><td><b>Wakarimasen</b></td><td>I don't understand.</td></tr>
+      <tr><td><b>Eki / deguchi / noriba</b></td><td>Station / exit / platform or bus stop.</td></tr>
+      <tr><td><b>Kumano Kodo wa dochira desu ka?</b></td><td>Which way is the Kumano Kodo?</td></tr>
     </table></div>
+    <div class="grid2" style="margin-top:12px">
+      <div class="card"><h4>Signs to recognise</h4><ul>
+        <li>出口 exit · 入口 entrance · 駅 station · 改札 ticket gate</li>
+        <li>男 men · 女 women · トイレ / お手洗い toilet</li>
+        <li>営業中 open · 準備中 closed/preparing · 休み closed today</li>
+        <li>禁煙 no smoking · 撮影禁止 no photos · 土足禁止 shoes off</li>
+        <li>温泉 onsen · 湯 hot water · 熊野古道 Kumano Kodo</li>
+      </ul></div>
+      <div class="card"><h4>Numbers</h4><ul>
+        <li>1 ichi · 2 ni · 3 san · 4 yon · 5 go · 6 roku · 7 nana · 8 hachi · 9 kyuu · 10 juu</li>
+        <li>100 hyaku · 1,000 sen · 10,000 man. ¥10,000 is "ichi-man en".</li>
+        <li>Counting people: hitori (1), futari (2).</li>
+        <li>Staff will type the price into a calculator for you anyway.</li>
+      </ul></div>
+    </div>
 
-    <h3 style="margin-top:20px">Numbers and facts</h3>
+    <h3>Money, numbers, emergencies</h3>
     <div class="scroll"><table>
       <tr><td><b>Police</b></td><td class="num">110</td><td><b>Ambulance and fire</b></td><td class="num">119</td></tr>
-      <tr><td><b>Japan Visitor Hotline (JNTO, 24h, English)</b></td><td class="num">050-3816-2787</td><td><b>Lost IC card or item on JR East</b></td><td class="num">050-2016-1603</td></tr>
+      <tr><td><b>Japan Visitor Hotline (JNTO, 24h, English)</b></td><td class="num">050-3816-2787</td><td><b>Lost item on JR West (Kyoto, Kumano)</b></td><td class="num">0570-00-2486</td></tr>
       <tr><td><b>Power</b></td><td>100 V, Type A flat two-pin</td><td><b>Tap water</b></td><td>Drinkable everywhere</td></tr>
-      <tr><td><b>Tipping</b></td><td>None, anywhere. Leaving coins confuses people.</td><td><b>Tax-free</b></td><td>¥5,000+ in one shop, passport shown, goods stay sealed</td></tr>
-      <tr><td><b>Escalators</b></td><td>Stand left in Tokyo, right in Osaka</td><td><b>Trains</b></td><td>No calls, phone on silent, bags on lap or rack</td></tr>
-      <tr><td><b>Big luggage on shinkansen</b></td><td>Bags over 160 cm total need the oversized-baggage seat, booked free in SmartEX</td><td><b>Konbini ATMs</b></td><td>7-Eleven and Lawson take foreign cards, 24h</td></tr>
+      <tr><td><b>Tipping</b></td><td>None, anywhere.</td><td><b>Tax-free</b></td><td>¥5,000+ in one shop, passport shown, goods stay sealed</td></tr>
+      <tr><td><b>Konbini ATMs</b></td><td>7-Eleven and Lawson take foreign cards, 24h</td><td><b>Cash needed</b></td><td>Kumano buses, minshuku, Tsuboyu, shrines, markets</td></tr>
+      <tr><td><b>Pharmacy</b></td><td>Matsumoto Kiyoshi, Welcia, Sundrug</td><td><b>Earthquake</b></td><td>Drop, cover, hold. Follow hotel staff. Trains stop and restart on their own.</td></tr>
     </table></div>
 
-    <h3 style="margin-top:20px">Tips from the field</h3>
+    <h3>Tips from the field</h3>
     <ul class="plain">
       <li>• Carry a small hand towel. Public toilets often have no dryers.</li>
-      <li>• Carry a zip bag for your rubbish. Bins are rare; take it back to the hotel or a konbini.</li>
-      <li>• Konbini breakfast is the move: onigiri, egg sandwiches, hot coffee. 7-Eleven, Lawson, FamilyMart, all open 24h.</li>
-      <li>• Lunch sets (teishoku) at 11:30 are half the price of the same restaurant at night.</li>
-      <li>• Queue for the train at the floor markings. Let people off first.</li>
-      <li>• Shoes off wherever there is a step up and slippers waiting: ryokan, temples, some restaurants. Wear socks without holes.</li>
-      <li>• Do not eat while walking, except at festival stalls and Miyajima's street where everyone does.</li>
-      <li>• Temples close around 17:00. Plan the big ones for the morning and markets or neighbourhoods for the late afternoon.</li>
+      <li>• Temples close around 17:00. Big sights in the morning, markets and neighbourhoods late afternoon.</li>
       <li>• A coin purse earns its keep: ¥1, ¥5, ¥10, ¥50, ¥100, ¥500 pile up fast.</li>
-      <li>• Google Maps transit directions are accurate to the minute, including which car to board for the exit you want.</li>
-      <li>• Pharmacies (Matsumoto Kiyoshi, Welcia) sell most things. Bring prescription meds with the prescription; pseudoephedrine products are banned.</li>
-      <li>• Izakaya charge a small seating fee (otoshi), usually ¥300 to ¥500 per person, with a small dish. It is not a scam.</li>
-      <li>• Haneda and Narita both have free luggage-wrapping and coin lockers; Kyoto Station lockers fill by 10:00, use the staffed luggage counter instead.</li>
+      <li>• Pharmacies sell most things. Bring prescription meds with the prescription; pseudoephedrine products are banned.</li>
+      <li>• Kyoto Station lockers fill by 10:00; use the staffed luggage counter instead.</li>
+      <li>• Department store basements (depachika) are the best cheap lunch in any city; everything is discounted after 19:00.</li>
+      <li>• On the trail, greet other walkers with "konnichiwa". Locals in the villages will say it first.</li>
+      <li>• Vending machines sell hot coffee and hot tea in November; the red-labelled ones are warm.</li>
     </ul>
   </section>
 
-  <footer>Operation Rising Sun · Lubo &amp; Elah · Hosted on GitHub Pages. Ticks and hotel choices are stored only in this browser.</footer>
+  <footer>Operation Rising Sun · Lubo &amp; Elah · Hosted on GitHub Pages. Ticks, step logs and hotel choices are stored only in this browser.</footer>
 </div>
 
 <script>
@@ -320,201 +507,242 @@ footer{margin-top:40px;color:var(--muted);font-size:13px;border-top:1px solid va
 var TZ="Asia/Tokyo";
 var START=new Date("2026-10-27T19:05:00Z"); // FRA departure 20:05 CET
 var END=new Date("2026-11-10T00:35:00Z");   // HND departure 09:35 JST
-var BUDGET=150;
+var BUDGET=150, STEP_MIN=15000, STEPS_PER_KM=1350;
 
 var PHASES=[
- {n:"Tokyo",d:"28 Oct – 2 Nov",c:"#5b6b3a"},
- {n:"Kyoto",d:"2 – 6 Nov",c:"#8a5a2b"},
- {n:"Osaka",d:"6 – 8 Nov",c:"#2f5f6f"},
- {n:"Hakone",d:"8 – 9 Nov",c:"#7a3a3a"},
+ {n:"Tokyo",d:"28 Oct – 1 Nov",c:"#5b6b3a"},
+ {n:"Kyoto",d:"1 – 6 Nov",c:"#8a5a2b"},
+ {n:"Kumano",d:"6 – 8 Nov",c:"#2f6b5a"},
+ {n:"Osaka",d:"8 – 9 Nov",c:"#2f5f6f"},
  {n:"Haneda",d:"9 – 10 Nov",c:"#555c4a"}
 ];
 
 var DAYS=[
- {code:"D-1",date:"2026-10-27",dow:"Tue",name:"Launch",city:"Frankfurt",ph:"Tokyo",
-  wp:[["20:05","Lubo: BA3449 departs Frankfurt","13h overnight. Sleep on the plane; Japan is 8 hours ahead of CET."],
-      ["evening","Elah: departs London","Separate flight, details on the Briefing tab. Rendezvous at the Tokyo hotel."]],
-  transport:"<b>Air</b> FRA → NRT and LHR → Tokyo. Eat before boarding, set watches to JST at take-off, live location on in the group.",
+ {code:"D-1",date:"2026-10-27",dow:"Tue",name:"Launch",city:"Frankfurt",ph:"Tokyo",km:3,
+  wp:[["17:00","Frankfurt Airport, bag drop","Checked in online the day before, seats together. Lounge or a last schnitzel."],
+      ["20:05","BA3449 departs","13 hours. Set watches to JST now: it is 04:05 in Tokyo."],
+      ["21:00","Dinner service, then one film","Tampopo or Perfect Days. See the in-flight plan on the SOP &amp; kit tab."],
+      ["23:00","Lights out","Eye mask, earplugs, no second glass. Aim for 6 hours; it is already Tokyo night."],
+      ["14:00 JST","Wake, breakfast, hydrate","Read Hiroshima or the Kumano chapters. Fill in nothing; Visit Japan Web is done."]],
+  transport:"<b>Air</b> FRA → NRT, together. Eat before boarding if the dinner service is late; water every hour.",
+  eat:"Airport. Nothing to report.",
   map:"Frankfurt Airport", route:["Frankfurt Airport"],
   check:["Passports, visa, printed hotel list","Visit Japan Web QR screenshots","SmartEX app installed, card added","eSIM activated","Offline maps downloaded"]},
- {code:"D0",date:"2026-10-28",dow:"Wed",name:"Insertion",city:"Tokyo",ph:"Tokyo",
+ {code:"D0",img:"p_meiji",date:"2026-10-28",dow:"Wed",name:"Insertion",city:"Tokyo",ph:"Tokyo",km:5,
   wp:[["17:05","Land Narita T2","Immigration, baggage, customs: allow 60–90 min."],
-      ["18:30","JR East Travel Service Center, T2 B1","Two Welcome Suica cards, charge ¥5,000 each. Buy Narita Express tickets here too."],
+      ["18:30","JR East Travel Service Center, T2 B1","Two Welcome Suica cards, charge ¥5,000 each. Narita Express tickets here too."],
       ["18:45","Narita Express to Tokyo Station","60 min, ¥3,070. Reserved seats."],
       ["20:00","Tokyo Station → hotel","Taxi 15 min with bags, or Marunouchi line to Akasaka-mitsuke."],
-      ["21:00","Akasaka dinner","Ramen or izakaya near the hotel, then sleep."]],
+      ["21:00","First dinner","Akasaka has everything; ramen is tradition."]],
   transport:"<b>Rail</b> Narita Express. Check-in at the hotel is 15:00 onwards so bags go straight to the room.",
+  eat:"<b>Ramen</b> as the first meal in Japan is tradition. Akasaka Ichiryu or any counter with a ticket machine.",
   map:"Narita International Airport Terminal 2", route:["Narita International Airport Terminal 2","Tokyo Station","Akasaka-mitsuke Station"],
   check:["Welcome Suica x2 bought","Narita Express boarded","Hotel check-in done"]},
- {code:"D1",date:"2026-10-29",dow:"Thu",name:"Harajuku & Shibuya",city:"Tokyo",ph:"Tokyo",
+ {code:"D1",img:"p_shibuya",date:"2026-10-29",dow:"Thu",name:"Harajuku & Shibuya",city:"Tokyo",ph:"Tokyo",km:14,
   wp:[["08:30","Meiji Jingu","Enter from Harajuku station side; quiet before 09:30."],
-      ["10:30","Takeshita Street → Omotesando → Cat Street","Crepes, Kiddy Land, Omotesando Hills."],
-      ["13:00","Lunch in Harajuku","Harajuku Gyoza Lou or Afuri ramen."],
+      ["10:30","Takeshita Street → Omotesando → Cat Street","Kiddy Land, Omotesando Hills, the back streets of Ura-Harajuku."],
+      ["13:00","Lunch","Harajuku Gyoza Lou (cheap, perfect) or Maisen tonkatsu in Aoyama."],
       ["15:00","Shibuya Scramble, Hachiko","Walk down via Cat Street."],
       ["16:30","Shibuya Sky","Pre-booked slot; sunset about 16:45."],
       ["19:00","Nonbei Yokocho","Tiny bars by the tracks, then dinner in Shibuya."]],
   transport:"<b>Metro</b> Chiyoda line to Meiji-jingumae. Everything else on foot, Ginza line back to Akasaka.",
+  eat:"<b>Harajuku crepes</b> on Takeshita, <b>gyoza</b> at Gyoza Lou, <b>conveyor sushi</b> at Uobei Shibuya (touch-screen, ¥150 a plate).",
   map:"Meiji Jingu", route:["Meiji Jingu","Takeshita Street","Omotesando","Shibuya Scramble Crossing","Shibuya Sky"],
   check:["Shibuya Sky booked","Meiji Jingu done","Scramble crossed"]},
- {code:"D2",date:"2026-10-30",dow:"Fri",name:"Art & Ebisu",city:"Tokyo",ph:"Tokyo",
+ {code:"D2",img:"p_nezu",date:"2026-10-30",dow:"Fri",name:"Art, Ebisu, Akihabara",city:"Tokyo",ph:"Tokyo",km:12,
   wp:[["10:00","Nezu Museum","Garden is the point; open Tue–Sun 10:00–17:00."],
       ["12:30","Aoyama lunch","Then walk to Roppongi."],
-      ["14:00","National Art Center Tokyo","Closed Tuesdays. Kurokawa's glass wave; check the current show."],
-      ["16:30","Roppongi Hills, Mori Tower view","Optional; skip if tired."],
-      ["18:30","Ebisu","Yebisu Garden Place, then Ebisu Yokocho for yakitori."]],
-  transport:"<b>Metro</b> Ginza line to Omotesando for Nezu. Hibiya line Roppongi → Ebisu. Hibiya line back.",
-  map:"Nezu Museum", route:["Nezu Museum","National Art Center Tokyo","Yebisu Garden Place","Ebisu Yokocho"],
-  check:["Nezu garden walked","National Art Center visited","Ebisu Yokocho dinner"]},
- {code:"D3",date:"2026-10-31",dow:"Sat",name:"Shinjuku",city:"Tokyo",ph:"Tokyo",
+      ["14:00","National Art Center Tokyo","Closed Tuesdays. Check the current show; the building alone is worth it."],
+      ["16:30","Akihabara","Hibiya line from Roppongi, 20 min. Retro game floors at Super Potato, Yodobashi, the gacha corridors. Dark by 17:00 and that is when it looks best."],
+      ["19:00","Ebisu","Hibiya line back. Yebisu Garden Place, then Ebisu Yokocho for yakitori and beer."]],
+  transport:"<b>Metro</b> Ginza line to Omotesando for Nezu. Hibiya line Roppongi → Akihabara → Ebisu. Hibiya line home.",
+  eat:"<b>Yakitori</b> and highballs at Ebisu Yokocho; <b>Afuri yuzu shio ramen</b> is 3 min from Ebisu station if still hungry.",
+  map:"Nezu Museum", route:["Nezu Museum","National Art Center Tokyo","Akihabara Electric Town","Ebisu Yokocho"],
+  alt:"<b>Alt.</b> Drop Akihabara and do Roppongi Hills Mori Tower at dusk instead; Akihabara is also on the way to Asakusa on 1 Nov.",
+  check:["Nezu garden walked","National Art Center visited","Akihabara done","Ebisu Yokocho dinner"]},
+ {code:"D3",img:"p_shinjuku",date:"2026-10-31",dow:"Sat",name:"Shinjuku",city:"Tokyo",ph:"Tokyo",km:12,
   wp:[["09:30","Shinjuku Gyoen","Garden, ¥500. Autumn colour starting."],
-      ["12:00","Lunch in Shinjuku","Depachika at Isetan or Takashimaya."],
+      ["12:00","Lunch","Depachika at Isetan or Takashimaya, or Tsunahachi tempura (since 1923)."],
       ["14:00","Tokyo Metropolitan Government Building","Free observation deck, 45th floor."],
       ["16:00","Kabukicho, Godzilla head, Don Quijote","Daylight walk through."],
       ["18:00","Omoide Yokocho","Yakitori lanes by the station."],
       ["21:00","Golden Gai","Pick a bar with no cover charge. Halloween night: stay out of Shibuya."]],
   transport:"<b>Metro</b> Marunouchi line Akasaka-mitsuke → Shinjuku-gyoemmae, 15 min. Same line home.",
+  eat:"<b>Fuunji tsukemen</b> (queue, worth it), <b>Tsunahachi tempura</b>, grilled things on sticks in <b>Omoide Yokocho</b>.",
   map:"Shinjuku Gyoen National Garden", route:["Shinjuku Gyoen National Garden","Tokyo Metropolitan Government Building","Omoide Yokocho","Golden Gai"],
   intel:"<b>Halloween.</b> Shibuya station area is closed off and street drinking is banned from 18:00. Shinjuku is fine.",
   check:["Gyoen done","Observation deck done","Golden Gai bar found"]},
- {code:"D4",date:"2026-11-01",dow:"Sun",name:"Asakusa & Akihabara",city:"Tokyo",ph:"Tokyo",
-  wp:[["08:30","Senso-ji","Before the Nakamise crowds; Kaminarimon gate photo."],
-      ["10:00","Nakamise, Kappabashi kitchen street","Knives and ceramics."],
-      ["12:00","Sumida Park riverside","Skytree view, lunch in Asakusa."],
-      ["14:00","Akihabara","Sunday pedestrian zone on Chuo-dori 13:00–17:00. Retro game shops, Yodobashi."],
-      ["19:00","Dinner back in Akasaka","Pack. SmartEX QR ready for the morning."]],
-  transport:"<b>Metro</b> Ginza line Akasaka-mitsuke → Asakusa direct, 25 min. Tsukuba Express or Hibiya line to Akihabara.",
-  map:"Senso-ji", route:["Senso-ji","Kappabashi Dougu Street","Sumida Park","Akihabara Electric Town"],
-  check:["Senso-ji done","Akihabara done","Bags packed, shinkansen QR ready"]},
- {code:"D5",date:"2026-11-02",dow:"Mon",name:"Advance to Kyoto",city:"Kyoto",ph:"Kyoto",
-  wp:[["08:30","Nozomi from Tokyo Station","2h15. Ekiben from the station concourse. Right side seats for Fuji at about 09:15."],
-      ["10:45","Kyoto Station","Drop bags at the hotel or use a locker."],
-      ["12:00","Kiyomizu-dera","Bus 206 or taxi. Lunch on the way up."],
-      ["14:00","Sannenzaka, Ninenzaka, Yasaka Pagoda","Slow walk down."],
-      ["16:00","Yasaka Shrine, Maruyama Park","Then into Gion."],
-      ["17:30","Gion, Hanamikoji","Dusk is the time to see it."],
+ {code:"D4",img:"p_senso",date:"2026-11-01",dow:"Sun",name:"Asakusa, then advance to Kyoto",city:"Kyoto",ph:"Kyoto",km:12,
+  wp:[["07:30","Bags to Tokyo Station lockers, or carry","Check out. Ginza line Akasaka-mitsuke → Asakusa direct, 25 min."],
+      ["08:30","Senso-ji","Before the Nakamise crowds; Kaminarimon gate photo. Sumida riverside for the Skytree view."],
+      ["10:00","Nakamise, Kappabashi kitchen street","Knives and ceramics; ship anything heavy."],
+      ["12:00","Nozomi from Tokyo Station","Collect bags, ekiben, 13:00 departure. Right side seats for Fuji at about 13:45."],
+      ["15:15","Kyoto Station","Check in; the hotel is 10 min away."],
+      ["17:00","Gion at dusk","Keihan to Gion-Shijo. Hanamikoji, Yasaka Shrine lanterns, Shirakawa canal."],
       ["19:00","Pontocho dinner","Alley along the Kamo river."]],
-  transport:"<b>Shinkansen</b> Tokyo → Kyoto, SmartEX ticket, ¥14,400 full fare. Keihan line Gion-Shijo back to the hotel area.",
-  map:"Kiyomizu-dera", route:["Kyoto Station","Kiyomizu-dera","Ninenzaka","Yasaka Shrine","Gion Hanamikoji Street","Pontocho"],
-  check:["Nozomi boarded","Hotel check-in","Kiyomizu done","Gion walked"]},
- {code:"D6",date:"2026-11-03",dow:"Tue",name:"Inari & Arashiyama",city:"Kyoto",ph:"Kyoto",
+  transport:"<b>Shinkansen</b> Tokyo → Kyoto, SmartEX, ¥14,400. Keihan or Karasuma line in Kyoto.",
+  eat:"<b>Melon pan</b> at Kagetsudo and <b>tempura</b> at Daikokuya in Asakusa; <b>ekiben</b> on the train; <b>obanzai</b> or <b>kushiyaki</b> in Pontocho.",
+  map:"Senso-ji", route:["Senso-ji","Kappabashi Dougu Street","Tokyo Station","Kyoto Station","Gion Hanamikoji Street","Pontocho"],
+  check:["Senso-ji done","Nozomi boarded","Kyoto check-in","Gion walked"]},
+ {code:"D5",img:"p_kiyomizu",date:"2026-11-02",dow:"Mon",name:"Higashiyama end to end",city:"Kyoto",ph:"Kyoto",km:16,
+  wp:[["08:00","Kiyomizu-dera","Bus 206 or taxi up. The stage over the valley, then Otowa waterfall."],
+      ["09:30","Sannenzaka, Ninenzaka, Yasaka Pagoda","Slow walk down; shops open about 10:00."],
+      ["11:00","Yasaka Shrine, Maruyama Park, Chion-in","Chion-in's gate is the biggest in Japan."],
+      ["12:30","Lunch near Nanzen-ji","Yudofu (hot tofu) at Okutan or Junsei, the Kyoto classic."],
+      ["14:00","Nanzen-ji","Brick aqueduct, Hojo garden."],
+      ["15:00","Philosopher's Path","2 km canal walk north."],
+      ["16:00","Ginkaku-ji","Silver pavilion, moss garden. Closes 17:00."],
+      ["18:00","Nishiki Market and downtown","Bus 5 or taxi. Market stalls close about 18:00; dinner downtown after."]],
+  transport:"<b>On foot</b> for the whole eastern hills. Taxi or bus 5 back from Ginkaku-ji.",
+  eat:"<b>Yudofu</b> at Nanzen-ji, <b>tako tamago</b> and <b>dashimaki</b> at Nishiki, <b>Honke Owariya soba</b> (since 1465) for dinner.",
+  map:"Kiyomizu-dera", route:["Kiyomizu-dera","Ninenzaka","Yasaka Shrine","Nanzen-ji","Philosopher's Path","Ginkaku-ji","Nishiki Market"],
+  check:["Kiyomizu done","Nanzen-ji aqueduct","Ginkaku-ji","Nishiki"]},
+ {code:"D6",img:"p_inari",date:"2026-11-03",dow:"Tue",name:"Inari & Arashiyama",city:"Kyoto",ph:"Kyoto",km:16,
   wp:[["07:00","Fushimi Inari Taisha","JR Nara line 2 stops from Kyoto. Climb to Yotsutsuji for the view, 45 min up."],
       ["10:00","JR to Saga-Arashiyama","Via Kyoto Station, 15 min on the Sagano line."],
       ["10:30","Bamboo Grove, Tenryu-ji","Garden first, then the grove."],
-      ["12:30","Lunch by Togetsukyo bridge","Yudofu or soba."],
+      ["12:30","Lunch by Togetsukyo bridge","Yuba or soba."],
       ["14:30","Kinkaku-ji","Taxi from Arashiyama, 20 min. Golden pavilion in afternoon light."],
       ["16:00","Ryoan-ji rock garden","15 min walk from Kinkaku-ji. Closes 17:00."]],
   transport:"<b>JR</b> Nara line and Sagano line. <b>Taxi</b> Arashiyama → Kinkaku-ji. Bus 205 back to Kyoto Station.",
+  eat:"<b>Inari sushi</b> and grilled <b>sparrow or quail</b> skewers at the shrine gate, <b>yuba</b> in Arashiyama, <b>% Arabica</b> coffee by the bridge.",
   map:"Fushimi Inari Taisha", route:["Fushimi Inari Taisha","Arashiyama Bamboo Grove","Tenryu-ji","Kinkaku-ji","Ryoan-ji"],
   intel:"<b>Culture Day.</b> National holiday, so everywhere is busy. The 07:00 start at Inari is the whole plan.",
   check:["Inari before 08:00","Bamboo grove","Kinkaku-ji"]},
- {code:"D7",date:"2026-11-04",dow:"Wed",name:"Palace & Philosopher's Path",city:"Kyoto",ph:"Kyoto",
-  wp:[["09:30","Kyoto Imperial Palace","Free, closed Mondays. Karasuma line to Imadegawa."],
-      ["11:30","Nanzen-ji","Brick aqueduct, Hojo garden. Tozai line to Keage."],
-      ["13:00","Lunch near Nanzen-ji","Then north on the path."],
-      ["14:00","Philosopher's Path","2 km canal walk to Ginkaku-ji."],
-      ["15:30","Ginkaku-ji","Silver pavilion, moss garden."],
-      ["18:00","Nishiki Market and Teramachi","Market closes about 18:00; dinner downtown after."]],
-  transport:"<b>Subway</b> Karasuma and Tozai lines. Bus 5 or taxi back from Ginkaku-ji.",
-  map:"Nanzen-ji", route:["Kyoto Imperial Palace","Nanzen-ji","Philosopher's Path","Ginkaku-ji","Nishiki Market"],
-  check:["Palace","Nanzen-ji aqueduct","Ginkaku-ji","Nishiki"]},
- {code:"D8",date:"2026-11-05",dow:"Thu",name:"Nara & Uji",city:"Kyoto",ph:"Kyoto",
-  wp:[["08:00","JR West ticket office, Kyoto Station","Activate the Kansai-Hiroshima Area Pass. Reserve 7 Nov Hiroshima seats now."],
-      ["08:30","Miyakoji Rapid to Nara","45 min, covered by the pass."],
-      ["09:30","Nara Park, Todai-ji","Great Buddha, deer crackers ¥200."],
-      ["11:30","Kasuga Taisha","Lantern paths through the forest."],
-      ["13:00","Nakatanidou mochi, lunch","Then JR back north."],
-      ["14:30","Uji","30 min from Nara. Byodo-in, the temple on the ¥10 coin."],
-      ["16:00","Matcha at Nakamura Tokichi","Uji bridge at dusk, then 20 min back to Kyoto."]],
-  transport:"<b>JR</b> Nara line all day, pass day 1 of 5.",
-  map:"Todai-ji", route:["Kyoto Station","Todai-ji","Kasuga Taisha","Byodo-in","Nakamura Tokichi Honten"],
-  check:["Pass activated","Hiroshima seats reserved","Todai-ji","Byodo-in"]},
- {code:"D9",date:"2026-11-06",dow:"Fri",name:"Shift to Osaka",city:"Osaka",ph:"Osaka",
-  wp:[["10:00","JR Special Rapid Kyoto → Osaka","29 min, pass. Midosuji line to the hotel."],
-      ["12:00","Kuromon Market lunch","Grilled scallops, tuna, fruit."],
-      ["14:00","Shinsekai, Tsutenkaku","Kushikatsu at Daruma. No double dipping."],
-      ["16:30","Namba Yasaka shrine, Hozenji Yokocho","Moss-covered Fudo statue."],
-      ["18:00","Dotonbori","Glico sign, takoyaki, crab. Rest early: 06:30 train tomorrow."]],
-  transport:"<b>JR</b> Kyoto → Osaka, pass day 2. Osaka metro Midosuji line.",
-  map:"Dotonbori", route:["Osaka Station","Kuromon Ichiba Market","Tsutenkaku","Hozenji Yokocho","Dotonbori"],
-  check:["Osaka check-in","Shinsekai kushikatsu","Dotonbori"]},
- {code:"D10",date:"2026-11-07",dow:"Sat",name:"Hiroshima strike",city:"Hiroshima",ph:"Osaka",
-  wp:[["06:30","Midosuji line to Shin-Osaka","20 min."],
-      ["07:00","Nozomi to Hiroshima","1h25, reserved seats on the pass."],
-      ["08:30","JR Sanyo line to Miyajimaguchi","28 min, then JR ferry 10 min. Both on the pass."],
-      ["09:15","Itsukushima Shrine","Check tide time: floating torii at high tide, walk out at low tide."],
-      ["10:30","Daisho-in temple, Omotesando street","Grilled oysters, momiji manju."],
+ {code:"D7",img:"p_itsukushima",date:"2026-11-04",dow:"Wed",name:"Hiroshima strike",city:"Hiroshima",ph:"Kyoto",km:14,
+  wp:[["06:15","Kyoto Station, JR West ticket office","Collect and activate the Kansai-Hiroshima Area Pass. Reserve today's Nozomi seats both ways and the 6 Nov Kuroshio."],
+      ["06:40","JR Special Rapid to Shin-Osaka","25 min. Nozomi 07:15 → Hiroshima 08:40."],
+      ["08:45","JR Sanyo line to Miyajimaguchi","28 min, then JR ferry 10 min. Both on the pass."],
+      ["09:30","Itsukushima Shrine","Check tide time: floating torii at high tide, walk out at low tide."],
+      ["10:45","Daisho-in temple, Omotesando street","Grilled oysters, momiji manju."],
       ["13:30","Ferry and train back to Hiroshima","Tram or walk to the Peace Park."],
       ["14:30","Peace Memorial Park, A-Bomb Dome","Museum ¥200, open to 18:00. Allow 90 min."],
       ["18:00","Okonomimura","Hiroshima-style okonomiyaki, three floors of stalls."],
-      ["19:30","Nozomi back","Shin-Osaka about 21:00."]],
-  transport:"<b>Shinkansen + JR + ferry</b> all on the Kansai-Hiroshima Area Pass, day 3. Miyajima visitor tax ¥100 at the pier.",
-  map:"Itsukushima Shrine", route:["Shin-Osaka Station","Hiroshima Station","Miyajimaguchi Station","Itsukushima Shrine","Hiroshima Peace Memorial Park","Okonomimura"],
-  check:["07:00 Nozomi boarded","Torii seen","Museum visited","Okonomiyaki eaten"]},
- {code:"D11",date:"2026-11-08",dow:"Sun",name:"Osaka Castle, then Hakone",city:"Hakone",ph:"Hakone",
-  wp:[["09:00","Osaka Castle","Loop line to Osakajokoen, pass day 4. Park and keep; tower optional."],
-      ["11:00","Back to hotel for bags","Midosuji line to Shin-Osaka."],
-      ["12:00","Hikari to Odawara","2h10, SmartEX. Lunch is an ekiben."],
-      ["14:15","Hakone Tozan line to Hakone-Yumoto","15 min. Buy the Hakone Freepass at Odawara if doing the full loop tomorrow."],
-      ["14:45","Ryokan check-in","Tonosawa is one stop beyond Yumoto; Miyanoshita three stops."],
-      ["15:30","Onsen","Then yukata, tea, and rest."],
-      ["18:00","Kaiseki dinner","Served in the room at Fukuzumiro. Do not be late."]],
-  transport:"<b>Shinkansen</b> Hikari only; Nozomi skips Odawara. <b>Hakone Tozan</b> from Odawara.",
-  map:"Hakone-Yumoto Station", route:["Osaka Castle","Shin-Osaka Station","Odawara Station","Hakone-Yumoto Station","Tonosawa Station"],
-  intel:"<b>Timing.</b> Ryokan want you in by 17:00 and dinner is at 18:00. Leave Shin-Osaka no later than 12:30.",
-  check:["Castle done","Hikari boarded","Checked in by 17:00","Onsen before dinner"]},
- {code:"D12",date:"2026-11-09",dow:"Mon",name:"Hakone loop, exfil to Haneda",city:"Tokyo",ph:"Haneda",
-  wp:[["07:30","Breakfast at the ryokan","Check out by 10:00; leave bags at reception or send them ahead."],
-      ["09:30","Tozan railway to Gora","Switchback train, 35 min."],
-      ["10:15","Cable car to Sounzan, ropeway to Owakudani","Black eggs, Fuji view if clear."],
-      ["11:30","Ropeway to Togendai, Lake Ashi cruise","Pirate ship to Moto-Hakone, 30 min."],
-      ["12:30","Hakone Shrine torii, lunch at Moto-Hakone","Then bus H back to Yumoto, 40 min."],
-      ["15:30","Odawara → Shinagawa Kodama","30 min. Keikyu line to Haneda, 15 min."],
-      ["17:00","Haneda hotel check-in","Quiet evening, early night. Bags ready for 06:45."]],
-  transport:"<b>Hakone Freepass</b> covers the whole loop. <b>Kodama</b> Odawara → Shinagawa. <b>Keikyu</b> to Tenkubashi or Otorii.",
-  map:"Owakudani", route:["Hakone-Yumoto Station","Gora Station","Owakudani","Togendai","Hakone Shrine","Odawara Station","Haneda Airport Terminal 3"],
-  check:["Owakudani","Lake Ashi cruise","Hakone Shrine torii","Haneda hotel check-in"]},
- {code:"D13",date:"2026-11-10",dow:"Tue",name:"Exfil",city:"Tokyo",ph:"Haneda",
+      ["19:30","Nozomi back","Shin-Osaka 21:00, Kyoto 21:35."]],
+  transport:"<b>Shinkansen + JR + ferry</b> all on the pass, day 1 of 5. Miyajima visitor tax ¥100 at the pier.",
+  eat:"<b>Grilled oysters</b> and <b>anago-meshi</b> (conger eel rice, Ueno at Miyajimaguchi) at lunch; <b>Hiroshima okonomiyaki</b> with soba noodles layered in for dinner; a fried <b>momiji manju</b> for the ferry.",
+  map:"Itsukushima Shrine", route:["Kyoto Station","Hiroshima Station","Miyajimaguchi Station","Itsukushima Shrine","Hiroshima Peace Memorial Park","Okonomimura"],
+  check:["Pass activated, seats reserved","Torii seen","Museum visited","Okonomiyaki eaten"]},
+ {code:"D8",img:"p_todaiji",date:"2026-11-05",dow:"Thu",name:"Nara & Uji",city:"Kyoto",ph:"Kyoto",km:15,
+  wp:[["08:30","Miyakoji Rapid to Nara","45 min, pass day 2."],
+      ["09:30","Nara Park, Todai-ji","Great Buddha, deer crackers ¥200. Bow to the deer, they bow back."],
+      ["11:30","Kasuga Taisha","Lantern paths through the forest."],
+      ["13:00","Nakatanidou mochi, lunch","Then JR back north."],
+      ["14:30","Uji","30 min from Nara. Byodo-in, the temple on the ¥10 coin."],
+      ["16:00","Matcha at Nakamura Tokichi","Uji bridge at dusk, then 20 min back to Kyoto."],
+      ["19:00","Pack for the mountains","Daypacks only for 3 nights. Suitcases ready for takkyubin at 08:00 tomorrow."]],
+  transport:"<b>JR</b> Nara line all day, pass day 2.",
+  eat:"<b>Kakinoha-zushi</b> (mackerel sushi in persimmon leaf) in Nara, <b>Nakatanidou pounded mochi</b>, <b>matcha soba and parfait</b> in Uji. Dinner: <b>Kyoto ramen</b> at Honke Daiichi-Asahi by the station.",
+  map:"Todai-ji", route:["Kyoto Station","Todai-ji","Kasuga Taisha","Byodo-in","Nakamura Tokichi Honten"],
+  alt:"<b>Alt.</b> Imperial Palace (free, 09:00) and a slow Nishiki lunch if legs want a lighter day before the mountains.",
+  check:["Todai-ji","Byodo-in","Daypacks packed, cash withdrawn"]},
+ {code:"D9",img:"p_takahara",date:"2026-11-06",dow:"Fri",name:"Into the Kii mountains",city:"Tanabe",ph:"Kumano",km:11,
+  wp:[["08:00","Suitcases to takkyubin at the hotel desk","Addressed to the Osaka hotel for 8 Nov. Keep passports, meds, chargers."],
+      ["08:30","Kuroshio from Kyoto (or change at Shin-Osaka)","Reserved seats on the pass, day 3. 2h45 down the coast; sea on the right."],
+      ["11:15","Kii-Tanabe","Drop daypacks at the hotel or take them. Kumano Kotsu bus to Takijiri, 40 min, from stop 2 outside the station."],
+      ["12:15","Kumano Kodo Kan Pilgrimage Center, Takijiri-oji","Maps, stamps, the start of the Nakahechi. Lunch here."],
+      ["13:00","Warm-up: Takijiri-oji → Takahara","3.7 km, 300 m up through the cedar forest, 1h45. Tainai-kuguri rock squeeze on the way."],
+      ["15:00","Takahara","Kiri-no-Sato terrace, view over the cloud valley, 11th-century Kumano shrine."],
+      ["16:00","Down to Takijiri and bus back","3.7 km down, 1h15. Bus to Tanabe about 17:30, or walk to SEN RETREAT if staying at the trailhead."],
+      ["19:00","Ajikoji alley, Tanabe","Two hundred izakaya in a few blocks. Kishu plum wine, local fish."]],
+  transport:"<b>Kuroshio</b> on the pass. <b>Kumano Kotsu bus</b> Tanabe ⇄ Takijiri, cash or IC.",
+  eat:"<b>Mehari-zushi</b> (rice wrapped in pickled mustard leaf, the pilgrim's lunch), <b>umeshu</b> and <b>umeboshi</b> (Tanabe is Japan's plum capital), <b>Kishu-style</b> grilled fish on Ajikoji.",
+  map:"Takijiri-oji", route:["Kyoto Station","Kii-Tanabe Station","Takijiri-oji","Takahara Kumano Shrine","Ajikoji Tanabe"],
+  alt:"<b>Alt.</b> Softer: skip the warm-up, walk Tanabe's Tokei Shrine and the harbour, early night. Harder: stay at SEN RETREAT Takijiri and be on the trail at 07:00 tomorrow without the bus.",
+  check:["Suitcases sent","Kuroshio boarded","Pilgrimage Center stamp","Takahara view","Ajikoji"]},
+ {code:"D10",img:"p_nakahechi",date:"2026-11-07",dow:"Sat",name:"The march: Takijiri to Tsugizakura",city:"Hongu",ph:"Kumano",km:19,
+  wp:[["06:35","Bus Kii-Tanabe → Takijiri","First bus. From SEN RETREAT, walk 10 min to the trailhead instead."],
+      ["07:20","Takijiri-oji → Takahara","3.7 km, the same climb as yesterday, now with fresh legs. 1h30."],
+      ["09:00","Takahara → Jujo-oji → Chikatsuyu","9.6 km over Jujo-toge pass, 4h. Water and toilets at Takahara only until Chikatsuyu."],
+      ["13:00","Chikatsuyu-oji, lunch","Village with a shop and a couple of cafes. Refill water."],
+      ["14:00","Chikatsuyu → Nonaka → Tsugizakura-oji","3.9 km, 1h30. Nonaka's 800-year-old cedars and the Ipposugi."],
+      ["15:30","Bus from Nonaka-Ipposugi to Hongu","About 1h. Confirm the exact time the week before; this is the bus that matters."],
+      ["16:40","Kumano Hongu Taisha","Quick visit if before 17:00, otherwise tomorrow morning."],
+      ["17:10","Bus to Yunomine or Kawayu","10 to 15 min. Check in, bath, dinner."]],
+  transport:"<b>On foot</b> 17.2 km on the Nakahechi, about 7 hours moving. <b>Kumano Kotsu bus</b> Nonaka → Hongu → onsen village, cash or IC.",
+  eat:"Packed lunch from the Tanabe konbini or the inn: <b>onigiri, mehari-zushi</b>, nuts, chocolate. Dinner at the inn: river fish, mountain vegetables, <b>onsen eggs</b> cooked in Yunomine's 90 °C spring.",
+  map:"Chikatsuyu-oji", route:["Takijiri-oji","Takahara Kumano Shrine","Chikatsuyu-oji","Tsugizakura-oji","Kumano Hongu Taisha","Yunomine Onsen"],
+  intel:"<b>Hard stop.</b> If not at Chikatsuyu by 13:30, take the bus from Chikatsuyu instead of walking on. Sunset 16:55. Inn dinner cannot be moved.",
+  alt:"<b>Alt.</b> Mega+: carry on from Tsugizakura toward Kobiro-oji and bus from there, 25 km, only with a 06:30 start and a dry forecast. Lighter: bus to Takahara and walk 13.5 km to Tsugizakura.",
+  check:["On the trail by 07:30","Chikatsuyu by 13:30","Nonaka bus caught","Checked in by 17:30","Onsen before dinner"]},
+ {code:"D11",img:"p_nachi",date:"2026-11-08",dow:"Sun",name:"Hongu, the big torii, Nachi's pagoda and waterfall",city:"Nachi",ph:"Osaka",km:9,
+  wp:[["06:30","Tsuboyu or the inn bath","Tsuboyu opens 06:00, 30-min slots, ¥800. Onsen eggs for breakfast."],
+      ["08:00","Bus to Hongu Taisha","Kumano Hongu Taisha (if not seen yesterday) and the 34 m Oyunohara torii, the largest in Japan, 15 min walk."],
+      ["09:40","Bus Hongu → Shingu","About 1h, ¥1,540. Kumano Hayatama Taisha is 15 min on foot from Shingu station: third grand shrine, done."],
+      ["11:30","JR Shingu → Nachi, bus to Daimon-zaka","Pass day 5 for the train. Bus 20 min to the Daimon-zaka stop."],
+      ["12:30","Daimon-zaka","600 m of mossy cobbled stairs under 800-year-old cedars. Lunch at the top."],
+      ["13:30","Kumano Nachi Taisha and Seiganto-ji","The three-storey vermilion pagoda with the waterfall behind it. This is the photo."],
+      ["14:30","Nachi Falls, Hiro Shrine","133 m, tallest single drop in Japan. ¥300 for the close platform."],
+      ["15:30","Bus to Kii-Katsuura","Kuroshio about 16:00 → Shin-Osaka about 20:00, pass. Reserve the seats at Shingu in the morning."],
+      ["20:30","Osaka hotel","Suitcases waiting. Late Dotonbori ramen; make up the steps."]],
+  transport:"<b>Bus</b> Hongu → Shingu (cash). <b>JR</b> Shingu → Nachi and <b>Kuroshio</b> Kii-Katsuura → Shin-Osaka on the pass. <b>Midosuji</b> to the hotel.",
+  eat:"<b>Onsen tamago</b> at Yunomine, <b>sanma-zushi</b> in Shingu, <b>maguro</b> (Katsuura is a tuna port) at the station if time, <b>late ramen</b> in Osaka.",
+  map:"Kumano Nachi Taisha", route:["Yunomine Onsen","Kumano Hongu Taisha","Oyunohara","Kumano Hayatama Taisha","Daimon-zaka","Kumano Nachi Taisha","Nachi Falls","Kii-Katsuura Station"],
+  intel:"<b>Trains.</b> Only six Kuroshio a day run from Kii-Katsuura. Miss the 16:00 and the next is about 17:30, Osaka at 21:30.",
+  alt:"<b>Alt.</b> Sleep in Kii-Katsuura at Hotel Urashima (cave onsen on the Pacific, tuna breakfast) and do the 7-hour haul to Haneda on 9 Nov, dropping Osaka.",
+  check:["Tsuboyu","Oyunohara torii","Hayatama Taisha","Pagoda and falls photo","Kuroshio boarded","Suitcases collected"]},
+ {code:"D12",img:"p_dotonbori",date:"2026-11-09",dow:"Mon",name:"Osaka, then exfil to Haneda",city:"Osaka",ph:"Osaka",km:11,
+  wp:[["08:30","Osaka Castle","Loop line to Osakajokoen. Park and the keep from outside; the museum inside is optional."],
+      ["10:30","Kuromon Market brunch","Scallops, uni, wagyu skewers, fruit."],
+      ["12:00","Dotonbori and Hozenji Yokocho","Glico sign in daylight, moss-covered Fudo statue, takoyaki standing up."],
+      ["13:30","Nozomi Shin-Osaka → Shinagawa","2h20, SmartEX, ¥14,700. Left side for Fuji this direction."],
+      ["16:00","Keikyu Shinagawa → Haneda","15 min. Tenkubashi for the Metropolitan, Otorii for MONday."],
+      ["17:00","Haneda hotel","Bags ready for 06:45. Early dinner, early night."]],
+  transport:"<b>Osaka Loop Line</b> and <b>Midosuji</b> (pass expired, pay with Suica). <b>Nozomi</b> to Shinagawa. <b>Keikyu</b> to Haneda.",
+  eat:"<b>Takoyaki</b> at Wanaka or Aizuya (the 1933 original), <b>kitsune udon</b> at Dotonbori Imai, <b>551 Horai pork buns</b> for the train, <b>Rikuro's cheesecake</b> at Namba. At Haneda T3, <b>Rokurinsha tsukemen</b> on Edo-koji.",
+  map:"Dotonbori", route:["Osaka Castle","Kuromon Ichiba Market","Dotonbori","Shin-Osaka Station","Haneda Airport Terminal 3"],
+  check:["Castle done","Kuromon eaten","Nozomi boarded","Haneda hotel check-in"]},
+ {code:"D13",img:"p_haneda",date:"2026-11-10",dow:"Tue",name:"Exfil",city:"Tokyo",ph:"Haneda",km:2,
   wp:[["06:45","Leave hotel","Terminal 3, international."],
       ["07:15","Bag drop, security, immigration","Tax-free goods must be carried on or shown."],
       ["09:35","Flight to Heathrow","Lands 15:35. Mission complete."]],
   transport:"<b>Keikyu</b> one stop from Tenkubashi, or hotel shuttle.",
+  eat:"Spend the last Suica yen on <b>onigiri and a hot can of coffee</b> at the T3 konbini.",
   map:"Haneda Airport Terminal 3", route:["Haneda Airport Terminal 3"],
   check:["Passports and tax-free receipts","Bag drop done","Wheels up"]}
 ];
 
 var STAYS=[
- {id:"tokyo",name:"Tokyo",dates:"28 Oct – 2 Nov",nights:5,ci:"2026-10-28",co:"2026-11-02",
+ {id:"tokyo",name:"Tokyo",dates:"28 Oct – 1 Nov",nights:4,ci:"2026-10-28",co:"2026-11-01",
   opts:[
-   {tier:"Standard",name:"APA Hotel Roppongi SIX",price:136,score:8.2,reviews:"10,187",
+   {tier:"Standard",name:"APA Hotel Roppongi SIX",price:149,score:8.2,reviews:"10,187",
     blurb:"Roppongi 2-chome, 10 min walk to Akasaka, next door to the National Art Center. Compact rooms, solid chain.",
     perks:["Namboku line","Walk to Roppongi"],slug:"apahoteru-liu-ben-mu-six",map:"APA Hotel Roppongi SIX"},
-   {tier:"Upgrade",name:"APA Hotel Pride Akasaka Kokkaigijidomae",price:155,score:8.5,reviews:"10,907",
+   {tier:"Upgrade",name:"APA Hotel Pride Akasaka Kokkaigijidomae",price:170,score:8.5,reviews:"10,907",
     blurb:"The hotel from the visa itinerary. Rooftop open-air bath, one minute from Tameike-sanno, Ginza and Namboku lines.",
     perks:["Rooftop open-air bath","Tameike-sanno 1 min"],slug:"apahoterupuraido-guo-hui-yi-shi-tang-qian",map:"APA Hotel Pride Akasaka Kokkaigijidomae"}]},
- {id:"kyoto",name:"Kyoto",dates:"2 – 6 Nov",nights:4,ci:"2026-11-02",co:"2026-11-06",
+ {id:"kyoto",name:"Kyoto",dates:"1 – 6 Nov",nights:5,ci:"2026-11-01",co:"2026-11-06",
   opts:[
-   {tier:"Standard",name:"Vessel Hotel Campana Kyoto Gojo",price:102,score:8.7,reviews:"1,109",
-    blurb:"4-star for the price of a business hotel. Public bath and sauna, Gojo subway stop, 10 min walk to Kyoto Station for the Nara, Uji and Osaka days.",
+   {tier:"Standard",name:"Vessel Hotel Campana Kyoto Gojo",price:106,score:8.7,reviews:"1,109",
+    blurb:"4-star for the price of a business hotel. Public bath and sauna, Gojo subway stop, 10 min walk to Kyoto Station for the early Hiroshima, Nara and Kuroshio departures.",
     perks:["Public bath + sauna","Karasuma line"],slug:"vessel-campana-kyoto-gojyo",map:"Vessel Hotel Campana Kyoto Gojo"},
-   {tier:"Upgrade",name:"Dormy Inn Premium Kyoto Ekimae Natural Hot Spring",price:183,score:8.7,reviews:"2,511",
-    blurb:"Real onsen on the roof with an open-air bath, free late-night ramen, opposite Kyoto Station. Over the line but the onsen every night is the point.",
+   {tier:"Upgrade",name:"Dormy Inn Premium Kyoto Ekimae Natural Hot Spring",price:188,score:8.7,reviews:"2,511",
+    blurb:"Real onsen on the roof with an open-air bath, free late-night ramen, opposite Kyoto Station. Over the line but the onsen every night is the point, and it is 3 min from the 06:15 trains.",
     perks:["Rooftop onsen","Free night ramen","Kyoto Station"],slug:"dormy-inn-premium-kyoto-ekimae",map:"Dormy Inn Premium Kyoto Ekimae"}]},
- {id:"osaka",name:"Osaka",dates:"6 – 8 Nov",nights:2,ci:"2026-11-06",co:"2026-11-08",
+ {id:"tanabe",name:"Tanabe / Takijiri",dates:"6 – 7 Nov",nights:1,ci:"2026-11-06",co:"2026-11-07",
   opts:[
-   {tier:"Standard",name:"Hotel Sobial Namba Daikokucho",price:106,score:8.8,reviews:"3,077",
-    blurb:"4-star with an open-air bath, Daikokucho station on the Midosuji line, which runs straight to Shin-Osaka for the 07:00 Hiroshima train.",
-    perks:["Open-air bath","Midosuji direct to Shin-Osaka"],slug:"hotel-sobial-namba-daikokucho",map:"Hotel Sobial Namba Daikokucho"},
-   {tier:"Upgrade",name:"APA Hotel & Resort Osaka Namba Ekimae Tower",price:123,score:8.4,reviews:"12,492",
-    blurb:"Tower hotel by Namba station with a rooftop pool, open-air bath, spa and bar. Pool is seasonal and may be closed in November; the bath and bar are open.",
+   {tier:"Standard",name:"Comfort Hotel Kii Tanabe",price:110,score:9.1,reviews:"771",
+    blurb:"New business hotel 3 min from Kii-Tanabe station and the bus to Takijiri. Ajikoji izakaya alley on the doorstep. Free breakfast from 06:00, which matters for the 06:35 bus.",
+    perks:["Station 3 min","Ajikoji alley","Breakfast from 06:00"],slug:"comfort-kii-tanabe",map:"Comfort Hotel Kii Tanabe"},
+   {tier:"Upgrade",name:"SEN RETREAT TAKIJIRI",price:192,score:8.8,reviews:"76",
+    blurb:"Cabin lodge at the trailhead with a riverside deck and dinner delivered to the room. Wake up, walk 10 min, start the march at 07:00 with no bus.",
+    perks:["At the trailhead","Dinner delivered","No bus in the morning"],slug:"senretreat-takijiri",map:"SEN RETREAT TAKIJIRI"}]},
+ {id:"hongu",name:"Hongu onsen villages",dates:"7 – 8 Nov",nights:1,ci:"2026-11-07",co:"2026-11-08",
+  opts:[
+   {tier:"Standard",name:"Cottage Kirihata",price:112,score:9.8,reviews:"43",
+    blurb:"Private cottage above Hongu run by a family who shuttle guests to the shrine and to Yunomine's baths. No onsen on site: bathe at Tsuboyu (¥800) or Watarase's open-air pool (¥1,000) instead.",
+    perks:["Free shuttle","Tsuboyu nearby","9.8 score"],slug:"cottage-kirihata",map:"Cottage Kirihata Hongu"},
+   {tier:"Upgrade",name:"Sansuikan Kawayu Midoriya",price:310,score:8.6,reviews:"991",
+    blurb:"Ryokan on the Oto river at Kawayu Onsen, where the river bed itself is hot: dig a pool on the gravel or use the hotel's riverside open-air bath. Dinner and breakfast, free shuttle to Hongu.",
+    perks:["River open-air bath","Dinner + breakfast","Free shuttle"],slug:"sansuikan-kawayu-midoriya",map:"Sansuikan Kawayu Midoriya"}]},
+ {id:"osaka",name:"Osaka",dates:"8 – 9 Nov",nights:1,ci:"2026-11-08",co:"2026-11-09",
+  opts:[
+   {tier:"Standard",name:"Hotel Sobial Namba Daikokucho",price:98,score:8.8,reviews:"3,077",
+    blurb:"4-star with an open-air bath, Daikokucho station on the Midosuji line, direct from Shin-Osaka at 20:00 and back to it at 13:00.",
+    perks:["Open-air bath","Midosuji direct"],slug:"hotel-sobial-namba-daikokucho",map:"Hotel Sobial Namba Daikokucho"},
+   {tier:"Upgrade",name:"APA Hotel & Resort Osaka Namba Ekimae Tower",price:85,score:8.4,reviews:"12,492",
+    blurb:"Tower hotel by Namba station with a rooftop pool, open-air bath, spa and bar. Cheaper than the Standard on this Sunday night. Pool is seasonal and may be shut in November; the bath and bar are open.",
     perks:["Rooftop pool (seasonal)","Open-air bath","Bar"],slug:"apahoterurizotoda-ban-nanbayi-qian-tawa",map:"APA Hotel & Resort Osaka Namba Ekimae Tower"}]},
- {id:"hakone",name:"Hakone",dates:"8 – 9 Nov",nights:1,ci:"2026-11-08",co:"2026-11-09",
-  opts:[
-   {tier:"Standard",name:"Hakone Miyanoshita Myojokan",price:157,score:9.2,reviews:"273",
-    blurb:"Adults-only onsen inn in Miyanoshita, three stops up the Tozan line. Room only; eat in the village.",
-    perks:["Onsen","Adults only","On the Tozan line"],slug:"myojokan",map:"Hakone Miyanoshita Myojokan"},
-   {tier:"Upgrade",name:"Fukuzumiro",price:399,score:9.4,reviews:"456",
-    blurb:"1890 wooden ryokan in Tonosawa, a registered cultural property. Kaiseki dinner and breakfast in the room, cypress indoor baths, 5 min walk from Tonosawa station. No outdoor bath.",
-    perks:["Kaiseki in room","Dinner + breakfast","Cultural property"],slug:"fukuzumiro",map:"Fukuzumiro Hakone"}]},
  {id:"haneda",name:"Haneda",dates:"9 – 10 Nov",nights:1,ci:"2026-11-09",co:"2026-11-10",
   opts:[
    {tier:"Standard",name:"hotel MONday Haneda Airport",price:93,score:8.6,reviews:"2,413",
@@ -526,32 +754,45 @@ var STAYS=[
 ];
 
 var LOGI=[
- ["Kansai-Hiroshima Area Pass","¥17,000 pp","Buy on the JR West site now, collect at Kyoto Station. Activate Thu 5 Nov, valid to 9 Nov.","Nozomi Shin-Osaka ⇄ Hiroshima, JR Miyajima ferry, Nara and Uji lines, Kyoto ⇄ Osaka, Osaka Loop Line. Reserved seats free."],
- ["SmartEX tickets","about ¥30,700 pp","App, book from 18 Oct. QR at the gate.","Tokyo → Kyoto 2 Nov, Shin-Osaka → Odawara 8 Nov, Odawara → Shinagawa 9 Nov."],
- ["Welcome Suica x2","¥0 + top-up","Narita T2, JR East Travel Service Center, 28 Oct.","All metro, JR local, buses, konbini. 28-day validity, no refund of balance."],
+ ["Kansai-Hiroshima Area Pass","¥17,000 pp","Buy on the JR West site by 20 Oct, collect at Kyoto Station 4 Nov. Valid 4 to 8 Nov.","Nozomi Shin-Osaka ⇄ Hiroshima, JR Miyajima ferry, Nara and Uji lines, Kyoto ⇄ Osaka, Kuroshio to Kii-Tanabe and from Kii-Katsuura, JR Shingu ⇄ Nachi. Reserved seats free."],
+ ["SmartEX tickets","¥29,100 pp","App. 9 Nov leg by 19 Oct for Hayatoku 21; 1 Nov leg by 29 Oct.","Tokyo → Kyoto 1 Nov, Shin-Osaka → Shinagawa 9 Nov."],
+ ["Welcome Suica","¥0 + top-up","Arrival airport, 28 Oct.","All metro, JR local, buses (Kumano Kotsu included), konbini. 28-day validity, balance not refundable."],
  ["Narita Express","¥3,070 pp","Narita T2 on arrival.","Airport → Tokyo Station, 60 min."],
- ["Hakone Freepass (Odawara, 2-day)","¥6,000 pp","Odawara station, 8 Nov.","Tozan railway, cable car, ropeway, Lake Ashi cruise, Hakone buses. Skip if only going to the ryokan and back."],
- ["Shibuya Sky","about ¥2,500 pp","Online, pick the 16:30 slot for 29 Oct.","Rooftop deck, sunset."],
- ["Peace Memorial Museum","¥200 pp","On the door, 7 Nov.","No reservation needed."],
+ ["Kumano Kotsu buses","about ¥4,500 pp total","On board, cash or IC. Tanabe ⇄ Takijiri ¥1,000, Nonaka → Hongu ¥1,600, Hongu → Shingu ¥1,540.","Trail access. Not on any JR pass."],
+ ["Takkyubin suitcase transfer","about ¥2,500 per bag","Kyoto hotel desk, 6 Nov 08:00.","Suitcases to the Osaka hotel, arrive 7 Nov, held until 8 Nov."],
+ ["Tsuboyu bath","¥800 pp","Yunomine ticket office, 8 Nov 06:00.","30-minute private slot in the UNESCO bath."],
+ ["Shibuya Sky","about ¥2,500 pp","Online, 16:30 slot for 29 Oct.","Rooftop deck, sunset."],
+ ["Peace Memorial Museum","¥200 pp","On the door, 4 Nov.","No reservation needed."],
+ ["Nachi Falls platform","¥300 pp","On the door, 8 Nov.","Close viewing platform at Hiro Shrine."],
  ["Visit Japan Web","free","Before departure.","Immigration and customs QR."],
  ["eSIM (Ubigi / Airalo)","about €20 for 10 GB","Before departure.","Data for the whole trip."]
 ];
 
 var OPEN=[
- "Tokyo: Roppongi SIX at €136 or Pride Akasaka with the rooftop bath at €155",
- "Kyoto: Vessel Campana Gojo at €102 or Dormy Inn with the rooftop onsen at €183",
- "Osaka: Sobial Namba at €106 or APA Namba Tower with pool and bar at €123",
- "Hakone: Myojokan room-only at €157 or Fukuzumiro with kaiseki at €399",
+ "Tokyo: Roppongi SIX at €149 or Pride Akasaka with the rooftop bath at €170",
+ "Kyoto: Vessel Campana Gojo at €106 or Dormy Inn with the rooftop onsen at €188",
+ "6 Nov: Comfort Hotel in Tanabe town at €110 or SEN RETREAT at the trailhead at €192",
+ "7 Nov: Cottage Kirihata at €112 plus Tsuboyu, or Kawayu Midoriya ryokan with river onsen at €310. Try Adumaya in Yunomine direct first.",
+ "8 Nov: Osaka night (Sobial €98 or APA Namba Tower €85) or Hotel Urashima cave onsen in Kii-Katsuura at €180 with a long 9 Nov",
  "Haneda: MONday at €93 or Metropolitan at Tenkubashi at €129",
- "Hakone Freepass: full loop on 9 Nov, or a slower morning and straight to Tokyo"
+ "7 Nov march: standard 17 km to Tsugizakura, or the 25 km push toward Kobiro-oji"
+];
+
+var RATIONS=[
+ ["Tokyo",[["Sushi at Tsukiji outer market, early (Sushi Dai queue or a standing bar)","sushi"],["Ramen: Fuunji tsukemen (Shinjuku), Afuri yuzu shio (Ebisu), any ticket-machine counter","tsukemen"],["Tonkatsu: Tonki in Meguro or Maisen in Aoyama","tonkatsu"],["Yakitori in Omoide Yokocho or Ebisu Yokocho","yakitori"],["Monjayaki on Tsukishima if a free evening appears","monjayaki"],["Gyukatsu Motomura (rare beef cutlet you sear yourself)","gyukatsu"],["Harajuku crepes; 7-Eleven egg sando; Asakusa melon pan at Kagetsudo","crepe"]]],
+ ["Kyoto",[["Yudofu (hot tofu) at Okutan or Junsei by Nanzen-ji","yudofu"],["Nishiki Market: tako tamago, dashimaki omelette, pickles, soy doughnuts","nishiki"],["Honke Owariya soba, in business since 1465","soba"],["Kyoto ramen at Honke Daiichi-Asahi by the station (rich soy, thin noodles)","kyotoramen"],["Obanzai (Kyoto home cooking) set in Pontocho","obanzai"],["Matcha everything: parfait at Nakamura Tokichi in Uji, warabi mochi, yatsuhashi to take home","matcha"],["Kaiseki once if the budget allows, Gion or a ryotei lunch for a third of the dinner price","kaiseki"]]],
+ ["Hiroshima & Miyajima",[["Hiroshima okonomiyaki: layered, with soba noodles inside. Okonomimura or Nagata-ya","hiroshimayaki"],["Grilled oysters on Miyajima's Omotesando street","oysters"],["Anago-meshi (conger eel on rice) at Ueno, by Miyajimaguchi station","anago"],["Momiji manju, fried, from a stall on the island","momiji"],["Hiroshima tsukemen (cold, spicy) if a second lunch happens",null]]],
+ ["Kumano & Tanabe",[["Mehari-zushi: rice balls wrapped in pickled takana leaf, the pilgrim's lunch","mehari"],["Sanma-zushi (pressed saury) and ayu river fish around Hongu and Shingu","sanma"],["Onsen tamago and sweet potatoes cooked in Yunomine's spring","onsentamago"],["Umeboshi and umeshu: Tanabe is the home of Kishu plums; Ajikoji alley for the izakaya crawl","umeboshi"],["Maguro (tuna) in Kii-Katsuura, one of Japan's biggest tuna ports; the station-front restaurants do a tuna bowl","maguro"]]],
+ ["Osaka",[["Takoyaki: Wanaka or Aizuya, the 1933 original","takoyaki"],["Okonomiyaki Osaka-style at Mizuno or Fukutaro","okonomiyaki"],["Kushikatsu at Daruma in Shinsekai; never double-dip the sauce","kushikatsu"],["Kitsune udon at Dotonbori Imai","udon"],["Kuromon Market: grilled scallops, uni, wagyu skewers",null],["551 Horai pork buns for the train, Rikuro's cheesecake at Namba","butaman"]]],
+ ["On the train",[["Ekiben: a regional bento bought on the concourse, eaten on the shinkansen with a can of something","ekiben"],["Rokurinsha tsukemen on Edo-koji at Haneda T3 for the last bowl",null]]]
 ];
 
 /* ---------- helpers ---------- */
 function store(k,v){try{if(v===undefined){var s=localStorage.getItem(k);return s?JSON.parse(s):null}localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}}
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
 function q(s){return encodeURIComponent(s)}
-function jstDate(){ // YYYY-MM-DD in Japan
-  var p=new Intl.DateTimeFormat("en-CA",{timeZone:TZ,year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());return p}
+function fmt(n){return n.toLocaleString("en-GB")}
+function jstDate(){return new Intl.DateTimeFormat("en-CA",{timeZone:TZ,year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date())}
 var CAN_EMBED=/github\.io$|localhost$|^127\./.test(location.hostname)||location.protocol==="file:";
 function phaseColor(n){for(var i=0;i<PHASES.length;i++)if(PHASES[i].n===n)return PHASES[i].c;return "var(--olive)"}
 function bookUrl(o,s){return "https://www.booking.com/hotel/jp/"+o.slug+".html?checkin="+s.ci+"&checkout="+s.co+"&group_adults=2&no_rooms=1&selected_currency=EUR"}
@@ -561,47 +802,67 @@ function routeUrl(r){ if(r.length<2) return mapUrl(r[0]);
   return "https://www.google.com/maps/dir/?api=1&origin="+q(o)+"&destination="+q(d)+(w?"&waypoints="+w:"")+"&travelmode=transit"}
 
 /* ---------- tabs ---------- */
+var TABS=["brief","ops","billet","logi","intel","hand","qrh"];
 var tabs=document.querySelectorAll(".tabs button");
 function showTab(id,push){
   tabs.forEach(function(b){b.setAttribute("aria-selected",String(b.dataset.tab===id))});
-  ["brief","ops","billet","logi","intel","hand"].forEach(function(s){document.getElementById(s).hidden=(s!==id)});
+  TABS.forEach(function(s){document.getElementById(s).hidden=(s!==id)});
   if(push){try{history.replaceState(null,"","#"+id)}catch(e){}}
 }
 tabs.forEach(function(b){b.addEventListener("click",function(){showTab(b.dataset.tab,true)})});
 
-/* ---------- phases ---------- */
+/* ---------- phases, open items, rations ---------- */
 document.getElementById("phases").innerHTML=PHASES.map(function(p){return '<div class="phase" style="border-top-color:'+p.c+'"><b>'+p.n+'</b><span>'+p.d+'</span></div>'}).join("");
 document.getElementById("openItems").innerHTML=OPEN.map(function(s){return "<li>• "+esc(s)+"</li>"}).join("");
+document.getElementById("rations").innerHTML=RATIONS.map(function(r){return '<div class="card"><h4>'+esc(r[0])+'</h4>'+r[1].map(function(x){return x[1]?'<div class="dish"><img src="img/'+x[1]+'.jpg" alt="" loading="lazy" onerror="this.parentNode.classList.add(\'noimg\');this.remove()"><span>'+esc(x[0])+'</span></div>':'<div class="dish noimg"><span>'+esc(x[0])+'</span></div>'}).join("")+'</div>'}).join("");
+try{fetch("img/credits.json").then(function(r){return r.json()}).then(function(c){var keys=Object.keys(c);if(!keys.length)return;
+  var el=document.createElement("p");el.className="credits";el.innerHTML="Photos from Wikimedia Commons, used under their free licences: "+keys.map(function(k){return '<a target="_blank" rel="noopener" href="'+c[k].page+'">'+esc(c[k].file)+'</a>'}).join(" · ");
+  document.getElementById("qrh").appendChild(el)}).catch(function(){})}catch(e){}
 
 /* ---------- days ---------- */
 var ticks=store("ors.ticks")||{};
+var logged=store("ors.steps")||{};
 var today=jstDate();
-document.getElementById("days").innerHTML=DAYS.map(function(d,i){
+var MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+document.getElementById("days").innerHTML=DAYS.map(function(d){
   var state=d.date===today?"active":(d.date<today?"past":"");
   var wps=d.wp.map(function(w){return '<li><span class="t">'+w[0]+'</span><span class="w">'+esc(w[1])+(w[2]?'<small>'+esc(w[2])+'</small>':'')+'</span></li>'}).join("");
   var checks=d.check.map(function(c,j){var k=d.code+":"+j;var on=!!ticks[k];
     return '<label class="'+(on?"done":"")+'"><input type="checkbox" id="ck-'+d.code+'-'+j+'" data-k="'+k+'"'+(on?" checked":"")+'> '+esc(c)+'</label>'}).join("");
   var map=CAN_EMBED?'<iframe loading="lazy" title="Map: '+esc(d.map)+'" src="https://maps.google.com/maps?q='+q(d.map)+'&z=13&output=embed"></iframe>':'<span>Map embeds on the GitHub Pages version.<br>Use the buttons below.</span>';
   var dt=new Date(d.date+"T00:00:00");
-  var label=d.dow+" "+dt.getDate()+" "+["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][dt.getMonth()];
+  var label=d.dow+" "+dt.getDate()+" "+MON[dt.getMonth()];
+  var planned=Math.round(d.km*STEPS_PER_KM/500)*500;
+  var stepChip=planned>=STEP_MIN?'<span class="chip ok">15k met</span>':'<span class="chip warn">short day</span>';
   return '<article class="day '+state+'" id="day-'+d.code+'" style="border-left-color:'+(state==="active"?"var(--accent)":phaseColor(d.ph))+'">'+
    '<header><span class="code">'+d.code+' · '+label+'</span><h3>'+esc(d.name)+'</h3>'+(state==="active"?'<span class="chip live">Active op</span>':'')+'<span class="meta">'+esc(d.city)+' · phase '+esc(d.ph)+'</span></header>'+
-   '<div class="cols"><div><ul class="timeline">'+wps+'</ul><div class="transport">'+d.transport+'</div>'+(d.intel?'<div class="intel">'+d.intel+'</div>':'')+'</div>'+
-   '<div><div class="map">'+map+'</div><div class="maplinks"><a class="btn primary" target="_blank" rel="noopener" href="'+routeUrl(d.route)+'">Route in Google Maps</a><a class="btn" target="_blank" rel="noopener" href="'+mapUrl(d.map)+'">'+esc(d.map)+'</a></div>'+
-   '<div class="check">'+checks+'</div></div></div></article>'}).join("");
+   '<div class="cols"><div><ul class="timeline">'+wps+'</ul><div class="transport">'+d.transport+'</div>'+
+   '<div class="eat"><b>Rations.</b> '+d.eat+'</div>'+(d.intel?'<div class="intel">'+d.intel+'</div>':'')+(d.alt?'<div class="alt">'+d.alt+'</div>':'')+'</div>'+
+   '<div>'+(d.img?'<img class="hero" src="img/'+d.img+'.jpg" alt="" loading="lazy" onerror="this.remove()">':'')+'<div class="map">'+map+'</div><div class="maplinks"><a class="btn primary" target="_blank" rel="noopener" href="'+routeUrl(d.route)+'">Route in Google Maps</a><a class="btn" target="_blank" rel="noopener" href="'+mapUrl(d.map)+'">'+esc(d.map)+'</a></div>'+
+   '<div class="check">'+checks+'</div>'+
+   '<div class="steps"><span>Planned <span class="mono">~'+fmt(planned)+'</span> steps · '+d.km+' km</span>'+stepChip+'<label for="st-'+d.code+'" style="margin-left:auto">Logged</label><input type="number" inputmode="numeric" min="0" step="100" id="st-'+d.code+'" data-code="'+d.code+'" value="'+(logged[d.code]||"")+'" placeholder="0"></div>'+
+   '</div></div></article>'}).join("");
 document.getElementById("days").addEventListener("change",function(e){
-  var el=e.target; if(el.type!=="checkbox")return;
-  ticks[el.dataset.k]=el.checked; store("ors.ticks",ticks); el.parentNode.classList.toggle("done",el.checked)});
+  var el=e.target;
+  if(el.type==="checkbox"){ticks[el.dataset.k]=el.checked; store("ors.ticks",ticks); el.parentNode.classList.toggle("done",el.checked)}
+  if(el.type==="number"){logged[el.dataset.code]=+el.value||0; store("ors.steps",logged); stepTiles()}
+});
+function stepTiles(){
+  var p=0,l=0;DAYS.forEach(function(d){p+=Math.round(d.km*STEPS_PER_KM/500)*500;l+=(logged[d.code]||0)});
+  document.getElementById("tilePlanned").textContent=fmt(p);
+  document.getElementById("tileLogged").textContent=l?fmt(l):"—";
+}
+stepTiles();
 
 /* ---------- billeting ---------- */
 var sel=store("ors.hotels")||{};
-function eur(n){return "€"+n.toLocaleString("en-GB")}
+function eur(n){return "€"+fmt(n)}
 function renderStays(){
   var html="",tot=0,min=0,max=0,nights=0;
   STAYS.forEach(function(s){
     var chosen=sel[s.id]||0; nights+=s.nights;
     var prices=s.opts.map(function(o){return o.price*s.nights});
-    min+=Math.min.apply(null,prices); max+=Math.max.apply(null,prices); tot+=prices[chosen];
+    min+=prices[0]; max+=prices[1]; tot+=prices[chosen];
     html+='<div class="stay"><header><span class="eyebrow">'+esc(s.name)+'</span><h3>'+s.dates+' · '+s.nights+(s.nights>1?' nights':' night')+'</h3></header><div class="opts">'+
       s.opts.map(function(o,j){var over=o.price>BUDGET;
         return '<label class="opt'+(chosen===j?' sel':'')+'"><input type="radio" name="st-'+s.id+'" id="st-'+s.id+'-'+j+'" value="'+j+'"'+(chosen===j?' checked':'')+'>'+
@@ -628,44 +889,72 @@ document.getElementById("logiTable").insertAdjacentHTML("beforeend",LOGI.map(fun
   return '<tr><td><input type="checkbox" id="lg-'+i+'" data-i="'+i+'"'+(logiDone[i]?' checked':'')+' aria-label="done"></td><td><b>'+esc(r[0])+'</b></td><td class="num">'+esc(r[1])+'</td><td>'+esc(r[2])+'</td><td>'+esc(r[3])+'</td></tr>'}).join(""));
 document.getElementById("logiTable").addEventListener("change",function(e){var el=e.target;if(el.type!=="checkbox")return;logiDone[el.dataset.i]=el.checked;store("ors.logi",logiDone)});
 
-/* ---------- handbook ---------- */
+/* ---------- SOP & kit ---------- */
 var BUY=[
- ["Travel insurance with medical cover","both","Print the policy number into the Numbers table in your head, or screenshot it."],
+ ["Travel insurance with medical and hiking cover","both","Screenshot the policy number and the 24h line."],
  ["eSIM, 10 GB or more (Ubigi, Airalo)","both","Install before departure, activate on landing."],
- ["Kansai-Hiroshima Area Pass","both","JR West online shop, collect at Kyoto Station on 5 Nov with passports."],
- ["SmartEX account and the three shinkansen tickets","Lubo","See deadlines on the Briefing tab. Book 2 seats together, oversized-bag seat if needed."],
- ["Hotels, all five bases","Lubo","Free-cancellation rates where offered. Ryokan usually charge 100% inside 7 days."],
+ ["Kansai-Hiroshima Area Pass","both","JR West online shop, collect at Kyoto Station on 4 Nov with passports."],
+ ["SmartEX account and both shinkansen tickets","Lubo","See deadlines on the Briefing tab. Two seats together, oversized-bag seat if needed."],
+ ["Hotels, all six bases","Lubo","Free-cancellation rates where offered. Kumano inns and ryokan charge 100% inside 7 days."],
  ["Shibuya Sky tickets, 29 Oct 16:30","Elah","Official site only."],
- ["Yen cash, about €300 each","both","Better rates at a 7-Eleven ATM in Japan than at a European bank."],
- ["Type A power adapter and a 2-port USB charger","both","Japan is 100 V; EU plugs do not fit."],
- ["Power bank, 10,000 mAh","both","Maps and Suica top-ups drain the phone."],
- ["Broken-in walking shoes","both","25,000 steps a day is normal. Slip-on if possible for temples and ryokan."],
- ["Small day bag, coin purse, hand towel, zip bags","both","See tips."],
+ ["Yen cash, about €400 each","both","Kumano runs on cash. 7-Eleven ATM in Japan beats a European bank's rate."],
+ ["Type A power adapter and a 2-port USB charger","both","Japan is 100 V; EU and UK plugs do not fit."],
+ ["Power bank, 10,000 mAh","both","Maps and Suica top-ups drain the phone; no sockets on the trail."],
+ ["Trail shoes or light boots, broken in","both","17 km with 700 m of climb on 7 Nov, wet stone steps. Slip-on for temples and ryokan is a bonus."],
+ ["Rain shell and a 20-litre daypack each","both","Three nights out of the suitcase. Dry bag for the phone."],
+ ["Headtorch, blister plasters, 2-litre water capacity","both","Sunset 16:55. Trail water only at villages."],
+ ["Small day bag, coin purse, hand towel, zip bags","both","See QRH tips."],
  ["Medication for the trip plus a copy of prescriptions","both","Check the banned list for anything with pseudoephedrine."],
  ["Visit Japan Web registration","both","Immigration and customs QR, done on the phone before flying."],
- ["WhatsApp group 'Rising Sun' with live location sharing","Elah","For the rendezvous on 28 Oct and any separation."]
+ ["WhatsApp group 'Rising Sun' with live location sharing","Elah","For any separation, and so the trail posts can be photographed into one thread."],
+ ["Downloads for the flight","both","Netflix and Prime downloads, Kindle books, podcasts. See the in-flight plan below."]
 ];
 var BUYJP=[
- ["Welcome Suica x2, charge ¥5,000","Narita T2 B1, JR East Travel Service Center","28-day card, no deposit. Elah buys hers at her arrival airport."],
+ ["Welcome Suica x2, charge ¥5,000 each","Narita T2 B1, JR East Travel Service Center","28-day card, no deposit."],
  ["Narita Express ticket","Same counter","¥3,070, reserved seat."],
- ["Umbrella","Any konbini, ¥500","Only if it rains. Do not pack one."],
- ["Hakone Freepass, 2-day from Odawara","Odawara station, Odakyu counter, 8 Nov","¥6,000. Only if doing the full loop on 9 Nov."],
- ["Peace Memorial Museum entry","On the door, 7 Nov","¥200."],
- ["Miyajima visitor tax","Ferry pier, 7 Nov","¥100, cash or IC."],
- ["Takkyubin luggage transfer (optional)","Hotel front desk, 1 Nov","About ¥2,500 per bag Tokyo to Kyoto, arrives next day."],
+ ["Umbrella","Any konbini, ¥500","Cities only; rain shell on the trail."],
+ ["Takkyubin for the suitcases","Kyoto hotel desk, 6 Nov 08:00","About ¥2,500 per bag to the Osaka hotel."],
+ ["Trail lunch","Kii-Tanabe konbini or the inn, 7 Nov 06:00","Onigiri, mehari-zushi, nuts. Nothing on the trail until Chikatsuyu."],
+ ["Goshuin stamp book","Kumano Hongu Taisha, ¥1,500","Collect the three grand shrine stamps plus Nachi's pagoda temple."],
+ ["Tsuboyu ticket","Yunomine office, 8 Nov 06:00","¥800, 30 minutes, first come."],
+ ["Peace Memorial Museum entry","On the door, 4 Nov","¥200."],
+ ["Miyajima visitor tax","Ferry pier, 4 Nov","¥100, cash or IC."],
  ["Gifts, tax-free","Don Quijote, Bic Camera, department stores","Show passport, keep the sealed bag closed until home."]
 ];
 var SOPS=[
  ["Morning","Check the day card the night before. Out by 08:30. Konbini breakfast on the move. Phone charged, power bank packed, Suica balance over ¥2,000."],
  ["Rail","At the platform 15 min early. Check car number on the SmartEX QR or the pass reservation. Stand at the floor marking for that car. Big bags in the rack behind the last row or the oversized seat. Silent phones."],
- ["Separated","Stop, do not wander. Message in the group with the station or landmark. Default meeting point is the hotel lobby. If no signal within 30 min, both go to the hotel."],
+ ["Trail","Start by 07:30. Follow the numbered posts, 500 m apart. Check in with each other at every oji. Hard-stop times on the day card decide whether you walk or bus; no heroics after 13:30. Rain shell on before you are wet, headtorch in the lid pocket."],
+ ["Separated","Stop, do not wander. Message in the group with the station, landmark or trail post number. Default meeting point is the hotel lobby, or the next oji on the trail. If no signal within 30 min, both go to the hotel."],
+ ["Jet lag","Day 1: no nap longer than 20 min, daylight by 09:00, dinner early, sleep by 22:00. Caffeine before 14:00 only. By 30 Oct you are on Tokyo time."],
  ["Onsen","Shoes off at the entrance. Undress fully in the changing room. Wash sitting down at a tap before entering. Small towel on your head, not in the water. No photos. 10 min in, cool off, repeat. Hydrate after."],
- ["Ryokan","Arrive by 17:00. Shoes off at the genkan. Yukata left side over right. Dinner at the stated time, no exceptions. Futons are laid out while you eat. Breakfast time agreed at check-in. Check out by 10:00."],
+ ["Ryokan and minshuku","Arrive by 17:00. Shoes off at the genkan. Yukata left side over right. Dinner at the stated time, no exceptions; tell them in the morning if you will be late. Futons are laid out while you eat. Breakfast time agreed at check-in. Check out by 10:00."],
  ["Shrine and temple","Bow once at the gate. Rinse hands at the water basin (left, right, mouth from the hand, never the ladle). At a shrine: coin, bow twice, clap twice, pray, bow once. At a temple: coin, bow, no clapping. Hats off indoors."],
  ["Earthquake","Drop, cover under a table, hold on. Do not run outside during shaking. After: check each other, follow hotel staff, phones switch to the J-Alert tone. Shinkansen stop automatically and resume."],
  ["Lost or stolen","Passport: nearest police box (koban) for a report, then the embassy in Tokyo. Cards: block in the banking app, cash from the other person. IC card: cannot be replaced, keep the balance low. Items left on a train: station office, they are usually found."],
- ["Illness","Pharmacy first (Matsumoto Kiyoshi, Welcia) for colds and stomach. Hospital for anything worse: call the JNTO hotline 050-3816-2787 for an English-speaking clinic, insurance number ready, pay and claim back."],
+ ["Illness or injury","Pharmacy first (Matsumoto Kiyoshi, Welcia) for colds and stomach. Blister: stop and tape at the first hot spot. Hospital for anything worse: JNTO hotline 050-3816-2787 for an English-speaking clinic, insurance number ready, pay and claim back. Nearest hospital to the trail is in Tanabe."],
  ["Exfil, 10 Nov","Alarm 06:00. Leave 06:45. Terminal 3 by 07:30. Tax-free goods in hand luggage. Suica balances spent at the airport konbini since they cannot be refunded."]
+];
+var PRE=[
+ ["Passports valid beyond 10 Nov, photo of each in the group chat","now","Japan needs validity for the stay only, but airlines are stricter."],
+ ["Visa status for whoever needs one, dates matching the new itinerary","now","Resubmit if still pending; fine if issued."],
+ ["Travel insurance bought, policy number screenshotted","now","Hiking cover included."],
+ ["All six hotels booked from the Genius account, confirmations saved offline","20 Oct","Free cancellation where possible; Kumano inns first."],
+ ["Kansai-Hiroshima Area Pass bought, voucher saved","20 Oct","Pickup Kyoto Station 4 Nov with passports."],
+ ["SmartEX: both shinkansen legs booked, QR codes saved","19 and 29 Oct","Seats D/E on 1 Nov, A/B on 9 Nov, for Fuji."],
+ ["Shibuya Sky slot booked for 29 Oct 16:30","26 Oct","Official site only."],
+ ["Kumano Kotsu timetable screenshotted for 6, 7 and 8 Nov","26 Oct","tb-kumano.jp. The Nonaka → Hongu afternoon bus is the one that matters."],
+ ["Visit Japan Web completed for both, QR screenshotted","26 Oct","Immigration and customs in one QR."],
+ ["Bank: cards usable abroad, no travel block, PINs known","26 Oct","Revolut or Wise for the best rate; 7-Eleven ATMs for cash."],
+ ["eSIM installed on both phones","26 Oct","Activate on landing, not before."],
+ ["Offline Google Maps: Tokyo, Kyoto, Osaka, Hiroshima, Kii peninsula","26 Oct","Also Google Translate Japanese offline pack."],
+ ["Flight downloads: films, series, books, podcasts","26 Oct","See the in-flight plan."],
+ ["BA online check-in, seats together, bags within 23 kg","26 Oct","Opens 24 h before 20:05."],
+ ["Packing: layers for 8 to 18 °C, rain shell, trail shoes, one smart outfit for kaiseki, daypack each","26 Oct","November in Kumano is cooler and wetter than the cities."],
+ ["Medication plus copies of prescriptions; nothing with pseudoephedrine","26 Oct","Check the MHLW banned list."],
+ ["Home: plants, post, bins, fridge, heating, spare key with someone","27 Oct","Out-of-office on."],
+ ["Yen cash in hand, about €400 each, or a plan to withdraw at Narita 7-Eleven","27 Oct","Kumano runs on cash."],
+ ["Phone and power bank charged, adapters packed, printed hotel list in the bag","27 Oct","Paper copy for the visa officer and the taxi driver."]
 ];
 var buyDone=store("ors.buy")||{};
 function buyRows(id,rows,prefix){
@@ -673,10 +962,8 @@ function buyRows(id,rows,prefix){
     return '<tr><td><input type="checkbox" id="'+k+'" data-k="'+k+'"'+(buyDone[k]?' checked':'')+' aria-label="done"></td><td><b>'+esc(r[0])+'</b></td><td>'+esc(r[1])+'</td><td>'+esc(r[2])+'</td></tr>'}).join(""));
   document.getElementById(id).addEventListener("change",function(e){var el=e.target;if(el.type!=="checkbox")return;buyDone[el.dataset.k]=el.checked;store("ors.buy",buyDone)});
 }
-buyRows("buyTable",BUY,"b-"); buyRows("buyJpTable",BUYJP,"j-");
+buyRows("buyTable",BUY,"b-"); buyRows("buyJpTable",BUYJP,"j-"); buyRows("preTable",PRE,"p-");
 document.getElementById("sops").innerHTML=SOPS.map(function(s){return '<div class="tile"><div class="tier eyebrow">SOP · '+esc(s[0])+'</div><p style="margin:6px 0 0;font-size:14px">'+esc(s[1])+'</p></div>'}).join("");
-var ef=document.getElementById("elahFlight");ef.value=store("ors.elah")||"";
-ef.addEventListener("input",function(){store("ors.elah",ef.value)});
 
 /* ---------- clock, countdown, progress ---------- */
 function pad(n){return (n<10?"0":"")+n}
@@ -697,7 +984,7 @@ document.getElementById("jumpToday").addEventListener("click",function(){
   showTab("ops",true);var el=document.getElementById("day-"+d.code);if(el)el.scrollIntoView({behavior:"smooth",block:"start"})});
 
 /* ---------- weather for the active city (Open-Meteo, keyless) ---------- */
-var CITY={Tokyo:[35.68,139.69],Kyoto:[35.01,135.77],Osaka:[34.69,135.5],Hiroshima:[34.39,132.46],Hakone:[35.23,139.1],Frankfurt:[50.11,8.68]};
+var CITY={Tokyo:[35.68,139.69],Kyoto:[35.01,135.77],Osaka:[34.69,135.5],Hiroshima:[34.39,132.46],Tanabe:[33.73,135.38],Hongu:[33.84,135.77],Nachi:[33.67,135.89],Frankfurt:[50.11,8.68]};
 (function(){
   var t=jstDate();var d=DAYS.filter(function(x){return x.date===t})[0]||DAYS[1];var c=CITY[d.city]||CITY.Tokyo;
   try{fetch("https://api.open-meteo.com/v1/forecast?latitude="+c[0]+"&longitude="+c[1]+"&current=temperature_2m,precipitation&timezone=Asia%2FTokyo")
@@ -707,7 +994,7 @@ var CITY={Tokyo:[35.68,139.69],Kyoto:[35.01,135.77],Osaka:[34.69,135.5],Hiroshim
 
 /* ---------- initial tab from hash ---------- */
 var h=(location.hash||"").replace("#","");
-if(["brief","ops","billet","logi","intel","hand"].indexOf(h)>=0)showTab(h,false);
+if(TABS.indexOf(h)>=0)showTab(h,false);
 })();
 </script>
 </body>
