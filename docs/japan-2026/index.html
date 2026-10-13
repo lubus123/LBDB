@@ -1,0 +1,596 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Operation Rising Sun</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=Share+Tech+Mono&display=swap">
+<style>
+/* Layout: field-ops dashboard. Sticky command bar, tabbed sections, day cards in a single column with a phase stripe. */
+:root{
+  --bg:#e7e4d6; --panel:#f5f3ea; --panel2:#ebe8da; --fg:#1f2318; --muted:#5f6452; --line:#c8c4ad;
+  --accent:#b86f14; --accent-ink:#fff; --olive:#5b6b3a; --olive-soft:#dfe3c9;
+  --ok:#3b7a3a; --warn:#b2541b; --crit:#9d2a2a; --active:#fff4dc;
+  --shadow:0 1px 0 rgba(0,0,0,.06);
+  --display:"Black Ops One","Impact","Arial Narrow",sans-serif;
+  --cond:"Barlow Condensed","Arial Narrow",sans-serif;
+  --body:"Barlow","Helvetica Neue",Arial,sans-serif;
+  --mono:"Share Tech Mono","SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#15180f; --panel:#1f2317; --panel2:#272c1c; --fg:#e7e4d2; --muted:#a0a48c; --line:#3b4030;
+  --accent:#e3a63a; --accent-ink:#1a1405; --olive:#8d9c5c; --olive-soft:#2b3320;
+  --ok:#7cc26e; --warn:#f0a06a; --crit:#f08a8a; --active:#2d2a14; --shadow:none; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#15180f; --panel:#1f2317; --panel2:#272c1c; --fg:#e7e4d2; --muted:#a0a48c; --line:#3b4030;
+  --accent:#e3a63a; --accent-ink:#1a1405; --olive:#8d9c5c; --olive-soft:#2b3320;
+  --ok:#7cc26e; --warn:#f0a06a; --crit:#f08a8a; --active:#2d2a14; --shadow:none; color-scheme:dark }
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5;
+  background-image:repeating-linear-gradient(0deg,transparent 0 39px,rgba(90,100,60,.07) 39px 40px),repeating-linear-gradient(90deg,transparent 0 39px,rgba(90,100,60,.07) 39px 40px)}
+a{color:var(--accent)}
+h1,h2,h3{margin:0;text-wrap:balance}
+button{font:inherit;color:inherit}
+.wrap{max-width:1100px;margin:0 auto;padding-inline:16px;padding-block:0 48px}
+
+/* Command bar */
+.cmd{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--panel);border-bottom:2px solid var(--olive);box-shadow:var(--shadow)}
+.cmd .wrap{padding-block:10px;display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center}
+.brand{display:flex;flex-direction:column;min-width:0}
+.brand h1{font-family:var(--display);font-size:clamp(20px,4vw,30px);letter-spacing:.04em;line-height:1.05;color:var(--olive)}
+.brand .sub{font-family:var(--cond);text-transform:uppercase;letter-spacing:.14em;font-size:12px;color:var(--muted)}
+.clock{margin-left:auto;display:flex;gap:16px;flex-wrap:wrap;font-family:var(--mono);font-size:13px}
+.clock b{display:block;font-family:var(--cond);font-weight:600;text-transform:uppercase;letter-spacing:.12em;font-size:11px;color:var(--muted)}
+.clock span{font-size:18px;font-variant-numeric:tabular-nums}
+.status{width:100%;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.bar{flex:1;min-width:120px;height:8px;background:var(--panel2);border:1px solid var(--line);position:relative}
+.bar i{position:absolute;inset:0;width:0;background:var(--olive)}
+.status small{font-family:var(--cond);text-transform:uppercase;letter-spacing:.1em;font-size:12px;color:var(--muted)}
+
+/* Tabs */
+.tabs{display:flex;gap:4px;overflow-x:auto;margin-block:14px 18px;border-bottom:1px solid var(--line)}
+.tabs button{flex:0 0 auto;border:0;background:none;padding:10px 14px;font-family:var(--cond);font-weight:600;text-transform:uppercase;letter-spacing:.12em;font-size:14px;color:var(--muted);border-bottom:3px solid transparent;cursor:pointer}
+.tabs button[aria-selected="true"]{color:var(--fg);border-color:var(--accent)}
+.tabs button:focus-visible,button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+section[hidden]{display:none}
+
+/* Generic */
+.eyebrow{font-family:var(--cond);font-weight:600;text-transform:uppercase;letter-spacing:.16em;font-size:12px;color:var(--accent)}
+h2{font-family:var(--display);font-size:clamp(22px,3.4vw,28px);letter-spacing:.03em;color:var(--olive);margin-bottom:6px}
+h3{font-family:var(--cond);font-weight:700;font-size:20px;letter-spacing:.02em}
+.lead{color:var(--muted);max-width:65ch;margin:0 0 18px}
+.grid{display:grid;gap:12px}
+.tiles{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
+.tile{background:var(--panel);border:1px solid var(--line);padding:12px 14px}
+.tile b{display:block;font-family:var(--mono);font-size:26px;line-height:1.1;font-variant-numeric:tabular-nums}
+.tile small{font-family:var(--cond);text-transform:uppercase;letter-spacing:.12em;font-size:11px;color:var(--muted)}
+.phases{display:flex;gap:4px;margin-block:18px;flex-wrap:wrap}
+.phase{flex:1 1 90px;min-width:0;padding:8px 10px;border-top:4px solid var(--olive);background:var(--panel)}
+.phase b{font-family:var(--cond);font-weight:700;display:block;text-transform:uppercase;letter-spacing:.08em}
+.phase span{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.chip{display:inline-block;font-family:var(--cond);font-weight:600;text-transform:uppercase;letter-spacing:.1em;font-size:11px;padding:2px 8px;border:1px solid var(--line);background:var(--panel2);color:var(--fg);white-space:nowrap}
+.chip.ok{border-color:var(--ok);color:var(--ok)} .chip.warn{border-color:var(--warn);color:var(--warn)} .chip.crit{border-color:var(--crit);color:var(--crit)}
+.chip.live{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border:1px solid var(--olive);background:var(--panel);color:var(--fg);text-decoration:none;font-family:var(--cond);font-weight:600;text-transform:uppercase;letter-spacing:.1em;font-size:13px;cursor:pointer}
+.btn.primary{background:var(--olive);color:#fff;border-color:var(--olive)}
+.btn:hover{border-color:var(--accent)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--cond);text-transform:uppercase;letter-spacing:.1em;font-size:12px;color:var(--muted)}
+td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.scroll{overflow-x:auto;background:var(--panel);border:1px solid var(--line)}
+.note{border-left:4px solid var(--accent);background:var(--panel);padding:10px 14px;margin-block:10px}
+ul.plain{list-style:none;padding:0;margin:0;display:grid;gap:6px}
+
+/* Day cards */
+.days{display:grid;gap:14px}
+.day{background:var(--panel);border:1px solid var(--line);border-left:6px solid var(--olive);padding:14px 16px;scroll-margin-top:140px}
+.day.active{background:var(--active);border-left-color:var(--accent)}
+.day.past{opacity:.72}
+.day header{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline}
+.day .code{font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.06em}
+.day h3{font-size:22px}
+.day .meta{font-family:var(--cond);text-transform:uppercase;letter-spacing:.1em;font-size:12px;color:var(--muted);margin-left:auto}
+.cols{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px;margin-top:10px}
+@media (max-width:720px){.cols{grid-template-columns:1fr}}
+.cols>*{min-width:0}
+.timeline{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.timeline li{display:grid;grid-template-columns:52px 1fr;gap:10px;padding:4px 0;border-bottom:1px dashed var(--line)}
+.timeline .t{font-family:var(--mono);font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;padding-top:2px}
+.timeline .w{font-weight:500}
+.timeline .w small{display:block;font-weight:400;color:var(--muted);font-size:13px}
+.transport{font-family:var(--cond);font-size:14px;letter-spacing:.02em;background:var(--panel2);padding:8px 10px;margin-top:10px}
+.transport b{color:var(--olive)}
+.map{aspect-ratio:4/3;max-width:100%;border:1px solid var(--line);background:var(--panel2);display:flex;align-items:center;justify-content:center;text-align:center;padding:12px;color:var(--muted);font-size:13px}
+.map iframe{width:100%;height:100%;border:0}
+.maplinks{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.check{margin-top:12px}
+.check label{display:flex;gap:8px;align-items:flex-start;font-size:14px;padding:3px 0}
+.check input{margin-top:4px;accent-color:var(--olive)}
+.check label.done{color:var(--muted);text-decoration:line-through}
+.intel{margin-top:10px;font-size:14px;color:var(--muted)}
+.intel b{color:var(--warn)}
+
+/* Billeting */
+.stay{background:var(--panel);border:1px solid var(--line);padding:14px 16px;margin-bottom:14px}
+.stay header{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;margin-bottom:10px}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.opt{border:1px solid var(--line);padding:12px;position:relative;cursor:pointer;background:var(--bg)}
+.opt.sel{border-color:var(--accent);box-shadow:inset 0 0 0 2px var(--accent)}
+.opt .tier{font-family:var(--cond);font-weight:700;text-transform:uppercase;letter-spacing:.12em;font-size:12px;color:var(--accent)}
+.opt h4{margin:2px 0 4px;font-family:var(--cond);font-weight:700;font-size:19px;letter-spacing:.01em}
+.opt .price{font-family:var(--mono);font-size:15px;font-variant-numeric:tabular-nums}
+.opt .price b{font-size:22px}
+.opt p{margin:6px 0;font-size:14px;color:var(--muted)}
+.opt .perks{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0}
+.opt .links{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.opt input{position:absolute;top:12px;right:12px;accent-color:var(--accent);width:18px;height:18px}
+.totals{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:baseline;background:var(--panel);border:1px solid var(--line);padding:12px 16px;margin-bottom:14px}
+.totals b{font-family:var(--mono);font-size:24px;font-variant-numeric:tabular-nums}
+.totals small{font-family:var(--cond);text-transform:uppercase;letter-spacing:.12em;font-size:11px;color:var(--muted);display:block}
+footer{margin-top:40px;color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:12px}
+@media (prefers-reduced-motion:no-preference){.bar i{transition:width .6s ease}}
+</style>
+</head>
+<body>
+<div class="cmd"><div class="wrap">
+  <div class="brand">
+    <h1>OPERATION RISING SUN</h1>
+    <span class="sub">Callsigns LUBO &amp; ELAH · Japan · 27 Oct – 10 Nov 2026</span>
+  </div>
+  <div class="clock">
+    <div><b>Japan time</b><span id="jst">--:--</span></div>
+    <div><b id="cdLabel">T-minus</b><span id="cd">--</span></div>
+    <div><b>Field conditions</b><span id="wx">—</span></div>
+  </div>
+  <div class="status"><small id="statusTxt">Pre-deployment</small><div class="bar"><i id="prog"></i></div><button class="btn" id="jumpToday" type="button">Today</button></div>
+</div></div>
+
+<div class="wrap">
+  <nav class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="brief" type="button">Briefing</button>
+    <button role="tab" aria-selected="false" data-tab="ops" type="button">Daily ops</button>
+    <button role="tab" aria-selected="false" data-tab="billet" type="button">Billeting</button>
+    <button role="tab" aria-selected="false" data-tab="logi" type="button">Logistics</button>
+    <button role="tab" aria-selected="false" data-tab="intel" type="button">Intel</button>
+  </nav>
+
+  <section id="brief">
+    <div class="eyebrow">Mission briefing</div>
+    <h2>Two weeks, five phases, one day trip to Hiroshima and one night in the hot water</h2>
+    <p class="lead">Tokyo first for five nights, the Tokaido shinkansen to Kyoto for four, two nights in Osaka with a Saturday strike on Hiroshima and Miyajima, then a ryokan night in Hakone on the way back and a final night at Haneda for the 09:35 flight home.</p>
+    <div class="grid tiles">
+      <div class="tile"><b>14</b><small>Days in theatre</small></div>
+      <div class="tile"><b>13</b><small>Nights</small></div>
+      <div class="tile"><b>5</b><small>Bases</small></div>
+      <div class="tile"><b>4</b><small>Shinkansen legs</small></div>
+      <div class="tile"><b id="tileTotal">—</b><small>Hotels, selected (EUR)</small></div>
+    </div>
+    <div class="phases" id="phases"></div>
+    <div class="note"><b>Flights.</b> Out: BA3449 Frankfurt 20:05 Tue 27 Oct, lands Narita 17:05 Wed 28 Oct (booking ZASD8Q). Home: Haneda 09:35 Tue 10 Nov, lands Heathrow 15:35.</div>
+    <h3 style="margin-top:18px">Decisions still open</h3>
+    <ul class="plain" id="openItems"></ul>
+    <h3 style="margin-top:18px">Deadlines</h3>
+    <div class="scroll"><table>
+      <tr><th>By</th><th>Action</th><th>Why</th></tr>
+      <tr><td class="num">18 Oct</td><td>Book Shin-Osaka → Odawara Hikari for 8 Nov in SmartEX</td><td>EX Hayatoku 21 early-bird fare closes 21 days out</td></tr>
+      <tr><td class="num">20 Oct</td><td>Lock hotel choices below and book, free-cancellation rates where offered</td><td>Early November is peak foliage season in Kyoto and Hakone</td></tr>
+      <tr><td class="num">26 Oct</td><td>Fill in Visit Japan Web, book Shibuya Sky slot for 29 Oct</td><td>Immigration QR and the sunset slots sell out</td></tr>
+      <tr><td class="num">30 Oct</td><td>Book Tokyo → Kyoto Nozomi for 2 Nov in SmartEX</td><td>EX Hayatoku needs 3 days; pick seats on the right side (D/E) for Mt Fuji</td></tr>
+      <tr><td class="num">2 Nov</td><td>Book Odawara → Shinagawa Kodama for 9 Nov</td><td>EX Hayatoku 7 for Hikari/Kodama closes 7 days out</td></tr>
+    </table></div>
+  </section>
+
+  <section id="ops" hidden>
+    <div class="eyebrow">Daily operations</div>
+    <h2>Day by day</h2>
+    <p class="lead">Each card has the route for the day, the transport call, and a checklist that remembers its ticks on this device. The card for today lights up automatically on Japan time. Maps embed on the GitHub Pages version; everywhere else use the Google Maps buttons.</p>
+    <div class="days" id="days"></div>
+  </section>
+
+  <section id="billet" hidden>
+    <div class="eyebrow">Billeting</div>
+    <h2>Where we sleep</h2>
+    <p class="lead">Two options per base: Standard holds the €150 line, Upgrade buys the rooftop bath, the pool or the kaiseki. Tap to choose; the total updates and the choice is remembered on this device. Prices are live Booking.com quotes from 13 Oct 2026 for 2 adults, taxes included.</p>
+    <div class="totals">
+      <div><small>Selected total</small><b id="selTotal">—</b></div>
+      <div><small>All standard</small><b id="minTotal">—</b></div>
+      <div><small>All upgrade</small><b id="maxTotal">—</b></div>
+      <div><small>Average per night</small><b id="avgNight">—</b></div>
+    </div>
+    <div id="stays"></div>
+  </section>
+
+  <section id="logi" hidden>
+    <div class="eyebrow">Logistics</div>
+    <h2>Tickets, passes, kit</h2>
+    <p class="lead">No national JR Pass: our four shinkansen legs cost about ¥48,000 at full fare against ¥80,000 for the 14-day pass. One regional pass covers the Hiroshima strike and pays for itself in a day.</p>
+    <div class="scroll"><table id="logiTable">
+      <tr><th></th><th>Item</th><th class="num">Price</th><th>When and where</th><th>Covers</th></tr>
+    </table></div>
+    <h3 style="margin-top:20px">Shinkansen legs (SmartEX app)</h3>
+    <div class="scroll"><table>
+      <tr><th>Date</th><th>Leg</th><th>Train</th><th class="num">Time</th><th class="num">Full fare</th><th>Note</th></tr>
+      <tr><td class="num">2 Nov</td><td>Tokyo → Kyoto</td><td>Nozomi</td><td class="num">2h15</td><td class="num">¥14,400</td><td>Seats D/E for Fuji on the right</td></tr>
+      <tr><td class="num">7 Nov</td><td>Shin-Osaka ⇄ Hiroshima</td><td>Nozomi</td><td class="num">1h25</td><td class="num">covered</td><td>Kansai-Hiroshima pass, reserve free at any JR West machine</td></tr>
+      <tr><td class="num">8 Nov</td><td>Shin-Osaka → Odawara</td><td>Hikari</td><td class="num">2h10</td><td class="num">¥13,000</td><td>Nozomi does not stop at Odawara; pick a Hikari that does</td></tr>
+      <tr><td class="num">9 Nov</td><td>Odawara → Shinagawa</td><td>Kodama</td><td class="num">0h30</td><td class="num">¥3,300</td><td>Then Keikyu to Haneda, 15 min</td></tr>
+    </table></div>
+    <h3 style="margin-top:20px">Getting around</h3>
+    <ul class="plain">
+      <li><b>IC card.</b> Non-Japanese Android phones cannot run Mobile Suica. Buy two physical Welcome Suica cards at the JR East Travel Service Center in Narita T2 (28-day validity, no deposit). Works on every metro, JR local line, bus, and konbini nationwide.</li>
+      <li><b>Narita → hotel.</b> Narita Express to Tokyo Station, ¥3,070, 60 min, then taxi or Marunouchi line to Akasaka. Evening arrival, so the train beats the limousine bus.</li>
+      <li><b>Kyoto.</b> Buses are slow in November; use the Karasuma and Tozai subway lines, JR, and Keihan where possible. Fushimi Inari is two JR stops from Kyoto Station.</li>
+      <li><b>Luggage.</b> Optional: ship the big bag Tokyo → Kyoto by takkyubin from the hotel (about ¥2,500 per bag, next day) and travel light on the shinkansen.</li>
+      <li><b>Connectivity.</b> eSIM (Ubigi or Airalo) bought before departure; offline Google Maps for Tokyo, Kyoto, Osaka, Hiroshima, Hakone.</li>
+    </ul>
+  </section>
+
+  <section id="intel" hidden>
+    <div class="eyebrow">Intel</div>
+    <h2>Rules of engagement</h2>
+    <ul class="plain">
+      <li><b>Sat 31 Oct, Halloween.</b> Shibuya station area is barricaded, street drinking banned from 18:00. Shibuya is on 29 Oct instead; Shinjuku on the 31st.</li>
+      <li><b>Tue 3 Nov, Culture Day.</b> National holiday. Fushimi Inari at 07:00 before the crowds, Arashiyama after, Kinkaku-ji late afternoon.</li>
+      <li><b>Ryokan timing.</b> Check in by 17:00, kaiseki dinner is served around 18:00 and cannot be moved. Leave Shin-Osaka by 12:00 on 8 Nov.</li>
+      <li><b>Onsen etiquette.</b> Wash before entering, no swimwear, hair up, small towel stays out of the water. Tattoos: ask at check-in or book a private bath.</li>
+      <li><b>Hiroshima.</b> Miyajima first, before 09:30, to beat the tour groups on the ferry. Peace Memorial Museum is open to 18:00, last entry 17:30, ¥200, no reservation. Miyajima charges a ¥100 visitor tax.</li>
+      <li><b>Haneda exfil.</b> Flight 09:35 means at Terminal 3 by 07:30. From Tenkubashi it is one Keikyu stop; from the Kamata hotels it is 10 min.</li>
+      <li><b>Cash.</b> Cards work in cities, but shrines, small restaurants, and Miyajima stalls want yen. Withdraw at 7-Eleven ATMs.</li>
+      <li><b>Visa paperwork.</b> The visa itinerary was filed for 31 Oct to 13 Nov. The flights land two days earlier. A shift inside the visa's validity window is fine if it is already issued; if still pending, resubmit with the new dates.</li>
+    </ul>
+    <h3 style="margin-top:18px">Mission log</h3>
+    <p class="lead">Dashboard prepared 13 Oct 2026. Hotel prices from Booking.com on that date. Rail fares from JR West, JR Central (SmartEX) and Odakyu, October 2026.</p>
+  </section>
+
+  <footer>Operation Rising Sun · Lubo &amp; Elah · Hosted on GitHub Pages. Ticks and hotel choices are stored only in this browser.</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+var TZ="Asia/Tokyo";
+var START=new Date("2026-10-27T19:05:00Z"); // FRA departure 20:05 CET
+var END=new Date("2026-11-10T00:35:00Z");   // HND departure 09:35 JST
+var BUDGET=150;
+
+var PHASES=[
+ {n:"Tokyo",d:"28 Oct – 2 Nov",c:"#5b6b3a"},
+ {n:"Kyoto",d:"2 – 6 Nov",c:"#8a5a2b"},
+ {n:"Osaka",d:"6 – 8 Nov",c:"#2f5f6f"},
+ {n:"Hakone",d:"8 – 9 Nov",c:"#7a3a3a"},
+ {n:"Haneda",d:"9 – 10 Nov",c:"#555c4a"}
+];
+
+var DAYS=[
+ {code:"D-1",date:"2026-10-27",dow:"Tue",name:"Launch",city:"Frankfurt",ph:"Tokyo",
+  wp:[["20:05","BA3449 departs Frankfurt","13h overnight. Sleep on the plane; Japan is 8 hours ahead of CET."]],
+  transport:"<b>Air</b> FRA → NRT. Eat before boarding, set watches to JST at take-off.",
+  map:"Frankfurt Airport", route:["Frankfurt Airport"],
+  check:["Passports, visa, printed hotel list","Visit Japan Web QR screenshots","SmartEX app installed, card added","eSIM activated","Offline maps downloaded"]},
+ {code:"D0",date:"2026-10-28",dow:"Wed",name:"Insertion",city:"Tokyo",ph:"Tokyo",
+  wp:[["17:05","Land Narita T2","Immigration, baggage, customs: allow 60–90 min."],
+      ["18:30","JR East Travel Service Center, T2 B1","Two Welcome Suica cards, charge ¥5,000 each. Buy Narita Express tickets here too."],
+      ["18:45","Narita Express to Tokyo Station","60 min, ¥3,070. Reserved seats."],
+      ["20:00","Tokyo Station → hotel","Taxi 15 min with bags, or Marunouchi line to Akasaka-mitsuke."],
+      ["21:00","Akasaka dinner","Ramen or izakaya near the hotel, then sleep."]],
+  transport:"<b>Rail</b> Narita Express. Check-in at the hotel is 15:00 onwards so bags go straight to the room.",
+  map:"Narita International Airport Terminal 2", route:["Narita International Airport Terminal 2","Tokyo Station","Akasaka-mitsuke Station"],
+  check:["Welcome Suica x2 bought","Narita Express boarded","Hotel check-in done"]},
+ {code:"D1",date:"2026-10-29",dow:"Thu",name:"Harajuku & Shibuya",city:"Tokyo",ph:"Tokyo",
+  wp:[["08:30","Meiji Jingu","Enter from Harajuku station side; quiet before 09:30."],
+      ["10:30","Takeshita Street → Omotesando → Cat Street","Crepes, Kiddy Land, Omotesando Hills."],
+      ["13:00","Lunch in Harajuku","Harajuku Gyoza Lou or Afuri ramen."],
+      ["15:00","Shibuya Scramble, Hachiko","Walk down via Cat Street."],
+      ["16:30","Shibuya Sky","Pre-booked slot; sunset about 16:45."],
+      ["19:00","Nonbei Yokocho","Tiny bars by the tracks, then dinner in Shibuya."]],
+  transport:"<b>Metro</b> Chiyoda line to Meiji-jingumae. Everything else on foot, Ginza line back to Akasaka.",
+  map:"Meiji Jingu", route:["Meiji Jingu","Takeshita Street","Omotesando","Shibuya Scramble Crossing","Shibuya Sky"],
+  check:["Shibuya Sky booked","Meiji Jingu done","Scramble crossed"]},
+ {code:"D2",date:"2026-10-30",dow:"Fri",name:"Art & Ebisu",city:"Tokyo",ph:"Tokyo",
+  wp:[["10:00","Nezu Museum","Garden is the point; open Tue–Sun 10:00–17:00."],
+      ["12:30","Aoyama lunch","Then walk to Roppongi."],
+      ["14:00","National Art Center Tokyo","Closed Tuesdays. Kurokawa's glass wave; check the current show."],
+      ["16:30","Roppongi Hills, Mori Tower view","Optional; skip if tired."],
+      ["18:30","Ebisu","Yebisu Garden Place, then Ebisu Yokocho for yakitori."]],
+  transport:"<b>Metro</b> Ginza line to Omotesando for Nezu. Hibiya line Roppongi → Ebisu. Hibiya line back.",
+  map:"Nezu Museum", route:["Nezu Museum","National Art Center Tokyo","Yebisu Garden Place","Ebisu Yokocho"],
+  check:["Nezu garden walked","National Art Center visited","Ebisu Yokocho dinner"]},
+ {code:"D3",date:"2026-10-31",dow:"Sat",name:"Shinjuku",city:"Tokyo",ph:"Tokyo",
+  wp:[["09:30","Shinjuku Gyoen","Garden, ¥500. Autumn colour starting."],
+      ["12:00","Lunch in Shinjuku","Depachika at Isetan or Takashimaya."],
+      ["14:00","Tokyo Metropolitan Government Building","Free observation deck, 45th floor."],
+      ["16:00","Kabukicho, Godzilla head, Don Quijote","Daylight walk through."],
+      ["18:00","Omoide Yokocho","Yakitori lanes by the station."],
+      ["21:00","Golden Gai","Pick a bar with no cover charge. Halloween night: stay out of Shibuya."]],
+  transport:"<b>Metro</b> Marunouchi line Akasaka-mitsuke → Shinjuku-gyoemmae, 15 min. Same line home.",
+  map:"Shinjuku Gyoen National Garden", route:["Shinjuku Gyoen National Garden","Tokyo Metropolitan Government Building","Omoide Yokocho","Golden Gai"],
+  intel:"<b>Halloween.</b> Shibuya station area is closed off and street drinking is banned from 18:00. Shinjuku is fine.",
+  check:["Gyoen done","Observation deck done","Golden Gai bar found"]},
+ {code:"D4",date:"2026-11-01",dow:"Sun",name:"Asakusa & Akihabara",city:"Tokyo",ph:"Tokyo",
+  wp:[["08:30","Senso-ji","Before the Nakamise crowds; Kaminarimon gate photo."],
+      ["10:00","Nakamise, Kappabashi kitchen street","Knives and ceramics."],
+      ["12:00","Sumida Park riverside","Skytree view, lunch in Asakusa."],
+      ["14:00","Akihabara","Sunday pedestrian zone on Chuo-dori 13:00–17:00. Retro game shops, Yodobashi."],
+      ["19:00","Dinner back in Akasaka","Pack. SmartEX QR ready for the morning."]],
+  transport:"<b>Metro</b> Ginza line Akasaka-mitsuke → Asakusa direct, 25 min. Tsukuba Express or Hibiya line to Akihabara.",
+  map:"Senso-ji", route:["Senso-ji","Kappabashi Dougu Street","Sumida Park","Akihabara Electric Town"],
+  check:["Senso-ji done","Akihabara done","Bags packed, shinkansen QR ready"]},
+ {code:"D5",date:"2026-11-02",dow:"Mon",name:"Advance to Kyoto",city:"Kyoto",ph:"Kyoto",
+  wp:[["08:30","Nozomi from Tokyo Station","2h15. Ekiben from the station concourse. Right side seats for Fuji at about 09:15."],
+      ["10:45","Kyoto Station","Drop bags at the hotel or use a locker."],
+      ["12:00","Kiyomizu-dera","Bus 206 or taxi. Lunch on the way up."],
+      ["14:00","Sannenzaka, Ninenzaka, Yasaka Pagoda","Slow walk down."],
+      ["16:00","Yasaka Shrine, Maruyama Park","Then into Gion."],
+      ["17:30","Gion, Hanamikoji","Dusk is the time to see it."],
+      ["19:00","Pontocho dinner","Alley along the Kamo river."]],
+  transport:"<b>Shinkansen</b> Tokyo → Kyoto, SmartEX ticket, ¥14,400 full fare. Keihan line Gion-Shijo back to the hotel area.",
+  map:"Kiyomizu-dera", route:["Kyoto Station","Kiyomizu-dera","Ninenzaka","Yasaka Shrine","Gion Hanamikoji Street","Pontocho"],
+  check:["Nozomi boarded","Hotel check-in","Kiyomizu done","Gion walked"]},
+ {code:"D6",date:"2026-11-03",dow:"Tue",name:"Inari & Arashiyama",city:"Kyoto",ph:"Kyoto",
+  wp:[["07:00","Fushimi Inari Taisha","JR Nara line 2 stops from Kyoto. Climb to Yotsutsuji for the view, 45 min up."],
+      ["10:00","JR to Saga-Arashiyama","Via Kyoto Station, 15 min on the Sagano line."],
+      ["10:30","Bamboo Grove, Tenryu-ji","Garden first, then the grove."],
+      ["12:30","Lunch by Togetsukyo bridge","Yudofu or soba."],
+      ["14:30","Kinkaku-ji","Taxi from Arashiyama, 20 min. Golden pavilion in afternoon light."],
+      ["16:00","Ryoan-ji rock garden","15 min walk from Kinkaku-ji. Closes 17:00."]],
+  transport:"<b>JR</b> Nara line and Sagano line. <b>Taxi</b> Arashiyama → Kinkaku-ji. Bus 205 back to Kyoto Station.",
+  map:"Fushimi Inari Taisha", route:["Fushimi Inari Taisha","Arashiyama Bamboo Grove","Tenryu-ji","Kinkaku-ji","Ryoan-ji"],
+  intel:"<b>Culture Day.</b> National holiday, so everywhere is busy. The 07:00 start at Inari is the whole plan.",
+  check:["Inari before 08:00","Bamboo grove","Kinkaku-ji"]},
+ {code:"D7",date:"2026-11-04",dow:"Wed",name:"Palace & Philosopher's Path",city:"Kyoto",ph:"Kyoto",
+  wp:[["09:30","Kyoto Imperial Palace","Free, closed Mondays. Karasuma line to Imadegawa."],
+      ["11:30","Nanzen-ji","Brick aqueduct, Hojo garden. Tozai line to Keage."],
+      ["13:00","Lunch near Nanzen-ji","Then north on the path."],
+      ["14:00","Philosopher's Path","2 km canal walk to Ginkaku-ji."],
+      ["15:30","Ginkaku-ji","Silver pavilion, moss garden."],
+      ["18:00","Nishiki Market and Teramachi","Market closes about 18:00; dinner downtown after."]],
+  transport:"<b>Subway</b> Karasuma and Tozai lines. Bus 5 or taxi back from Ginkaku-ji.",
+  map:"Nanzen-ji", route:["Kyoto Imperial Palace","Nanzen-ji","Philosopher's Path","Ginkaku-ji","Nishiki Market"],
+  check:["Palace","Nanzen-ji aqueduct","Ginkaku-ji","Nishiki"]},
+ {code:"D8",date:"2026-11-05",dow:"Thu",name:"Nara & Uji",city:"Kyoto",ph:"Kyoto",
+  wp:[["08:00","JR West ticket office, Kyoto Station","Activate the Kansai-Hiroshima Area Pass. Reserve 7 Nov Hiroshima seats now."],
+      ["08:30","Miyakoji Rapid to Nara","45 min, covered by the pass."],
+      ["09:30","Nara Park, Todai-ji","Great Buddha, deer crackers ¥200."],
+      ["11:30","Kasuga Taisha","Lantern paths through the forest."],
+      ["13:00","Nakatanidou mochi, lunch","Then JR back north."],
+      ["14:30","Uji","30 min from Nara. Byodo-in, the temple on the ¥10 coin."],
+      ["16:00","Matcha at Nakamura Tokichi","Uji bridge at dusk, then 20 min back to Kyoto."]],
+  transport:"<b>JR</b> Nara line all day, pass day 1 of 5.",
+  map:"Todai-ji", route:["Kyoto Station","Todai-ji","Kasuga Taisha","Byodo-in","Nakamura Tokichi Honten"],
+  check:["Pass activated","Hiroshima seats reserved","Todai-ji","Byodo-in"]},
+ {code:"D9",date:"2026-11-06",dow:"Fri",name:"Shift to Osaka",city:"Osaka",ph:"Osaka",
+  wp:[["10:00","JR Special Rapid Kyoto → Osaka","29 min, pass. Midosuji line to the hotel."],
+      ["12:00","Kuromon Market lunch","Grilled scallops, tuna, fruit."],
+      ["14:00","Shinsekai, Tsutenkaku","Kushikatsu at Daruma. No double dipping."],
+      ["16:30","Namba Yasaka shrine, Hozenji Yokocho","Moss-covered Fudo statue."],
+      ["18:00","Dotonbori","Glico sign, takoyaki, crab. Rest early: 06:30 train tomorrow."]],
+  transport:"<b>JR</b> Kyoto → Osaka, pass day 2. Osaka metro Midosuji line.",
+  map:"Dotonbori", route:["Osaka Station","Kuromon Ichiba Market","Tsutenkaku","Hozenji Yokocho","Dotonbori"],
+  check:["Osaka check-in","Shinsekai kushikatsu","Dotonbori"]},
+ {code:"D10",date:"2026-11-07",dow:"Sat",name:"Hiroshima strike",city:"Hiroshima",ph:"Osaka",
+  wp:[["06:30","Midosuji line to Shin-Osaka","20 min."],
+      ["07:00","Nozomi to Hiroshima","1h25, reserved seats on the pass."],
+      ["08:30","JR Sanyo line to Miyajimaguchi","28 min, then JR ferry 10 min. Both on the pass."],
+      ["09:15","Itsukushima Shrine","Check tide time: floating torii at high tide, walk out at low tide."],
+      ["10:30","Daisho-in temple, Omotesando street","Grilled oysters, momiji manju."],
+      ["13:30","Ferry and train back to Hiroshima","Tram or walk to the Peace Park."],
+      ["14:30","Peace Memorial Park, A-Bomb Dome","Museum ¥200, open to 18:00. Allow 90 min."],
+      ["18:00","Okonomimura","Hiroshima-style okonomiyaki, three floors of stalls."],
+      ["19:30","Nozomi back","Shin-Osaka about 21:00."]],
+  transport:"<b>Shinkansen + JR + ferry</b> all on the Kansai-Hiroshima Area Pass, day 3. Miyajima visitor tax ¥100 at the pier.",
+  map:"Itsukushima Shrine", route:["Shin-Osaka Station","Hiroshima Station","Miyajimaguchi Station","Itsukushima Shrine","Hiroshima Peace Memorial Park","Okonomimura"],
+  check:["07:00 Nozomi boarded","Torii seen","Museum visited","Okonomiyaki eaten"]},
+ {code:"D11",date:"2026-11-08",dow:"Sun",name:"Osaka Castle, then Hakone",city:"Hakone",ph:"Hakone",
+  wp:[["09:00","Osaka Castle","Loop line to Osakajokoen, pass day 4. Park and keep; tower optional."],
+      ["11:00","Back to hotel for bags","Midosuji line to Shin-Osaka."],
+      ["12:00","Hikari to Odawara","2h10, SmartEX. Lunch is an ekiben."],
+      ["14:15","Hakone Tozan line to Hakone-Yumoto","15 min. Buy the Hakone Freepass at Odawara if doing the full loop tomorrow."],
+      ["14:45","Ryokan check-in","Tonosawa is one stop beyond Yumoto; Miyanoshita three stops."],
+      ["15:30","Onsen","Then yukata, tea, and rest."],
+      ["18:00","Kaiseki dinner","Served in the room at Fukuzumiro. Do not be late."]],
+  transport:"<b>Shinkansen</b> Hikari only; Nozomi skips Odawara. <b>Hakone Tozan</b> from Odawara.",
+  map:"Hakone-Yumoto Station", route:["Osaka Castle","Shin-Osaka Station","Odawara Station","Hakone-Yumoto Station","Tonosawa Station"],
+  intel:"<b>Timing.</b> Ryokan want you in by 17:00 and dinner is at 18:00. Leave Shin-Osaka no later than 12:30.",
+  check:["Castle done","Hikari boarded","Checked in by 17:00","Onsen before dinner"]},
+ {code:"D12",date:"2026-11-09",dow:"Mon",name:"Hakone loop, exfil to Haneda",city:"Tokyo",ph:"Haneda",
+  wp:[["07:30","Breakfast at the ryokan","Check out by 10:00; leave bags at reception or send them ahead."],
+      ["09:30","Tozan railway to Gora","Switchback train, 35 min."],
+      ["10:15","Cable car to Sounzan, ropeway to Owakudani","Black eggs, Fuji view if clear."],
+      ["11:30","Ropeway to Togendai, Lake Ashi cruise","Pirate ship to Moto-Hakone, 30 min."],
+      ["12:30","Hakone Shrine torii, lunch at Moto-Hakone","Then bus H back to Yumoto, 40 min."],
+      ["15:30","Odawara → Shinagawa Kodama","30 min. Keikyu line to Haneda, 15 min."],
+      ["17:00","Haneda hotel check-in","Quiet evening, early night. Bags ready for 06:45."]],
+  transport:"<b>Hakone Freepass</b> covers the whole loop. <b>Kodama</b> Odawara → Shinagawa. <b>Keikyu</b> to Tenkubashi or Otorii.",
+  map:"Owakudani", route:["Hakone-Yumoto Station","Gora Station","Owakudani","Togendai","Hakone Shrine","Odawara Station","Haneda Airport Terminal 3"],
+  check:["Owakudani","Lake Ashi cruise","Hakone Shrine torii","Haneda hotel check-in"]},
+ {code:"D13",date:"2026-11-10",dow:"Tue",name:"Exfil",city:"Tokyo",ph:"Haneda",
+  wp:[["06:45","Leave hotel","Terminal 3, international."],
+      ["07:15","Bag drop, security, immigration","Tax-free goods must be carried on or shown."],
+      ["09:35","Flight to Heathrow","Lands 15:35. Mission complete."]],
+  transport:"<b>Keikyu</b> one stop from Tenkubashi, or hotel shuttle.",
+  map:"Haneda Airport Terminal 3", route:["Haneda Airport Terminal 3"],
+  check:["Passports and tax-free receipts","Bag drop done","Wheels up"]}
+];
+
+var STAYS=[
+ {id:"tokyo",name:"Tokyo",dates:"28 Oct – 2 Nov",nights:5,ci:"2026-10-28",co:"2026-11-02",
+  opts:[
+   {tier:"Standard",name:"APA Hotel Roppongi SIX",price:136,score:8.2,reviews:"10,187",
+    blurb:"Roppongi 2-chome, 10 min walk to Akasaka, next door to the National Art Center. Compact rooms, solid chain.",
+    perks:["Namboku line","Walk to Roppongi"],slug:"apahoteru-liu-ben-mu-six",map:"APA Hotel Roppongi SIX"},
+   {tier:"Upgrade",name:"APA Hotel Pride Akasaka Kokkaigijidomae",price:155,score:8.5,reviews:"10,907",
+    blurb:"The hotel from the visa itinerary. Rooftop open-air bath, one minute from Tameike-sanno, Ginza and Namboku lines.",
+    perks:["Rooftop open-air bath","Tameike-sanno 1 min"],slug:"apahoterupuraido-guo-hui-yi-shi-tang-qian",map:"APA Hotel Pride Akasaka Kokkaigijidomae"}]},
+ {id:"kyoto",name:"Kyoto",dates:"2 – 6 Nov",nights:4,ci:"2026-11-02",co:"2026-11-06",
+  opts:[
+   {tier:"Standard",name:"Vessel Hotel Campana Kyoto Gojo",price:102,score:8.7,reviews:"1,109",
+    blurb:"4-star for the price of a business hotel. Public bath and sauna, Gojo subway stop, 10 min walk to Kyoto Station for the Nara, Uji and Osaka days.",
+    perks:["Public bath + sauna","Karasuma line"],slug:"vessel-campana-kyoto-gojyo",map:"Vessel Hotel Campana Kyoto Gojo"},
+   {tier:"Upgrade",name:"Dormy Inn Premium Kyoto Ekimae Natural Hot Spring",price:183,score:8.7,reviews:"2,511",
+    blurb:"Real onsen on the roof with an open-air bath, free late-night ramen, opposite Kyoto Station. Over the line but the onsen every night is the point.",
+    perks:["Rooftop onsen","Free night ramen","Kyoto Station"],slug:"dormy-inn-premium-kyoto-ekimae",map:"Dormy Inn Premium Kyoto Ekimae"}]},
+ {id:"osaka",name:"Osaka",dates:"6 – 8 Nov",nights:2,ci:"2026-11-06",co:"2026-11-08",
+  opts:[
+   {tier:"Standard",name:"Hotel Sobial Namba Daikokucho",price:106,score:8.8,reviews:"3,077",
+    blurb:"4-star with an open-air bath, Daikokucho station on the Midosuji line, which runs straight to Shin-Osaka for the 07:00 Hiroshima train.",
+    perks:["Open-air bath","Midosuji direct to Shin-Osaka"],slug:"hotel-sobial-namba-daikokucho",map:"Hotel Sobial Namba Daikokucho"},
+   {tier:"Upgrade",name:"APA Hotel & Resort Osaka Namba Ekimae Tower",price:123,score:8.4,reviews:"12,492",
+    blurb:"Tower hotel by Namba station with a rooftop pool, open-air bath, spa and bar. Pool is seasonal and may be closed in November; the bath and bar are open.",
+    perks:["Rooftop pool (seasonal)","Open-air bath","Bar"],slug:"apahoterurizotoda-ban-nanbayi-qian-tawa",map:"APA Hotel & Resort Osaka Namba Ekimae Tower"}]},
+ {id:"hakone",name:"Hakone",dates:"8 – 9 Nov",nights:1,ci:"2026-11-08",co:"2026-11-09",
+  opts:[
+   {tier:"Standard",name:"Hakone Miyanoshita Myojokan",price:157,score:9.2,reviews:"273",
+    blurb:"Adults-only onsen inn in Miyanoshita, three stops up the Tozan line. Room only; eat in the village.",
+    perks:["Onsen","Adults only","On the Tozan line"],slug:"myojokan",map:"Hakone Miyanoshita Myojokan"},
+   {tier:"Upgrade",name:"Fukuzumiro",price:399,score:9.4,reviews:"456",
+    blurb:"1890 wooden ryokan in Tonosawa, a registered cultural property. Kaiseki dinner and breakfast in the room, cypress indoor baths, 5 min walk from Tonosawa station. No outdoor bath.",
+    perks:["Kaiseki in room","Dinner + breakfast","Cultural property"],slug:"fukuzumiro",map:"Fukuzumiro Hakone"}]},
+ {id:"haneda",name:"Haneda",dates:"9 – 10 Nov",nights:1,ci:"2026-11-09",co:"2026-11-10",
+  opts:[
+   {tier:"Standard",name:"hotel MONday Haneda Airport",price:93,score:8.6,reviews:"2,413",
+    blurb:"Free airport shuttle, 10 min to Terminal 3. Plain and clean.",
+    perks:["Free shuttle"],slug:"relief-premium-haneda-tokyo",map:"hotel MONday Haneda Airport"},
+   {tier:"Upgrade",name:"Hotel Metropolitan Tokyo Haneda",price:129,score:9.2,reviews:"7,139",
+    blurb:"Inside Haneda Innovation City at Tenkubashi station, one Keikyu stop from Terminal 3. Rooftop footbath with runway views.",
+    perks:["Tenkubashi station","Rooftop footbath"],slug:"metropolitan-tokyo-haneda",map:"Hotel Metropolitan Tokyo Haneda"}]}
+];
+
+var LOGI=[
+ ["Kansai-Hiroshima Area Pass","¥17,000 pp","Buy on the JR West site now, collect at Kyoto Station. Activate Thu 5 Nov, valid to 9 Nov.","Nozomi Shin-Osaka ⇄ Hiroshima, JR Miyajima ferry, Nara and Uji lines, Kyoto ⇄ Osaka, Osaka Loop Line. Reserved seats free."],
+ ["SmartEX tickets","about ¥30,700 pp","App, book from 18 Oct. QR at the gate.","Tokyo → Kyoto 2 Nov, Shin-Osaka → Odawara 8 Nov, Odawara → Shinagawa 9 Nov."],
+ ["Welcome Suica x2","¥0 + top-up","Narita T2, JR East Travel Service Center, 28 Oct.","All metro, JR local, buses, konbini. 28-day validity, no refund of balance."],
+ ["Narita Express","¥3,070 pp","Narita T2 on arrival.","Airport → Tokyo Station, 60 min."],
+ ["Hakone Freepass (Odawara, 2-day)","¥6,000 pp","Odawara station, 8 Nov.","Tozan railway, cable car, ropeway, Lake Ashi cruise, Hakone buses. Skip if only going to the ryokan and back."],
+ ["Shibuya Sky","about ¥2,500 pp","Online, pick the 16:30 slot for 29 Oct.","Rooftop deck, sunset."],
+ ["Peace Memorial Museum","¥200 pp","On the door, 7 Nov.","No reservation needed."],
+ ["Visit Japan Web","free","Before departure.","Immigration and customs QR."],
+ ["eSIM (Ubigi / Airalo)","about €20 for 10 GB","Before departure.","Data for the whole trip."]
+];
+
+var OPEN=[
+ "Tokyo: Roppongi SIX at €136 or Pride Akasaka with the rooftop bath at €155",
+ "Kyoto: Vessel Campana Gojo at €102 or Dormy Inn with the rooftop onsen at €183",
+ "Osaka: Sobial Namba at €106 or APA Namba Tower with pool and bar at €123",
+ "Hakone: Myojokan room-only at €157 or Fukuzumiro with kaiseki at €399",
+ "Haneda: MONday at €93 or Metropolitan at Tenkubashi at €129",
+ "Hakone Freepass: full loop on 9 Nov, or a slower morning and straight to Tokyo"
+];
+
+/* ---------- helpers ---------- */
+function store(k,v){try{if(v===undefined){var s=localStorage.getItem(k);return s?JSON.parse(s):null}localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function q(s){return encodeURIComponent(s)}
+function jstDate(){ // YYYY-MM-DD in Japan
+  var p=new Intl.DateTimeFormat("en-CA",{timeZone:TZ,year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());return p}
+var CAN_EMBED=/github\.io$|localhost$|^127\./.test(location.hostname)||location.protocol==="file:";
+function phaseColor(n){for(var i=0;i<PHASES.length;i++)if(PHASES[i].n===n)return PHASES[i].c;return "var(--olive)"}
+function bookUrl(o,s){return "https://www.booking.com/hotel/jp/"+o.slug+".html?checkin="+s.ci+"&checkout="+s.co+"&group_adults=2&no_rooms=1&selected_currency=EUR"}
+function mapUrl(p){return "https://www.google.com/maps/search/?api=1&query="+q(p)}
+function routeUrl(r){ if(r.length<2) return mapUrl(r[0]);
+  var o=r[0],d=r[r.length-1],w=r.slice(1,-1).map(q).join("%7C");
+  return "https://www.google.com/maps/dir/?api=1&origin="+q(o)+"&destination="+q(d)+(w?"&waypoints="+w:"")+"&travelmode=transit"}
+
+/* ---------- tabs ---------- */
+var tabs=document.querySelectorAll(".tabs button");
+function showTab(id,push){
+  tabs.forEach(function(b){b.setAttribute("aria-selected",String(b.dataset.tab===id))});
+  ["brief","ops","billet","logi","intel"].forEach(function(s){document.getElementById(s).hidden=(s!==id)});
+  if(push){try{history.replaceState(null,"","#"+id)}catch(e){}}
+}
+tabs.forEach(function(b){b.addEventListener("click",function(){showTab(b.dataset.tab,true)})});
+
+/* ---------- phases ---------- */
+document.getElementById("phases").innerHTML=PHASES.map(function(p){return '<div class="phase" style="border-top-color:'+p.c+'"><b>'+p.n+'</b><span>'+p.d+'</span></div>'}).join("");
+document.getElementById("openItems").innerHTML=OPEN.map(function(s){return "<li>• "+esc(s)+"</li>"}).join("");
+
+/* ---------- days ---------- */
+var ticks=store("ors.ticks")||{};
+var today=jstDate();
+document.getElementById("days").innerHTML=DAYS.map(function(d,i){
+  var state=d.date===today?"active":(d.date<today?"past":"");
+  var wps=d.wp.map(function(w){return '<li><span class="t">'+w[0]+'</span><span class="w">'+esc(w[1])+(w[2]?'<small>'+esc(w[2])+'</small>':'')+'</span></li>'}).join("");
+  var checks=d.check.map(function(c,j){var k=d.code+":"+j;var on=!!ticks[k];
+    return '<label class="'+(on?"done":"")+'"><input type="checkbox" id="ck-'+d.code+'-'+j+'" data-k="'+k+'"'+(on?" checked":"")+'> '+esc(c)+'</label>'}).join("");
+  var map=CAN_EMBED?'<iframe loading="lazy" title="Map: '+esc(d.map)+'" src="https://maps.google.com/maps?q='+q(d.map)+'&z=13&output=embed"></iframe>':'<span>Map embeds on the GitHub Pages version.<br>Use the buttons below.</span>';
+  var dt=new Date(d.date+"T00:00:00");
+  var label=d.dow+" "+dt.getDate()+" "+["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][dt.getMonth()];
+  return '<article class="day '+state+'" id="day-'+d.code+'" style="border-left-color:'+(state==="active"?"var(--accent)":phaseColor(d.ph))+'">'+
+   '<header><span class="code">'+d.code+' · '+label+'</span><h3>'+esc(d.name)+'</h3>'+(state==="active"?'<span class="chip live">Active op</span>':'')+'<span class="meta">'+esc(d.city)+' · phase '+esc(d.ph)+'</span></header>'+
+   '<div class="cols"><div><ul class="timeline">'+wps+'</ul><div class="transport">'+d.transport+'</div>'+(d.intel?'<div class="intel">'+d.intel+'</div>':'')+'</div>'+
+   '<div><div class="map">'+map+'</div><div class="maplinks"><a class="btn primary" target="_blank" rel="noopener" href="'+routeUrl(d.route)+'">Route in Google Maps</a><a class="btn" target="_blank" rel="noopener" href="'+mapUrl(d.map)+'">'+esc(d.map)+'</a></div>'+
+   '<div class="check">'+checks+'</div></div></div></article>'}).join("");
+document.getElementById("days").addEventListener("change",function(e){
+  var el=e.target; if(el.type!=="checkbox")return;
+  ticks[el.dataset.k]=el.checked; store("ors.ticks",ticks); el.parentNode.classList.toggle("done",el.checked)});
+
+/* ---------- billeting ---------- */
+var sel=store("ors.hotels")||{};
+function eur(n){return "€"+n.toLocaleString("en-GB")}
+function renderStays(){
+  var html="",tot=0,min=0,max=0,nights=0;
+  STAYS.forEach(function(s){
+    var chosen=sel[s.id]||0; nights+=s.nights;
+    var prices=s.opts.map(function(o){return o.price*s.nights});
+    min+=Math.min.apply(null,prices); max+=Math.max.apply(null,prices); tot+=prices[chosen];
+    html+='<div class="stay"><header><span class="eyebrow">'+esc(s.name)+'</span><h3>'+s.dates+' · '+s.nights+(s.nights>1?' nights':' night')+'</h3></header><div class="opts">'+
+      s.opts.map(function(o,j){var over=o.price>BUDGET;
+        return '<label class="opt'+(chosen===j?' sel':'')+'"><input type="radio" name="st-'+s.id+'" id="st-'+s.id+'-'+j+'" value="'+j+'"'+(chosen===j?' checked':'')+'>'+
+        '<div class="tier">'+o.tier+'</div><h4>'+esc(o.name)+'</h4>'+
+        '<div class="price"><b>'+eur(o.price)+'</b> / night · '+eur(o.price*s.nights)+' total <span class="chip '+(over?'warn':'ok')+'">'+(over?'over €'+BUDGET:'in budget')+'</span></div>'+
+        '<div class="price">Score '+o.score+' · '+o.reviews+' reviews</div><p>'+esc(o.blurb)+'</p>'+
+        '<div class="perks">'+o.perks.map(function(p){return '<span class="chip">'+esc(p)+'</span>'}).join("")+'</div>'+
+        '<div class="links"><a class="btn primary" target="_blank" rel="noopener" href="'+bookUrl(o,s)+'">Booking.com</a><a class="btn" target="_blank" rel="noopener" href="'+mapUrl(o.map)+'">Map</a></div></label>'}).join("")+'</div></div>'});
+  document.getElementById("stays").innerHTML=html;
+  document.getElementById("selTotal").textContent=eur(tot);
+  document.getElementById("minTotal").textContent=eur(min);
+  document.getElementById("maxTotal").textContent=eur(max);
+  document.getElementById("avgNight").textContent=eur(Math.round(tot/nights));
+  document.getElementById("tileTotal").textContent=eur(tot);
+}
+renderStays();
+document.getElementById("stays").addEventListener("change",function(e){
+  var el=e.target; if(el.type!=="radio")return;
+  sel[el.name.slice(3)]=+el.value; store("ors.hotels",sel); renderStays()});
+
+/* ---------- logistics ---------- */
+var logiDone=store("ors.logi")||{};
+document.getElementById("logiTable").insertAdjacentHTML("beforeend",LOGI.map(function(r,i){
+  return '<tr><td><input type="checkbox" id="lg-'+i+'" data-i="'+i+'"'+(logiDone[i]?' checked':'')+' aria-label="done"></td><td><b>'+esc(r[0])+'</b></td><td class="num">'+esc(r[1])+'</td><td>'+esc(r[2])+'</td><td>'+esc(r[3])+'</td></tr>'}).join(""));
+document.getElementById("logiTable").addEventListener("change",function(e){var el=e.target;if(el.type!=="checkbox")return;logiDone[el.dataset.i]=el.checked;store("ors.logi",logiDone)});
+
+/* ---------- clock, countdown, progress ---------- */
+function pad(n){return (n<10?"0":"")+n}
+function tick(){
+  var now=new Date();
+  document.getElementById("jst").textContent=new Intl.DateTimeFormat("en-GB",{timeZone:TZ,hour:"2-digit",minute:"2-digit",weekday:"short"}).format(now);
+  var lbl=document.getElementById("cdLabel"),cd=document.getElementById("cd"),st=document.getElementById("statusTxt"),pr=document.getElementById("prog");
+  if(now<START){var ms=START-now,d=Math.floor(ms/864e5),h=Math.floor(ms%864e5/36e5),m=Math.floor(ms%36e5/6e4);
+    lbl.textContent="T-minus to wheels up";cd.textContent=d+"d "+pad(h)+"h "+pad(m)+"m";st.textContent="Pre-deployment · "+d+" days to launch";pr.style.width="0%"}
+  else if(now<END){var pct=Math.round((now-START)/(END-START)*100);var dayN=Math.floor((now-START)/864e5)+1;
+    lbl.textContent="Mission clock";cd.textContent="Day "+dayN+" of 14";st.textContent="In theatre · "+pct+"% complete";pr.style.width=pct+"%"}
+  else{lbl.textContent="Status";cd.textContent="Complete";st.textContent="Mission complete";pr.style.width="100%"}
+}
+tick(); setInterval(tick,30000);
+
+document.getElementById("jumpToday").addEventListener("click",function(){
+  var t=jstDate();var d=DAYS.filter(function(x){return x.date===t})[0]||(t<DAYS[0].date?DAYS[0]:DAYS[DAYS.length-1]);
+  showTab("ops",true);var el=document.getElementById("day-"+d.code);if(el)el.scrollIntoView({behavior:"smooth",block:"start"})});
+
+/* ---------- weather for the active city (Open-Meteo, keyless) ---------- */
+var CITY={Tokyo:[35.68,139.69],Kyoto:[35.01,135.77],Osaka:[34.69,135.5],Hiroshima:[34.39,132.46],Hakone:[35.23,139.1],Frankfurt:[50.11,8.68]};
+(function(){
+  var t=jstDate();var d=DAYS.filter(function(x){return x.date===t})[0]||DAYS[1];var c=CITY[d.city]||CITY.Tokyo;
+  try{fetch("https://api.open-meteo.com/v1/forecast?latitude="+c[0]+"&longitude="+c[1]+"&current=temperature_2m,precipitation&timezone=Asia%2FTokyo")
+    .then(function(r){return r.json()}).then(function(j){var cur=j.current;document.getElementById("wx").textContent=d.city+" "+Math.round(cur.temperature_2m)+"°C"+(cur.precipitation>0?" · rain":"")})
+    .catch(function(){document.getElementById("wx").textContent=d.city})}catch(e){document.getElementById("wx").textContent=d.city}
+})();
+
+/* ---------- initial tab from hash ---------- */
+var h=(location.hash||"").replace("#","");
+if(["brief","ops","billet","logi","intel"].indexOf(h)>=0)showTab(h,false);
+})();
+</script>
+</body>
+</html>
