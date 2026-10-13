@@ -131,6 +131,10 @@ ul.plain{list-style:none;padding:0;margin:0;display:grid;gap:6px}
 .dish.noimg{grid-template-columns:1fr}
 .credits{font-size:12px;color:var(--muted);margin-top:16px}
 .credits a{color:var(--muted)}
+.daytable tr.active td{background:var(--active);font-weight:600}
+.daytable tr.past td{color:var(--muted)}
+.daytable a{color:var(--fg);text-decoration:none;border-bottom:1px dotted var(--accent)}
+.daytable a:hover{color:var(--accent)}
 
 /* Billeting */
 .stay{background:var(--panel);border:1px solid var(--line);padding:14px 16px;margin-bottom:14px}
@@ -191,6 +195,10 @@ footer{margin-top:40px;color:var(--muted);font-size:13px;border-top:1px solid va
       <div class="tile"><b id="tileTotal">—</b><small>Hotels, selected (EUR)</small></div>
     </div>
     <div class="phases" id="phases"></div>
+    <h3 style="margin-top:6px">Day by day</h3>
+    <div class="scroll"><table id="dayTable" class="daytable">
+      <tr><th>Day</th><th>Date</th><th>Base</th><th>Op</th><th class="num">Steps</th></tr>
+    </table></div>
     <div class="note"><b>Flights, both of us.</b> Out: BA3449 Frankfurt 20:05 Tue 27 Oct, lands Narita 17:05 Wed 28 Oct, 13 hours (booking ZASD8Q). Home: Haneda 09:35 Tue 10 Nov, lands Heathrow 15:35. In-flight plan is on the SOP &amp; kit tab.</div>
     <div class="note"><b>Booking.com Genius Level 3.</b> Lubo's account carries 10 to 20% off at Genius-partner hotels, free breakfast or room upgrades at some, and priority support. Every price on the Billeting tab was quoted logged out, so book from the account and expect most Standard options to land under the cap with margin.</div>
     <div class="note"><b>Step doctrine.</b> Minimum 15,000 a day. Planned figures below are walking estimates at 1,350 steps per km. Two days fall short by design: the flight days. Everything else clears 15k, the Kumano days on trail and the Osaka days on pavement.</div>
@@ -845,6 +853,13 @@ function stepTiles(){
   document.getElementById("tileLogged").textContent=l?fmt(l):"—";
 }
 stepTiles();
+
+/* ---------- briefing day table ---------- */
+document.getElementById("dayTable").insertAdjacentHTML("beforeend",DAYS.map(function(d){
+  var dt=new Date(d.date+"T00:00:00");var planned=Math.round(d.km*STEPS_PER_KM/500)*500;
+  var state=d.date===today?' class="active"':(d.date<today?' class="past"':'');
+  return '<tr'+state+'><td class="num">'+d.code+'</td><td class="num">'+d.dow+' '+dt.getDate()+' '+MON[dt.getMonth()]+'</td><td>'+esc(d.city)+'</td><td><a href="#ops" data-day="'+d.code+'">'+esc(d.name)+'</a></td><td class="num">'+(planned>=STEP_MIN?'':'<span class="chip warn" style="margin-right:6px">short</span>')+fmt(planned)+'</td></tr>'}).join(""));
+document.getElementById("dayTable").addEventListener("click",function(e){var a=e.target.closest("a[data-day]");if(!a)return;e.preventDefault();showTab("ops",true);var el=document.getElementById("day-"+a.dataset.day);if(el)el.scrollIntoView({behavior:"smooth",block:"start"})});
 
 /* ---------- billeting ---------- */
 var sel=store("ors.hotels")||{};
