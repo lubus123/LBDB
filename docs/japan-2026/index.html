@@ -226,7 +226,7 @@ footer{margin-top:40px;color:var(--muted);font-size:13px;border-top:1px solid va
   <section id="billet" hidden>
     <div class="eyebrow">Billeting</div>
     <h2>Where we sleep</h2>
-    <p class="lead">Two options per base: Standard holds the €150 line where the market allows, Upgrade buys the rooftop bath, the trailhead lodge or the river onsen. Tap to choose; the total updates and the choice is remembered on this device. Prices are live Booking.com quotes from 13 Oct 2026 for 2 adults, taxes included, quoted logged out; Genius Level 3 will cut most of them by 10 to 20%, so book from Lubo's account. Tokyo is split on purpose: west for the first three nights (Harajuku, Shibuya, Shinjuku on foot), east for the last two (Tsukiji, Ginza, Nihonbashi, and the Asakusa line straight to Haneda). Yunomine's ryokan Adumaya and Yoshinoya show no availability on Booking for 2 Nov; try them direct before settling.</p>
+    <p class="lead">Two options per base: Standard holds the €150 line where the market allows, Upgrade buys the rooftop bath, the trailhead lodge or the river onsen. Tap to choose; the total updates and the choice is remembered on this device. Prices are live Booking.com quotes from 13 Oct 2026 for 2 adults, taxes included, quoted logged out; Genius Level 3 will cut most of them by 10 to 20%, so book from Lubo's account. Tokyo is split on purpose: west for the first three nights (Harajuku, Shibuya, Shinjuku on foot), east for the last two (Tsukiji, Ginza, Nihonbashi, and the Asakusa line straight to Haneda). The Kumano night is the one place Booking.com fails you: the valley's real ryokan (Adumaya, Yoshinoya, Iseya at Yunomine, Fujiya and Kameya at Kawayu) sell through Kumano Travel, the Tanabe tourism bureau's own booking site, or by phone. The two direct options are listed with estimated prices; hold the J-Hoppers room on free cancellation while you secure one.</p>
     <div class="totals">
       <div><small>Selected total</small><b id="selTotal">—</b></div>
       <div><small>All standard</small><b id="minTotal">—</b></div>
@@ -290,10 +290,17 @@ footer{margin-top:40px;color:var(--muted);font-size:13px;border-top:1px solid va
       <li><b>Cash.</b> Cards work in cities. Kumano buses, minshuku, Tsuboyu, shrines and Miyajima stalls want yen. Withdraw at 7-Eleven in Kyoto before 2 Nov; there is one ATM in Hongu and none on the trail.</li>
       <li><b>Visa paperwork.</b> The visa itinerary was filed for 31 Oct to 13 Nov. A shift inside the visa's validity window is fine if it is already issued; if still pending, resubmit with the new dates.</li>
     </ul>
+    <h3 style="margin-top:18px">Onsen intel: the four hot waters on the route</h3>
+    <ul class="plain">
+      <li><b>Yunomine.</b> Japan's oldest hot spring, a one-lane village in a gorge with the UNESCO-listed Tsuboyu rock bath and a 90 °C spring where you cook eggs. Where the Dainichi-goe path ends. Ryokan Adumaya (Edo-period, in-room kaiseki) and Yoshinoya (family-run, cheaper) are the beds; both book through <a target="_blank" rel="noopener" href="https://www.kumano-travel.com/en/accommodations">Kumano Travel</a> or by phone, not Booking.com. First choice.</li>
+      <li><b>Kawayu.</b> A river whose gravel bed is hot: dig a pool, sit in it, step into the cold current. Fujiya has river-view rooms with private open-air baths and a reservable outdoor bath for couples; Kameya and Midoriya are the other two. 15 min from Hongu by bus or shuttle. Second choice, and the one for a private bath.</li>
+      <li><b>Watarase.</b> The largest open-air bath in western Japan, a terraced pool complex in a bend of the river; two hotels (Yamayuri, Sasayuri) with dinner and shuttles. Modern and comfortable, not a ryokan experience. The Booking.com fallback with meals.</li>
+      <li><b>Katsuura, the coast.</b> Hotel Urashima's Bokido is a hot-spring cave opening onto Pacific waves, in a sprawling resort reached by boat; Manseiro and TAOYA are smaller with sea-facing baths and dinner. Adds a second onsen night on 3 Nov after Nachi, at the cost of Osaka's city day.</li>
+    </ul>
     <h3 style="margin-top:18px">Alternatives held in reserve</h3>
     <ul class="plain">
       <li><b>Kumano in three days.</b> Borrow a Tokyo night: Kyoto 30 Oct to 1 Nov, then Takijiri → Takahara → Chikatsuyu (13 km) on 1 Nov with a bed in Chikatsuyu, the walk into Hongu on the 2nd, Nachi on the 3rd. The full Nakahechi instead of its last stretch.</li>
-      <li><b>Two onsen nights.</b> Sleep in Kii-Katsuura on 3 Nov at Hotel Urashima (€180, 8.3), the Bokido cave onsen opening onto the Pacific and a tuna breakfast; Osaka drops to four nights and the city day moves to the 4th afternoon.</li>
+      <li><b>Two onsen nights.</b> Sleep in Kii-Katsuura on 3 Nov: Hotel Urashima (€180, 8.3, the Bokido cave onsen and a tuna breakfast), Manseiro (€293, 8.5, small ryokan with an open-air bath and dinner) or TAOYA Nachikatsuura (€439, 8.8, sea-facing baths, dinner included). Osaka drops to four nights; the 4th becomes a late-morning Kuroshio and an Osaka afternoon.</li>
       <li><b>Hakone.</b> If the Kii trip gets cut: Osaka → Odawara Hikari, ryokan Fukuzumiro in Tonosawa (€399 with kaiseki, 9.4), Hakone loop next morning, Kodama to Tokyo. Not recommended over Kumano.</li>
       <li><b>Daibosatsu.</b> The Fuji-view ridge walk on the wish list needs the weekend-only bus from Enzan; it would replace Mitake only if the Tokyo end moved to a Saturday or Sunday, which it does not.</li>
       <li><b>Koyasan.</b> A fourth sacred mountain, 2h from Namba by Nankai and cable car: the monastery town, Okunoin's cedar cemetery, a temple-lodging night with shojin cuisine. The best swap for the Kyoto II day if mountains beat castles.</li>
@@ -748,13 +755,19 @@ var STAYS=[
    {tier:"Upgrade",name:"Dormy Inn Premium Kyoto Ekimae Natural Hot Spring",price:215,score:8.7,reviews:"2,512",
     blurb:"Real onsen on the roof with an open-air bath, free late-night ramen, opposite Kyoto Station: 3 min from the Nara line to Inari and the Kuroshio platform.",
     perks:["Rooftop onsen","Free night ramen","Kyoto Station"],slug:"dormy-inn-premium-kyoto-ekimae",map:"Dormy Inn Premium Kyoto Ekimae"}]},
- {id:"hongu",name:"Yunomine Onsen",dates:"2 – 3 Nov",nights:1,ci:"2026-11-02",co:"2026-11-03",
+ {id:"hongu",name:"Yunomine Onsen (Kumano night)",dates:"2 – 3 Nov",nights:1,ci:"2026-11-02",co:"2026-11-03",
   opts:[
-   {tier:"Standard",name:"J-Hoppers Kumano Yunomine Guesthouse",price:81,score:9.1,reviews:"2,093",
-    blurb:"In Yunomine village itself, where the Dainichi-goe ends and Tsuboyu is 2 min away. Own hot-spring bath and open-air tub, private rooms, shared kitchen. No dinner: book the village restaurant at check-in or carry food from Tanabe.",
-    perks:["Tsuboyu 2 min","Open-air onsen","9.1 from 2,000 reviews"],slug:"j-hoppers-kumano-yunomine-guesthouse",map:"J-Hoppers Kumano Yunomine Guesthouse"},
-   {tier:"Upgrade",name:"Watarase Onsen Hotel Yamayuri",price:319,score:8.8,reviews:"120",
-    blurb:"The biggest open-air bath in western Japan is in the garden, dinner and breakfast included, free shuttle from Hongu Taisha at the end of the walk and to the morning bus. Adumaya and Yoshinoya in Yunomine show no availability; try them direct.",
+   {tier:"Direct · standard",name:"Ryokan Yoshinoya",price:150,est:true,score:"—",reviews:"book direct",
+    blurb:"Family ryokan in the middle of Yunomine, 1 min from Tsuboyu, dinner and breakfast of river fish and mountain vegetables cooked in the spring. About ¥12,000 per person with two meals; not on Booking, reserve through Kumano Travel or by phone, 0735-42-0101.",
+    perks:["Tsuboyu 1 min","Two meals","Real ryokan"],url:"https://www.kumano-travel.com/en/accommodations",map:"Yoshinoya Yunomine Onsen"},
+   {tier:"Direct · upgrade",name:"Ryokan Adumaya",price:290,est:true,score:"—",reviews:"book direct",
+    blurb:"The Edo-period inn of Yunomine: cypress baths fed by the 90 °C spring, a 14-dish dinner served in your tatami room, Tsuboyu across the lane. About ¥18,000 to ¥25,000 per person with two meals. Not on Booking; Kumano Travel or 0735-42-0012. Book this week, it fills first.",
+    perks:["Kaiseki in room","Cypress onsen","Tsuboyu across the lane"],url:"https://www.kumano-travel.com/en/accommodations/ryokan-adumaya",map:"Ryokan Adumaya Yunomine"},
+   {tier:"Booking · fallback",name:"J-Hoppers Kumano Yunomine Guesthouse",price:81,score:9.1,reviews:"2,093",
+    blurb:"If both ryokan are full: in the village, own hot-spring bath and open-air tub, private rooms, no dinner. Bookable now with free cancellation, so hold it while you email the ryokan.",
+    perks:["Tsuboyu 2 min","Open-air onsen","Free cancellation"],slug:"j-hoppers-kumano-yunomine-guesthouse",map:"J-Hoppers Kumano Yunomine Guesthouse"},
+   {tier:"Booking · hotel",name:"Watarase Onsen Hotel Yamayuri",price:343,score:8.8,reviews:"120",
+    blurb:"Not a ryokan but the biggest open-air bath in western Japan is in the garden, dinner and breakfast included, shuttle from Hongu Taisha at the end of the walk. The only bookable room with meals in the valley on 2 Nov.",
     perks:["Giant open-air bath","Dinner + breakfast","Free shuttle"],slug:"watarase-onsen-hotel-yamayuri",map:"Watarase Onsen Hotel Yamayuri"}]},
  {id:"osaka",name:"Osaka",dates:"3 – 8 Nov",nights:5,ci:"2026-11-03",co:"2026-11-08",
   opts:[
@@ -805,7 +818,8 @@ var LOGI=[
 var OPEN=[
  "Tokyo west: Sakura Fleur Aoyama in Shibuya at €136 or APA Kabukicho Tower in Shinjuku with the rooftop bath at €174",
  "Kyoto: KIORI Exec Gojo at €143 or Dormy Inn with the rooftop onsen at €215 (Pocket Hotel at €92 if saving)",
- "Yunomine, 2 Nov: J-Hoppers in the village at €81 or Watarase Yamayuri with the giant open-air bath and dinner at €319",
+ "Yunomine, 2 Nov: Adumaya or Yoshinoya booked direct through Kumano Travel this week; J-Hoppers held on free cancellation as the fallback",
+ "Second onsen night? Katsuura on 3 Nov: Hotel Urashima cave baths at €180, Manseiro at €293, TAOYA at €439 with dinner",
  "Osaka, five nights: S-Presso East at €62 or APA Namba Tower with pool and bar at €93",
  "Tokyo east: APA Ningyocho at €83 or Hotel Vista Tsukiji at €153",
  "1 Nov afternoon: Mii-dera and the lakeshore, or Enryaku-ji up Mount Hiei",
@@ -907,15 +921,15 @@ function renderStays(){
     var chosen=sel[s.id]||0; nights+=s.nights;
     var prices=s.opts.map(function(o){return o.price*s.nights});
     if(!s.nights){html+='<div class="stay"><header><span class="eyebrow">'+esc(s.name)+'</span><h3>Reserve option, not counted</h3></header><p style="margin:0;color:var(--muted);font-size:14px">'+s.opts.map(function(o){return esc(o.name)+' €'+o.price+' ('+o.score+')'}).join(" · ")+'</p></div>';return}
-    min+=prices[0]; max+=prices[1]; tot+=prices[chosen];
+    min+=Math.min.apply(null,prices); max+=Math.max.apply(null,prices); tot+=prices[chosen];
     html+='<div class="stay"><header><span class="eyebrow">'+esc(s.name)+'</span><h3>'+s.dates+' · '+s.nights+(s.nights>1?' nights':' night')+'</h3></header><div class="opts">'+
       s.opts.map(function(o,j){var over=o.price>BUDGET;
         return '<label class="opt'+(chosen===j?' sel':'')+'"><input type="radio" name="st-'+s.id+'" id="st-'+s.id+'-'+j+'" value="'+j+'"'+(chosen===j?' checked':'')+'>'+
         '<div class="tier">'+o.tier+'</div><h4>'+esc(o.name)+'</h4>'+
-        '<div class="price"><b>'+eur(o.price)+'</b> / night · '+eur(o.price*s.nights)+' total <span class="chip '+(over?'warn':'ok')+'">'+(over?'over €'+BUDGET:'in budget')+'</span></div>'+
-        '<div class="price">Score '+o.score+' · '+o.reviews+' reviews</div><p>'+esc(o.blurb)+'</p>'+
+        '<div class="price"><b>'+(o.est?'~':'')+eur(o.price)+'</b> / night'+(o.est?' est.':'')+' · '+eur(o.price*s.nights)+' total <span class="chip '+(over?'warn':'ok')+'">'+(over?'over €'+BUDGET:'in budget')+'</span></div>'+
+        '<div class="price">'+(o.est?esc(o.reviews):'Score '+o.score+' · '+o.reviews+' reviews')+'</div><p>'+esc(o.blurb)+'</p>'+
         '<div class="perks">'+o.perks.map(function(p){return '<span class="chip">'+esc(p)+'</span>'}).join("")+'</div>'+
-        '<div class="links"><a class="btn primary" target="_blank" rel="noopener" href="'+bookUrl(o,s)+'">Booking.com'+(s.ci2?' '+s.ci.slice(8)+' Nov':'')+'</a>'+(s.ci2?'<a class="btn primary" target="_blank" rel="noopener" href="'+bookUrl(o,{ci:s.ci2,co:s.co2})+'">Booking.com '+s.ci2.slice(8)+' Nov</a>':'')+'<a class="btn" target="_blank" rel="noopener" href="'+mapUrl(o.map)+'">Map</a></div></label>'}).join("")+'</div></div>'});
+        '<div class="links">'+(o.url?'<a class="btn primary" target="_blank" rel="noopener" href="'+o.url+'">Book direct</a>':'<a class="btn primary" target="_blank" rel="noopener" href="'+bookUrl(o,s)+'">Booking.com'+(s.ci2?' '+s.ci.slice(8)+' Nov':'')+'</a>')+(s.ci2?'<a class="btn primary" target="_blank" rel="noopener" href="'+bookUrl(o,{ci:s.ci2,co:s.co2})+'">Booking.com '+s.ci2.slice(8)+' Nov</a>':'')+'<a class="btn" target="_blank" rel="noopener" href="'+mapUrl(o.map)+'">Map</a></div></label>'}).join("")+'</div></div>'});
   document.getElementById("stays").innerHTML=html;
   document.getElementById("selTotal").textContent=eur(tot);
   document.getElementById("minTotal").textContent=eur(min);
