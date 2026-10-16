@@ -417,6 +417,7 @@ footer{margin-top:40px;color:var(--muted);font-size:13px;border-top:1px solid va
       </ul></div>
       <div class="card"><h4>Ordering and paying</h4><ul>
         <li>Ramen shops often use a ticket machine by the door: pay, take the ticket, hand it over.</li>
+        <li>Conveyor belt sushi (kaiten-zushi): take a number at the door, sit, order on the touch screen (English button) and it arrives on the express lane; grab anything you like off the belt. Plate colour is the price. Powdered green tea and hot water tap at every seat, pickled ginger is free. Press the call button when done; they count the plates.</li>
         <li>Call staff with "sumimasen"; there is no hovering. A button on the table does the same job.</li>
         <li>Pay at the register by the door, not at the table. Put cash or card on the tray.</li>
         <li>No tipping, no splitting bills in small places; one person pays and you settle after.</li>
@@ -605,9 +606,9 @@ var DAYS=[
       ["12:45","JR to Otsu","Saga-Arashiyama → Kyoto 15 min, Kyoto → Otsu 10 min, all JR."],
       ["13:30","Mii-dera","Hillside temple over the lake, the bell of Mii, the Kannon hall. Closes 17:00."],
       ["15:30","Lake Biwa shore","Nagisa park promenade, Biwako Otsu Port, the lake at dusk."],
-      ["18:00","Back to Kyoto","Downtown dinner, early night."]],
+      ["18:00","Back to Kyoto: conveyor belt sushi","Musashi Sushi at Sanjo-Kawaramachi, the Kyoto kaiten classic since 1986: plates from ¥150, touch-screen orders, green-tea powder on the counter. Early night."]],
   transport:"<b>JR</b> Sagano line and Biwako line; Otsu is one stop beyond Yamashina.",
-  eat:"<b>Yuba</b> in Arashiyama, <b>Omi beef</b> in Otsu if you want a splurge, <b>Honke Owariya soba</b> (since 1465) for dinner in Kyoto.",
+  eat:"<b>Yuba</b> in Arashiyama, <b>Omi beef</b> in Otsu if you want a splurge, <b>conveyor belt sushi</b> at Musashi for dinner: grab what rolls past, order the rest on the screen, pay by the plate count.",
   map:"Arashiyama Bamboo Grove", route:["Arashiyama Bamboo Grove","Tenryu-ji","Togetsukyo Bridge","Otsu Station","Mii-dera","Biwako Otsu Port"],
   alt:"<b>Alt.</b> Enryaku-ji on Mount Hiei instead of Mii-dera: JR to Hieizan-Sakamoto, cable car up, the UNESCO mountain monastery in autumn colour; last cable down about 17:00. Or Kinkaku-ji and Ryoan-ji after Arashiyama and skip the lake.",
   check:["Bamboo grove before 09:00","Tenryu-ji","Mii-dera"]},
@@ -669,9 +670,9 @@ var DAYS=[
       ["13:15","Climb Mount Miwa","467 m, about 2h round trip on roots and rock. Silence is expected; it is a prayer, not a hike."],
       ["15:30","Somen in Miwa","Miwa is the birthplace of somen noodles; Senjutei or Mori Shoten on the shrine approach. If legs allow, 1.5 km of the Yamanobe-no-michi to Hibara Shrine and back."],
       ["17:00","JR Miwa → Nara → Osaka","About 1h20 on the pass, or Kintetsu from Sakurai to Namba in 1h."],
-      ["19:00","Namba evening","A standing sushi bar, Hozenji Yokocho bars, negiyaki at Yamamoto."]],
+      ["19:00","Conveyor belt sushi on Dotonbori","Daiki Suisan, the big kaiten on the canal: plates ¥140 to ¥500, the belt still runs. Kura Sushi nearby for the gacha prize every five plates. Then Hozenji Yokocho bars."]],
   transport:"<b>JR Yamatoji and Sakurai lines</b> on the pass all day. Sakurai line trains are hourly; the 12:05 from Nara is the one that matters.",
-  eat:"<b>Kakinoha-zushi</b> and <b>Nakatanidou pounded mochi</b> in Nara; <b>Miwa somen</b> after the mountain; <b>negiyaki</b> at Yamamoto in Osaka.",
+  eat:"<b>Kakinoha-zushi</b> and <b>Nakatanidou pounded mochi</b> in Nara; <b>Miwa somen</b> after the mountain; <b>conveyor belt sushi</b> at Daiki Suisan or Kura on Dotonbori.",
   map:"Todai-ji", route:["Osaka Station","Todai-ji","Kasuga Taisha","Nara Station","Omiwa Shrine","Miwa Station"],
   intel:"<b>Hard stop.</b> Leave Kasuga Taisha by 11:30 whatever is unfinished; miss the 12:05 train and the climb is gone. Sai Shrine may ask whether you understand Japanese; a polite yes with a translation app and the English sheet is normally enough, but admission is the priest's call and numbers are capped.",
   alt:"<b>Alt.</b> If the mountain is refused or closed, the Yamanobe-no-michi north from Omiwa to Hibara and Chogakuji, turning back at 16:00. Or stay in Nara: Naramachi's merchant streets and the Harushika sake tasting.",
@@ -829,11 +830,11 @@ var OPEN=[
 ];
 
 var RATIONS=[
- ["Tokyo",[["Sushi at Tsukiji outer market, early (Sushi Dai queue or a standing bar)","sushi"],["Ramen: Fuunji tsukemen (Shinjuku), Afuri yuzu shio (Ebisu), any ticket-machine counter","tsukemen"],["Tonkatsu: Tonki in Meguro or Maisen in Aoyama","tonkatsu"],["Yakitori in Omoide Yokocho or Ebisu Yokocho","yakitori"],["Monjayaki on Tsukishima if a free evening appears","monjayaki"],["Gyukatsu Motomura (rare beef cutlet you sear yourself)","gyukatsu"],["Harajuku crepes; 7-Eleven egg sando; Asakusa melon pan at Kagetsudo","crepe"]]],
- ["Kyoto",[["Yudofu (hot tofu) at Okutan or Junsei by Nanzen-ji","yudofu"],["Nishiki Market: tako tamago, dashimaki omelette, pickles, soy doughnuts","nishiki"],["Honke Owariya soba, in business since 1465","soba"],["Kyoto ramen at Honke Daiichi-Asahi by the station (rich soy, thin noodles)","kyotoramen"],["Obanzai (Kyoto home cooking) set in Pontocho","obanzai"],["Matcha everything: parfait at Nakamura Tokichi in Uji, warabi mochi, yatsuhashi to take home","matcha"],["Kaiseki once if the budget allows, Gion or a ryotei lunch for a third of the dinner price","kaiseki"]]],
+ ["Tokyo",[["Sushi at Tsukiji outer market, early (Sushi Dai queue or a standing bar)","sushi"],["Conveyor belt sushi: Nemuro Hanamaru at KITTE by Tokyo Station (Hokkaido fish, take a queue ticket), Sushiro or Kura for the pure chain experience, Uobei Shibuya for the bullet-train lanes","sushi"],["Ramen: Fuunji tsukemen (Shinjuku), Afuri yuzu shio (Ebisu), any ticket-machine counter","tsukemen"],["Tonkatsu: Tonki in Meguro or Maisen in Aoyama","tonkatsu"],["Yakitori in Omoide Yokocho or Ebisu Yokocho","yakitori"],["Monjayaki on Tsukishima if a free evening appears","monjayaki"],["Gyukatsu Motomura (rare beef cutlet you sear yourself)","gyukatsu"],["Harajuku crepes; 7-Eleven egg sando; Asakusa melon pan at Kagetsudo","crepe"]]],
+ ["Kyoto",[["Yudofu (hot tofu) at Okutan or Junsei by Nanzen-ji","yudofu"],["Conveyor belt sushi at Musashi, Sanjo-Kawaramachi, the Kyoto kaiten since 1986",null],["Nishiki Market: tako tamago, dashimaki omelette, pickles, soy doughnuts","nishiki"],["Honke Owariya soba, in business since 1465","soba"],["Kyoto ramen at Honke Daiichi-Asahi by the station (rich soy, thin noodles)","kyotoramen"],["Obanzai (Kyoto home cooking) set in Pontocho","obanzai"],["Matcha everything: parfait at Nakamura Tokichi in Uji, warabi mochi, yatsuhashi to take home","matcha"],["Kaiseki once if the budget allows, Gion or a ryotei lunch for a third of the dinner price","kaiseki"]]],
  ["Hiroshima & Miyajima",[["Hiroshima okonomiyaki: layered, with soba noodles inside. Okonomimura or Nagata-ya","hiroshimayaki"],["Grilled oysters on Miyajima's Omotesando street","oysters"],["Anago-meshi (conger eel on rice) at Ueno, by Miyajimaguchi station","anago"],["Momiji manju, fried, from a stall on the island","momiji"],["Hiroshima tsukemen (cold, spicy) if a second lunch happens",null]]],
  ["Kumano & Tanabe",[["Mehari-zushi: rice balls wrapped in pickled takana leaf, the pilgrim's lunch","mehari"],["Sanma-zushi (pressed saury) and ayu river fish around Hongu and Shingu","sanma"],["Onsen tamago and sweet potatoes cooked in Yunomine's spring","onsentamago"],["Umeboshi and umeshu: Tanabe is the home of Kishu plums; Ajikoji alley for the izakaya crawl","umeboshi"],["Maguro (tuna) in Kii-Katsuura, one of Japan's biggest tuna ports; the station-front restaurants do a tuna bowl","maguro"]]],
- ["Osaka",[["Takoyaki: Wanaka or Aizuya, the 1933 original","takoyaki"],["Okonomiyaki Osaka-style at Mizuno or Fukutaro","okonomiyaki"],["Kushikatsu at Daruma in Shinsekai; never double-dip the sauce","kushikatsu"],["Kitsune udon at Dotonbori Imai","udon"],["Kuromon Market: grilled scallops, uni, wagyu skewers",null],["551 Horai pork buns for the train, Rikuro's cheesecake at Namba","butaman"]]],
+ ["Osaka",[["Takoyaki: Wanaka or Aizuya, the 1933 original","takoyaki"],["Conveyor belt sushi: Daiki Suisan on Dotonbori (the belt still runs), Kura Sushi for the gacha, Ganko for quality",null],["Okonomiyaki Osaka-style at Mizuno or Fukutaro","okonomiyaki"],["Kushikatsu at Daruma in Shinsekai; never double-dip the sauce","kushikatsu"],["Kitsune udon at Dotonbori Imai","udon"],["Kuromon Market: grilled scallops, uni, wagyu skewers",null],["551 Horai pork buns for the train, Rikuro's cheesecake at Namba","butaman"]]],
  ["On the train",[["Ekiben: a regional bento bought on the concourse, eaten on the shinkansen with a can of something","ekiben"],["Rokurinsha tsukemen on Edo-koji at Haneda T3 for the last bowl",null]]]
 ];
 
