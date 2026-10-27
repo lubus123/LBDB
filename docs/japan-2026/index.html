@@ -113,6 +113,7 @@ ul.plain{list-style:none;padding:0;margin:0;display:grid;gap:6px}
 .intel b{color:var(--warn)}
 .alt{margin-top:10px;font-size:14px;border-left:3px solid var(--line);padding-left:10px;color:var(--muted)}
 .alt b{color:var(--fg)}
+.decide{margin-top:10px;border:1px dashed var(--accent);padding:8px 12px;font-size:14px} .decide>b{font-family:var(--cond);text-transform:uppercase;letter-spacing:.1em;font-size:12px;color:var(--accent)} .decide ul{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:6px} .decide li{display:grid;grid-template-columns:92px 1fr;gap:8px;align-items:start} .decide .gate{font-family:var(--mono);font-size:12px;color:var(--accent);padding-top:2px} .decide li b{display:block} .decide li small{display:block;color:var(--muted);font-size:13px;grid-column:2} .decide i{color:var(--fg);font-style:normal;font-weight:600}
 .eat{margin-top:10px;font-size:14px}
 .eat b{color:var(--accent)}
 .steps{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px;padding-top:10px;border-top:1px dashed var(--line);font-family:var(--cond);font-size:14px;letter-spacing:.02em}
@@ -433,6 +434,46 @@ footer{margin-top:40px;color:var(--muted);font-size:13px;border-top:1px solid va
     <h3>Rations: must-eats by base</h3>
     <div class="grid2" id="rations"></div>
 
+    <h3>Night ops: drinks, bars, making friends</h3>
+    <div class="grid2">
+      <div class="card"><h4>The famous drinks, in the order to try them</h4><ul>
+        <li><b>Highball</b> (haibōru): Suntory Kaku whisky and soda, ¥400 to ¥600. The default order in any izakaya; "Kaku-hai" gets you the classic.</li>
+        <li><b>Lemon sour</b> (remon sawā): shochu, soda, fresh lemon. Tokyo's drink. Open Book in Golden Gai is the shrine to it.</li>
+        <li><b>Nama biiru</b>, draft: Asahi Super Dry, Kirin Ichiban, Sapporo Black Label, Yebisu for the premium one. "Toriaezu nama" ("a draft to start") opens every night.</li>
+        <li><b>Sake</b>: junmai is pure rice, ginjo and daiginjo are polished and fruity, nigori is cloudy and sweet. Order "osusume" and the local one: Fushimi in Kyoto, Nara where sake was invented, and Omiwa at Miwa is the sake god's own shrine, hence the cedar balls over brewery doors.</li>
+        <li><b>Umeshu</b>, plum liqueur, on the rocks or with soda. The Kii peninsula grows Japan's best plums (Nanko-ume), so it is the drink of the Kumano days.</li>
+        <li><b>Shochu</b>: imo (sweet potato, earthy) or mugi (barley, soft), with hot water, rocks, or as oolong-hai with oolong tea.</li>
+        <li><b>Hoppy</b>: Showa-era beer-flavoured mixer poured over shochu, ¥500, the drink of the Yurakucho arches and Asakusa's Hoppy Street.</li>
+        <li><b>Japanese whisky</b>: Hibiki and Toki from Suntory, Nikka From the Barrel; Yamazaki by the measure if a bar has it. Bar Benfiddich in Nishi-Shinjuku for the serious version.</li>
+        <li><b>Konbini</b>: Strong Zero (9%, careful), Horoyoi (3%, for her maybe), Kirin Hyoketsu, a can of Yebisu for the park.</li>
+        <li><b>Morning after</b>: Pocari Sweat; Ukon no Chikara (turmeric) or Hepalyse from the konbini fridge before you start.</li>
+      </ul></div>
+      <div class="card"><h4>How a Japanese night works</h4><ul>
+        <li><b>Izakaya</b>: the otoshi (¥300 to ¥500 starter you did not order) is the cover charge. Drinks first, food in rounds, pay at the end, often cash, no tip. Two-hour table limits are normal.</li>
+        <li><b>Nomihodai</b>: all-you-can-drink for 90 or 120 min, ¥1,500 to ¥2,500. Chains like Torikizoku (everything ¥360) are where students and salarymen go.</li>
+        <li><b>Pour for each other</b>, never for yourself; kanpai once everyone has a glass.</li>
+        <li><b>Tachinomi</b>, standing bars: cheapest drinks, friendliest rooms. If you want to talk to locals, stand.</li>
+        <li><b>Golden Gai</b>: 200 bars seating six to eight. Cover ¥500 to ¥1,000, look for "no cover" and "English OK" signs, ask before photos, one drink per bar and move on.</li>
+        <li><b>Never follow a tout</b> in Kabukicho. Pick your own door; the touted ones are the bill scams.</li>
+        <li><b>Street drinking is legal</b>; a konbini beer by the river or in a park is normal. Do not be loud on trains.</li>
+        <li><b>Last trains</b> about 00:30, first about 05:00. Taxis are honest and about ¥500 a km. In Shinjuku everything is on foot anyway.</li>
+        <li><b>Craft beer</b> is strong here: Yebisu Brewery Tokyo (reopened 2024) in Ebisu, Mikkeller Shibuya, Beer Komachi in Kyoto, Craft Beer Base in Osaka.</li>
+      </ul></div>
+      <div class="card"><h4>Where to make travelling friends</h4><ul>
+        <li><b>Shinjuku</b>: Golden Gai's English-friendly rooms, Albatross (three floors), Open Book, Bar Araku, Champion (cheap karaoke, every nationality at 01:00), Deathmatch in Hell for metal. Omoide Yokocho counters put you shoulder to shoulder with strangers by design.</li>
+        <li><b>Shibuya</b>: Nonbei Yokocho's Tight, a bar the size of a cupboard; Mikkeller Tokyo and Goodbeer Faucets for the craft crowd; Oiran is the dance-bar option.</li>
+        <li><b>Ebisu</b>: Ebisu Yokocho, a covered alley of tiny counters that turns into one party after 22:00.</li>
+        <li><b>Yurakucho</b>: the gado-shita arches, Andy's Shin Hinomoto (British-run izakaya, book it), and whoever sits next to you.</li>
+        <li><b>Kyoto</b>: Beer Komachi in Gion, Sake Bar Yoramu for sake schooling, L'Escamoteur for cocktails in a magician's bar, the Suiba standing bars (¥500 drinks, mixed crowd), Pontocho for the lanterns.</li>
+        <li><b>Osaka</b>: Hozenji Yokocho, Misono Building's bar warren, Ura-Namba standing bars, Space Station in Amerikamura (retro games bar, the backpacker living room), Craft Beer Base Bud.</li>
+        <li><b>Hiroshima</b>: Koba in Nagarekawa, a tiny metal bar whose owner collects visitors; Golden Garden for craft beer. One drink before the Nozomi.</li>
+        <li><b>Asakusa</b>: Hoppy Street, open-air stools and stew, the friendliest hour in east Tokyo after Mitake.</li>
+        <li><b>Kawayu</b>: the river is the bar. A can from the inn's vending machine in a pool you dug yourself.</li>
+      </ul></div>
+    </div>
+    <h4 style="margin:14px 0 6px;font-family:var(--cond);font-size:17px">Bar routes, one per base, each with a Google Maps walk</h4>
+    <div class="grid2" id="barRoutes"></div>
+
     <h3>Shrines, temples, sacred ground</h3>
     <div class="grid2">
       <div class="card"><h4>Shrine (Shinto, torii gate)</h4><ul>
@@ -556,14 +597,22 @@ var DAYS=[
   map:"Frankfurt Airport", route:["Frankfurt Airport"],
   check:["Passports, visa, printed hotel list","Visit Japan Web QR screenshots","SmartEX app installed, card added","eSIM activated","Offline maps downloaded"]},
  {code:"D0",img:"p_shinjuku",date:"2026-10-28",dow:"Wed",name:"Insertion, west Tokyo",city:"Tokyo",ph:"Tokyo W",km:5,
-  wp:[["17:05","Land Narita T2","Immigration, baggage, customs: allow 60–90 min."],
+  wp:[["17:05","Land Narita T2","Immigration, baggage, customs: allow 60–90 min. Visit Japan Web QR ready."],
       ["18:30","JR East Travel Service Center, T2 B1","Two Welcome Suica cards, charge ¥5,000 each. Narita Express tickets to Shinjuku."],
       ["18:50","Narita Express direct to Shinjuku","About 80 min, ¥3,250, reserved seats. Every 30 min."],
-      ["20:15","Shinjuku, Kabukicho Tower","Check in, drop bags, 15 minutes, out again. The sushi clock is running."],
-      ["20:45","Conveyor sushi, go/no-go at the hotel door","<b>Out by 20:30:</b> Fukutoshin line Shinjuku-sanchome → Meiji-jingumae, 5 min, to Kaiten Sushi Ginza Onodera in Omotesando: the Michelin group's belt, 40 seats round a long counter, ¥300 to ¥1,100 a plate, last orders about 21:30. <b>Later than 20:30:</b> Numazuko on Yasukuni-dori, 10 min on foot, the long classic Shinjuku belt, open to 23:00, ¥140 to ¥500 a plate. No reservations at either."],
-      ["22:15","Golden Gai","Back to the hotel's own doorstep: 200 bars in six alleys. Albatross (three floors, ¥500 cover), Open Book (lemon sours, no cover), Bar Araku (no cover, English). Then sleep; Shibuya Sky is at 16:30 tomorrow."]],
-  transport:"<b>Rail</b> Narita Express to Shinjuku. Check-in at the hotel is 15:00 onwards so bags go straight to the room. <b>Fukutoshin line</b> to Omotesando if the timing allows, 5 min each way.",
-  eat:"<b>Conveyor sushi</b> first night: Ginza Onodera's belt in Omotesando if you are out by 20:30, Numazuko in Shinjuku if not. <b>Yakitori</b> in Omoide Yokocho is the fallback if both queues defeat you. The best belt in the city, Nemuro Hanamaru, is booked into the 8 Nov evening.",
+      ["20:15","Shinjuku, Kabukicho Tower","Check in, drop bags, 15 minutes. The rooftop bath is open to 24:00, so it goes either before dinner (20:30, quick) or after (last entry about 23:15)."],
+      ["20:45","Dinner: spot decision below","The gate is the time you walk out of the hotel door. Pick the first line you can still make."],
+      ["22:30","Bar route: Golden Gai","3 min from the hotel. Albatross → Open Book → Bar Araku → Champion if you want karaoke. Nagi ramen in the same alley at 01:00 if hungry again."],
+      ["23:30","Bath, sleep","Shibuya Sky is at 16:30 tomorrow, nothing before 10:00 matters."]],
+  decide:[
+   ["out by 20:30","Kaiten Sushi Ginza Onodera, Omotesando","The Michelin group's conveyor, 40-seat long counter, ¥300 to ¥1,100 a plate, last orders about 21:30. Fukutoshin line Shinjuku-sanchome → Meiji-jingumae, 5 min, no reservations.","Fukutoshin back, then Golden Gai"],
+   ["out by 21:45","Menya Musashi, Nishi-Shinjuku","Tsukemen at the 1996 original: thick chewy noodles, pork-and-fish dip, free double noodles, draft beer, loud and happy. ¥1,200. Last orders about 22:00.","Omoide Yokocho is 2 min away for the second beer, then Golden Gai"],
+   ["out by 22:15","Hayashida","The best bowl in Shinjuku: clear shoyu, hand-made noodles, perfect egg, draft beer and gyoza at a counter. ¥1,100. Last orders about 22:30.","Golden Gai, 6 min"],
+   ["any time","Numazuko conveyor, Yasukuni-dori","The classic long Shinjuku belt since the 80s, ¥140 to ¥500 a plate, open to 23:00, 10 min on foot.","Golden Gai, 4 min"],
+   ["any time","Hakata Ikkousha, Kabukicho","Creamy tonkotsu, thin noodles with free refills, gyoza, draft beer, lively counter, open into the small hours, 3 min from the hotel. ¥900 to ¥1,300.","Golden Gai, 2 min"],
+   ["any time","Omoide Yokocho yakitori","The original plan: sticks and beer in the smoke under the tracks, counters of six, to midnight. Torien or Sasamoto; ¥3,000 a head.","Golden Gai, 8 min"]],
+  transport:"<b>Rail</b> Narita Express to Shinjuku. Check-in at the hotel is 15:00 onwards so bags go straight to the room. <b>Fukutoshin line</b> to Omotesando if the sushi timing allows, 5 min each way. Last trains about 00:30 but tonight everything is on foot.",
+  eat:"<b>First night by the clock:</b> the spot-decision table above. The best belt in the city, Nemuro Hanamaru, is on the 8 Nov evening instead. <b>Bath</b> 15:00–24:00 and 06:00–10:00, tattoo cover stickers from the front desk.",
   map:"Shinjuku Station", route:["Narita International Airport Terminal 2","Shinjuku Station","Kaiten Sushi Ginza Onodera Omotesando","Golden Gai"],
   check:["Welcome Suica x2 bought","Narita Express boarded","Hotel check-in done","First conveyor plate","Golden Gai"]},
  {code:"D1",img:"p_shibuya",date:"2026-10-29",dow:"Thu",name:"Harajuku & Shibuya",city:"Tokyo",ph:"Tokyo W",km:14,
@@ -885,7 +934,7 @@ document.getElementById("days").innerHTML=DAYS.map(function(d){
   return '<article class="day '+state+'" id="day-'+d.code+'" style="border-left-color:'+(state==="active"?"var(--accent)":phaseColor(d.ph))+'">'+
    '<header><span class="code">'+d.code+' · '+label+'</span><h3>'+esc(d.name)+'</h3>'+(state==="active"?'<span class="chip live">Active op</span>':'')+'<span class="meta">'+esc(d.city)+' · phase '+esc(d.ph)+'</span></header>'+
    '<div class="cols"><div><ul class="timeline">'+wps+'</ul><div class="transport">'+d.transport+'</div>'+
-   '<div class="eat"><b>Rations.</b> '+d.eat+'</div>'+(d.intel?'<div class="intel">'+d.intel+'</div>':'')+(d.alt?'<div class="alt">'+d.alt+'</div>':'')+'</div>'+
+   '<div class="eat"><b>Rations.</b> '+d.eat+'</div>'+(d.decide?'<div class="decide"><b>Spot decision at the hotel door</b><ul>'+d.decide.map(function(o){return '<li><span class="gate">'+esc(o[0])+'</span><b>'+esc(o[1])+'</b><small>'+esc(o[2])+' <i>Then:</i> '+esc(o[3])+'</small></li>'}).join("")+'</ul></div>':'')+(d.intel?'<div class="intel">'+d.intel+'</div>':'')+(d.alt?'<div class="alt">'+d.alt+'</div>':'')+'</div>'+
    '<div>'+(d.img?'<img class="hero" src="img/'+d.img+'.jpg" alt="" loading="lazy" onerror="this.remove()">':'')+'<div class="map">'+map+'</div><div class="maplinks"><a class="btn primary" target="_blank" rel="noopener" href="'+routeUrl(d.route)+'">Route in Google Maps</a><a class="btn" target="_blank" rel="noopener" href="'+mapUrl(d.map)+'">'+esc(d.map)+'</a></div>'+
    '<div class="check">'+checks+'</div>'+
    '<div class="steps"><span>Planned <span class="mono">~'+fmt(planned)+'</span> steps · '+d.km+' km</span>'+stepChip+'<label for="st-'+d.code+'" style="margin-left:auto">Logged</label><input type="number" inputmode="numeric" min="0" step="100" id="st-'+d.code+'" data-code="'+d.code+'" value="'+(logged[d.code]||"")+'" placeholder="0"></div>'+
@@ -996,6 +1045,25 @@ var SOPS=[
  ["Illness or injury","Pharmacy first (Matsumoto Kiyoshi, Welcia) for colds and stomach. Blister: stop and tape at the first hot spot. Hospital for anything worse: JNTO hotline 050-3816-2787 for an English-speaking clinic, insurance number ready, pay and claim back. Nearest hospital to the trail is in Tanabe."],
  ["Exfil, 10 Nov","Alarm 06:00. Leave 06:45. Terminal 3 by 07:30. Tax-free goods in hand luggage. Suica balances spent at the airport konbini since they cannot be refunded."]
 ];
+var BARS=[
+ {city:"Shinjuku · 28, 29, 30 Oct",stops:[["Omoide Yokocho","Yakitori and the first beer at a six-stool counter, Torien or Sasamoto."],["Albatross, Golden Gai","Three floors, chandeliers, ¥500 cover, the easy first door."],["Open Book","Lemon sours and a wall of books, no cover."],["Bar Araku","No cover, English, the owner introduces people."],["Champion","Karaoke dive, cheap, every nationality after midnight."],["Nagi","24-hour niboshi ramen in the same alley for the end."]],
+  route:["Omoide Yokocho","Albatross Golden Gai","Open Book Golden Gai Shinjuku","Bar Araku Golden Gai","Champion Golden Gai","Sugoi Niboshi Ramen Nagi Golden Gai"]},
+ {city:"Shibuya · 29 Oct, after Shibuya Sky",stops:[["Nonbei Yokocho","Two lanes of 1950s bars by the tracks; Tight is the one with the open door."],["Mikkeller Tokyo","Craft beer, big tables, travellers and expats."],["Oiran","Red-lit bar with a dance floor if the night is going that way."]],
+  route:["Shibuya Sky","Nonbei Yokocho","Mikkeller Tokyo","Oiran Shibuya"]},
+ {city:"Ebisu · 30 Oct, after the west-side villages",stops:[["Yebisu Brewery Tokyo","Taproom on the old brewery site, Yebisu fresh from the tank."],["Ebisu Yokocho","Covered alley of counters that becomes one party by 22:00."],["Bar Trench","Absinthe and proper cocktails, 10 seats, a quiet last drink."]],
+  route:["Yebisu Brewery Tokyo","Ebisu Yokocho","Bar Trench Ebisu"]},
+ {city:"Kyoto · 31 Oct, 1 and 2 Nov",stops:[["Pontocho","The lantern alley, walk its length once."],["Beer Komachi","Craft beer in Gion, small, chatty, English menu."],["Sake Bar Yoramu","An Israeli sake expert pours flights and explains them; book or arrive at opening."],["L'Escamoteur","Cocktails in a magician's parlour, queue after 21:00."],["Suiba","Standing bar, every drink ¥500, locals and students."]],
+  route:["Pontocho","Beer Komachi Kyoto","Sake Bar Yoramu","L'Escamoteur Bar Kyoto","Suiba Kawaramachi"]},
+ {city:"Osaka · 4 to 7 Nov",stops:[["Hozenji Yokocho","Stone lane, the moss-covered Fudo statue, Hozenji's izakaya."],["Misono Building","Two floors of 1960s bars in a lift-lobby of a building; pick doors at random."],["Ura-Namba","Standing bars and tiny izakaya behind Namba, the local Saturday."],["Space Station","Retro games bar in Amerikamura, the backpacker living room."],["Craft Beer Base Bud","Osaka's craft brewery taproom."]],
+  route:["Hozenji Yokocho","Misono Building Osaka","Ura Namba","Space Station Bar Osaka","Craft Beer Base Bud"]},
+ {city:"Hiroshima · 6 Nov, before the Nozomi",stops:[["Koba","Metal bar of twelve seats, the owner's guestbook is full of travellers."],["Golden Garden","Craft beer, 20 taps, Nagarekawa."]],
+  route:["Hiroshima Peace Memorial Park","Koba Hiroshima bar","Golden Garden Hiroshima","Hiroshima Station"]},
+ {city:"East Tokyo · 8 and 9 Nov",stops:[["Yurakucho gado-shita","Izakaya under the brick arches; Andy's Shin Hinomoto needs a booking."],["Bar High Five, Ginza","World-top-50 cocktail bar, no menu, tell them what you like."],["Hoppy Street, Asakusa","Open-air stools, beef stew and hoppy after the Mitake day."],["Kamiya Bar","Japan's oldest western bar (1880), Denki Bran at ¥400."]],
+  route:["Yurakucho","Bar High Five Ginza","Hoppy Street Asakusa","Kamiya Bar Asakusa"]}
+];
+document.getElementById("barRoutes").innerHTML=BARS.map(function(b){
+  return '<div class="card"><h4>'+esc(b.city)+'</h4><ul>'+b.stops.map(function(x){return '<li><b>'+esc(x[0])+'</b>: '+esc(x[1])+'</li>'}).join("")+'</ul><div style="margin-top:8px"><a class="btn primary" target="_blank" rel="noopener" href="'+routeUrl(b.route)+'">Walk it in Google Maps</a></div></div>'}).join("");
+
 var PRE=[
  ["Passports valid beyond 10 Nov, photo of each in the group chat","now","Japan needs validity for the stay only, but airlines are stricter."],
  ["Visa status for whoever needs one, dates matching the new itinerary","now","Resubmit if still pending; fine if issued."],
