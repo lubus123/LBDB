@@ -150,6 +150,8 @@ ul.plain{list-style:none;padding:0;margin:0;display:grid;gap:6px}
 .opt .perks{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0}
 .opt .links{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 .opt input{position:absolute;top:12px;right:12px;accent-color:var(--accent);width:18px;height:18px}
+.opt.booked{border-color:var(--ok);box-shadow:inset 0 0 0 2px var(--ok);cursor:default} .opt.booked .tier{color:var(--ok)} .opt.alt{opacity:.6;cursor:default}
+.opt .conf{font-family:var(--mono);font-size:13px;line-height:1.5;margin:4px 0 6px;padding:6px 8px;background:var(--panel2);border-left:3px solid var(--ok)}
 .totals{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:baseline;background:var(--panel);border:1px solid var(--line);padding:12px 16px;margin-bottom:14px}
 .totals b{font-family:var(--mono);font-size:24px;font-variant-numeric:tabular-nums}
 .totals small{font-family:var(--cond);text-transform:uppercase;letter-spacing:.12em;font-size:11px;color:var(--muted);display:block}
@@ -189,10 +191,10 @@ footer{margin-top:40px;color:var(--muted);font-size:13px;border-top:1px solid va
     <div class="grid tiles">
       <div class="tile"><b>14</b><small>Days in theatre</small></div>
       <div class="tile"><b>13</b><small>Nights</small></div>
-      <div class="tile"><b>6</b><small>Bases</small></div>
+      <div class="tile"><b>5</b><small>Bases</small></div>
       <div class="tile"><b id="tilePlanned">—</b><small>Planned steps</small></div>
       <div class="tile"><b id="tileLogged">—</b><small>Logged steps</small></div>
-      <div class="tile"><b id="tileTotal">—</b><small>Hotels, selected (EUR)</small></div>
+      <div class="tile"><b id="tileTotal">—</b><small>Hotels, booked (EUR)</small></div>
     </div>
     <div class="phases" id="phases"></div>
     <h3 style="margin-top:6px">Day by day</h3>
@@ -200,7 +202,7 @@ footer{margin-top:40px;color:var(--muted);font-size:13px;border-top:1px solid va
       <tr><th>Day</th><th>Date</th><th>Base</th><th>Op</th><th class="num">Steps</th></tr>
     </table></div>
     <div class="note"><b>Flights, both of us.</b> Out: BA3449 Frankfurt 20:05 Tue 27 Oct, lands Narita 17:05 Wed 28 Oct, 13 hours (booking ZASD8Q). Home: Haneda 09:35 Tue 10 Nov, lands Heathrow 15:35. In-flight plan is on the SOP &amp; kit tab.</div>
-    <div class="note"><b>Booking.com Genius Level 3.</b> Lubo's account carries 10 to 20% off at Genius-partner hotels, free breakfast or room upgrades at some, and priority support. Every price on the Billeting tab was quoted logged out, so book from the account and expect most Standard options to land under the cap with margin.</div>
+    <div class="note"><b>Hotels locked.</b> All five bases are confirmed on Booking.com from Lubo's Genius account: Kabukicho Tower (Shinjuku), KIORI Exec Gojo (Kyoto), Sansuikan Kawayu Midoriya (the onsen night), Hotel S-Presso East (Osaka), APA Ningyocho (east Tokyo). ¥283,545 for 13 nights, about €127 a night. Confirmation numbers, payment and cancellation deadlines are on the Billeting tab. Still to do at Midoriya: ask for a non-smoking room and order dinner, before 28 Oct.</div>
     <div class="note"><b>Step doctrine.</b> Minimum 15,000 a day. Planned figures below are walking estimates at 1,350 steps per km. Three days fall short by design: the two flight days and the Tokyo arrival on 8 Nov, which is a train, a long lunch and a garden. Everything else clears 15k.</div>
     <h3 style="margin-top:18px">Decisions still open</h3>
     <ul class="plain" id="openItems"></ul>
@@ -226,12 +228,12 @@ footer{margin-top:40px;color:var(--muted);font-size:13px;border-top:1px solid va
   <section id="billet" hidden>
     <div class="eyebrow">Billeting</div>
     <h2>Where we sleep</h2>
-    <p class="lead">Two options per base: Standard holds the €150 line where the market allows, Upgrade buys the rooftop bath, the trailhead lodge or the river onsen. Tap to choose; the total updates and the choice is remembered on this device. Prices are live Booking.com quotes from 13 Oct 2026 for 2 adults, taxes included, quoted logged out; Genius Level 3 will cut most of them by 10 to 20%, so book from Lubo's account. Tokyo is split on purpose: west for the first three nights (Harajuku, Shibuya, Shinjuku on foot), east for the last two (Tsukiji, Ginza, Nihonbashi, and the Asakusa line straight to Haneda). The Kumano night is the one place Booking.com fails you: the valley's real ryokan (Adumaya, Yoshinoya, Iseya at Yunomine, Fujiya and Kameya at Kawayu) sell through Kumano Travel, the Tanabe tourism bureau's own booking site, or by phone. The two direct options are listed with estimated prices; hold the SEN RETREAT cabin on free cancellation while you secure one, or take Kawayu Midoriya, which is a proper ryokan and bookable now.</p>
+    <p class="lead">All five bases are booked on Booking.com from Lubo's Genius account; the confirmations are in Gmail. Euro figures are converted at ¥172 to the euro and will differ a little from the card statement. Each card carries the confirmation number, what is paid and the free-cancellation deadline: 28 Oct for Kyoto and Kawayu, 31 Oct for Osaka, 6 Nov for east Tokyo; the Shinjuku deadline has passed. One alternative is kept under each base in case a booking has to move. Tokyo is split on purpose: Shinjuku for the first three nights, Ningyocho for the last two with the Asakusa line straight to Haneda. The Kumano night is at Kawayu, 10 min below Yunomine on the same bus line, so Tsuboyu stays in the plan on the way through.</p>
     <div class="totals">
-      <div><small>Selected total</small><b id="selTotal">—</b></div>
-      <div><small>All standard</small><b id="minTotal">—</b></div>
-      <div><small>All upgrade</small><b id="maxTotal">—</b></div>
+      <div><small>Booked total, about</small><b id="selTotal">—</b></div>
+      <div><small>Booked total, yen</small><b id="yenTotal">—</b></div>
       <div><small>Average per night</small><b id="avgNight">—</b></div>
+      <div><small>Nights booked</small><b id="nightsTotal">—</b></div>
     </div>
     <div id="stays"></div>
   </section>
@@ -628,25 +630,26 @@ var DAYS=[
   intel:"<b>Monday.</b> The Imperial Palace and Sento Palace are closed; Nijo, the temples and the market are open. Nijo at opening and Ginkaku-ji at 16:00 are the quiet windows.",
   alt:"<b>Alt.</b> Kinkaku-ji and Ryoan-ji in the north-west instead of the Philosopher's Path, by bus 205 from Nijo. Or a rest day: the Dormy Inn rooftop onsen, Nishiki, and an early night before the mountains.",
   check:["Nijo at 08:45","Teramachi","Nishiki lunch","Philosopher's Path","Ginkaku-ji","Daypacks packed, cash withdrawn"]},
- {code:"D6",img:"p_oyunohara",date:"2026-11-03",dow:"Tue",name:"Kumano Sanzan I: the pilgrim road into Hongu, over the pass to the bath",city:"Hongu",ph:"Kumano",km:12,
+ {code:"D6",img:"p_oyunohara",date:"2026-11-03",dow:"Tue",name:"Kumano Sanzan I: the pilgrim road into Hongu, over the pass to the baths",city:"Kawayu",ph:"Kumano",km:12,
   wp:[["06:30","Check out, suitcases to takkyubin at the desk","Addressed to the Osaka hotel for 4 Nov. Daypacks only from here."],
       ["07:05","Kuroshio 1 from Kyoto","Reserved seats on the pass, day 1. 2h45 down the coast; sea on the right after Wakayama. Konbini breakfast on board."],
       ["09:50","Kii-Tanabe","Kumano Kotsu bus from stop 2, the Hongu line, 10:10. Get off at Hosshinmon-oji, about 11:40, ¥1,900 on Suica."],
       ["11:45","Hosshinmon-oji","The gate of awakening, where the final approach to Hongu begins. Toilets, vending machine, lunch on the bench."],
       ["12:15","Nakahechi: Hosshinmon-oji → Hongu Taisha","6.9 km, 2h30. Mizunomi-oji, tea fields, then Fushiogami-oji with the first view of the Oyunohara torii far below."],
       ["14:45","Kumano Hongu Taisha","First of the three grand shrines, arriving by the back path from the trail. Cedar halls, the 158 steps, the goshuin book for ¥1,500. Oyunohara's 34 m torii is 15 min below."],
-      ["15:30","Dainichi-goe: Hongu → Yunomine","3.4 km, 1h15. Short and steep over the ridge, straight into the village. From Watarase, the hotel shuttle instead."],
-      ["16:45","Inn, then Tsuboyu","The UNESCO bath, ¥800, 30-minute private slots, first come. Onsen eggs from the yutsubo next door."],
-      ["18:30","Dinner","At the inn if it serves, otherwise the village's one restaurant; book it at check-in."]],
+      ["15:30","Dainichi-goe: Hongu → Yunomine","3.4 km, 1h15. Short and steep over the ridge, straight down into the village. Tired or late: the Midoriya shuttle from Hongu Taisha instead, arranged with the inn."],
+      ["16:45","Tsuboyu","The UNESCO bath, ¥800, 30-minute private slots, first come. Onsen eggs from the yutsubo next door while you wait."],
+      ["17:45","Yunomine → Kawayu, Midoriya","10 min on the Kumano Kotsu Shingu-line bus, about ¥300 on Suica, or the inn shuttle. Check-in window 15:00 – 19:00; they expect you at 18:00. ¥150 bath tax each, cash."],
+      ["18:30","Dinner at Midoriya, then the river","Dinner is ordered in advance through Booking. Afterwards the Sennin-buro: the Oto river bed is hot, dig a pool in the gravel with the inn's shovel, torch and towel. Then the riverside open-air bath."]],
   transport:"<b>Kuroshio</b> on the pass. <b>Kumano Kotsu bus</b> Tanabe → Hosshinmon-oji, cash or IC, not on the pass. <b>On foot</b> 10.3 km.",
   eat:"<b>Mehari-zushi</b> from the Tanabe station konbini for the bench at Hosshinmon-oji, <b>onsen tamago</b> at Yunomine, river fish and mountain vegetables.",
-  map:"Hosshinmon-oji", route:["Kyoto Station","Kii-Tanabe Station","Hosshinmon-oji","Fushiogami-oji","Kumano Hongu Taisha","Yunomine Onsen"],
+  map:"Hosshinmon-oji", route:["Kyoto Station","Kii-Tanabe Station","Hosshinmon-oji","Fushiogami-oji","Kumano Hongu Taisha","Yunomine Onsen","Sansuikan Kawayu Midoriya"],
   intel:"<b>Turn-back rule.</b> If the bus is late and you are not walking by 12:30, get off at Hongu Taisha instead, see the shrine and the Oyunohara torii, and walk only the Dainichi-goe. Sunset 16:55. <b>Culture Day</b> holiday: the trail stays quiet, Tsuboyu will have a queue, so take the first slot you are offered.",
-  alt:"<b>Alt, three days.</b> Borrow a Tokyo night: leave Kyoto on 2 Nov, walk Takijiri → Takahara → Chikatsuyu (13 km) and sleep there, do this day on the 3rd, Nachi on the 4th. More trail, same bath.",
-  check:["Suitcases sent","Kuroshio boarded","Hosshinmon-oji","Fushiogami view","Hongu Taisha stamp","Tsuboyu"]},
+  alt:"<b>Alt, three days.</b> Leave Kyoto on 2 Nov, walk Takijiri → Takahara → Chikatsuyu (13 km) and sleep there, do this day on the 3rd, Nachi on the 4th. The Kyoto night is now paid for, so only if a day collapses.",
+  check:["Suitcases sent","Kuroshio boarded","Hosshinmon-oji","Fushiogami view","Hongu Taisha stamp","Tsuboyu","River bath at Kawayu"]},
  {code:"D7",img:"p_nachi",date:"2026-11-04",dow:"Wed",name:"Kumano Sanzan II: Hayatama, the old road up to Nachi's pagoda and falls, then Osaka",city:"Nachi",ph:"Osaka",km:13,
-  wp:[["06:30","Morning bath, breakfast","Check out by 07:45."],
-      ["08:00","Bus Yunomine → Shingu","About 1h20, ¥1,540. Riverside the whole way."],
+  wp:[["06:45","River bath, then breakfast at Midoriya","Breakfast is included. Check out by 08:00; the inn will hold daypacks and call ahead for the bus time."],
+      ["08:10","Bus Kawayu → Shingu","About 1h10, around ¥1,500 on Suica, from the stop outside the inn. Riverside the whole way."],
       ["09:30","Kumano Hayatama Taisha","15 min walk from Shingu station. Second grand shrine, second stamp. The 800-year-old nagi tree. Reserve the afternoon Kuroshio seats at the station before leaving."],
       ["10:40","JR Shingu → Nachi","Pass day 2, 20 min local train."],
       ["11:00","Nachi station → Daimon-zaka on foot","3.5 km along the old pilgrim road through Nachi town, gently uphill. Lunch at the bottom of the stairs."],
@@ -655,11 +658,11 @@ var DAYS=[
       ["14:15","Nachi Falls, Hiro Shrine","133 m, tallest single drop in Japan. ¥300 for the close platform."],
       ["15:00","Bus to Kii-Katsuura","Kuroshio about 16:00 → Shin-Osaka about 20:00, pass. Tuna bowl at the station if the timing allows."],
       ["20:30","Osaka hotel","Suitcases waiting. Late ramen in Namba."]],
-  transport:"<b>Bus</b> Yunomine → Shingu (cash or IC). <b>JR</b> Shingu → Nachi and <b>Kuroshio</b> Kii-Katsuura → Shin-Osaka on the pass. <b>On foot</b> 8 to 10 km. <b>Midosuji</b> to the hotel.",
+  transport:"<b>Bus</b> Kawayu → Shingu (cash or IC). <b>JR</b> Shingu → Nachi and <b>Kuroshio</b> Kii-Katsuura → Shin-Osaka on the pass. <b>On foot</b> 8 to 10 km. <b>Midosuji</b> to the hotel.",
   eat:"<b>Sanma-zushi</b> from the Shingu station shop for the walk, <b>maguro</b> at Katsuura station if the timing allows, <b>late ramen</b> in Namba.",
-  map:"Kumano Nachi Taisha", route:["Yunomine Onsen","Kumano Hayatama Taisha","Nachi Station","Daimon-zaka","Kumano Nachi Taisha","Nachi Falls","Kii-Katsuura Station","Shin-Osaka Station"],
+  map:"Kumano Nachi Taisha", route:["Sansuikan Kawayu Midoriya","Kumano Hayatama Taisha","Nachi Station","Daimon-zaka","Kumano Nachi Taisha","Nachi Falls","Kii-Katsuura Station","Shin-Osaka Station"],
   intel:"<b>Trains.</b> Only six Kuroshio a day run from Kii-Katsuura; miss the 16:00 and the next is about 17:30, Osaka at 21:30. Nachi Taisha and the falls platform close at 16:30.",
-  alt:"<b>Alt.</b> Sleep in Kii-Katsuura at Hotel Urashima (cave onsen on the Pacific, tuna breakfast) and ride to Osaka on the morning of the 5th, trading Nara's morning for a second onsen night.",
+  alt:"<b>Alt.</b> Sleep in Kii-Katsuura at Hotel Urashima (cave onsen on the Pacific, tuna breakfast) and ride to Osaka on the morning of the 5th, trading Nara's morning and a paid Osaka night for a second onsen night.",
   check:["Hayatama Taisha","Nachi old road walked","Daimon-zaka","Pagoda and falls photo","Kuroshio boarded","Suitcases collected"]},
  {code:"D8",img:"p_todaiji",date:"2026-11-05",dow:"Thu",name:"Nara's deer, then sacred Mount Miwa",city:"Nara",ph:"Osaka",km:14,
   wp:[["07:45","Yamatoji Rapid Osaka → Nara","50 min, pass day 3. Early, because the mountain gate closes at 14:00."],
@@ -741,71 +744,65 @@ var DAYS=[
 ];
 
 var STAYS=[
- {id:"tokyow",name:"Tokyo west (Shibuya / Shinjuku)",dates:"28 – 31 Oct",nights:3,ci:"2026-10-28",co:"2026-10-31",
+ {id:"tokyow",name:"Tokyo west (Shinjuku)",dates:"28 – 31 Oct",nights:3,ci:"2026-10-28",co:"2026-10-31",
   opts:[
-   {tier:"Standard",name:"Sakura Fleur Aoyama",price:136,score:8.3,reviews:"2,089",
-    blurb:"Adults-only hotel in Shibuya 2-chome, 10 min walk to Shibuya station and Scramble, 15 to Omotesando, Yamanote to Shinjuku in 6 min. Quiet street, big rooms by Tokyo standards.",
-    perks:["Shibuya on foot","Adults only","Quiet"],slug:"sakura-fleur-aoyama",map:"Sakura Fleur Aoyama"},
-   {tier:"Upgrade",name:"APA Hotel Higashi Shinjuku Kabukicho Tower",price:174,score:8.2,reviews:"22,187",
-    blurb:"Tower in Kabukicho with a rooftop open-air bath, 5 min from Golden Gai and Omoide Yokocho, 10 from Shinjuku station and the Narita Express platform. The Morgans' pick of district for a first trip.",
-    perks:["Rooftop open-air bath","Golden Gai 5 min","Narita Express direct"],slug:"apahoteru-dong-xin-su-ge-wu-ji-ting-tawa",map:"APA Hotel Higashi Shinjuku Kabukicho Tower"}]},
+   {tier:"Booked",name:"APA Hotel Higashi Shinjuku Kabukicho Tower",price:184,yen:94860,score:8.2,reviews:"22,187",
+    booked:{conf:"5159544226",room:"Double room, 2 adults, 3 nights",pay:"¥94,860, pay at the hotel",cancel:"free until 26 Oct 23:59 JST (passed)"},
+    blurb:"Tower in Kabukicho with a rooftop open-air bath, 5 min from Golden Gai and Omoide Yokocho, 10 from Shinjuku station and the Narita Express platform. Check-in from 15:00; the Narita Express lands you at Shinjuku about 19:00.",
+    perks:["Rooftop open-air bath","Golden Gai 5 min","Narita Express direct"],slug:"apahoteru-dong-xin-su-ge-wu-ji-ting-tawa",map:"APA Hotel Higashi Shinjuku Kabukicho Tower"},
+   {tier:"Not booked · Shibuya alternative",name:"Sakura Fleur Aoyama",price:136,score:8.3,reviews:"2,089",
+    blurb:"Adults-only hotel in Shibuya 2-chome, 10 min walk to Shibuya station and Scramble. Kept here only in case the Shinjuku booking has to move.",
+    perks:["Shibuya on foot","Adults only","Quiet"],slug:"sakura-fleur-aoyama",map:"Sakura Fleur Aoyama"}]},
  {id:"kyoto",name:"Kyoto",dates:"31 Oct – 3 Nov",nights:3,ci:"2026-10-31",co:"2026-11-03",
   opts:[
-   {tier:"Standard",name:"KIORI Exec Gojo",price:143,score:8.7,reviews:"664",
-    blurb:"New, quiet, between Gojo and Kyoto Station, 12 min walk to the 07:05 Kuroshio. The Pocket Hotel Karasuma Gojo (8.7, €87) is the compact budget option two streets away.",
-    perks:["Kyoto Station 12 min","Karasuma line"],slug:"kiori-gojo",map:"KIORI Exec Gojo Kyoto"},
-   {tier:"Upgrade",name:"Dormy Inn Premium Kyoto Ekimae Natural Hot Spring",price:216,score:8.7,reviews:"2,512",
-    blurb:"Real onsen on the roof with an open-air bath, free late-night ramen, opposite Kyoto Station: 3 min from the Nara line to Inari and the Kuroshio platform.",
+   {tier:"Booked",name:"KIORI Exec Gojo",price:133,yen:68395,score:8.7,reviews:"664",
+    booked:{conf:"6846115623",room:"Twin Room with View, 3 nights",pay:"¥68,395, cashless hotel (card only, no cash)",cancel:"free until 28 Oct"},
+    blurb:"New, quiet, between Gojo and Kyoto Station, 12 min walk to the 07:05 Kuroshio on 3 Nov. Karasuma line at Gojo for Nijo and the north; Keihan at Kiyomizu-Gojo for Fushimi Inari and Gion.",
+    perks:["Kyoto Station 12 min","Karasuma line","Twin with view"],slug:"kiori-gojo",map:"KIORI Exec Gojo Kyoto"},
+   {tier:"Not booked · alternative",name:"Dormy Inn Premium Kyoto Ekimae Natural Hot Spring",price:216,score:8.7,reviews:"2,512",
+    blurb:"Rooftop onsen and free late-night ramen opposite Kyoto Station. Kept as the fallback if the KIORI booking has to move.",
     perks:["Rooftop onsen","Free night ramen","Kyoto Station"],slug:"dormy-inn-premium-kyoto-ekimae",map:"Dormy Inn Premium Kyoto Ekimae"}]},
- {id:"hongu",name:"Yunomine Onsen (Kumano night)",dates:"3 – 4 Nov",nights:1,ci:"2026-11-03",co:"2026-11-04",
+ {id:"hongu",name:"Kawayu Onsen (the Kumano night)",dates:"3 – 4 Nov",nights:1,ci:"2026-11-03",co:"2026-11-04",
   opts:[
-   {tier:"Direct · standard",name:"Ryokan Yoshinoya",price:150,est:true,score:"—",reviews:"book direct",
-    blurb:"Family ryokan in the middle of Yunomine, 1 min from Tsuboyu, dinner and breakfast of river fish and mountain vegetables cooked in the spring. About ¥12,000 per person with two meals; not on Booking, reserve through Kumano Travel or by phone, 0735-42-0101.",
-    perks:["Tsuboyu 1 min","Two meals","Real ryokan"],url:"https://www.kumano-travel.com/en/accommodations",map:"Yoshinoya Yunomine Onsen"},
-   {tier:"Direct · upgrade",name:"Ryokan Adumaya",price:290,est:true,score:"—",reviews:"book direct",
-    blurb:"The Edo-period inn of Yunomine: cypress baths fed by the 90 °C spring, a 14-dish dinner served in your tatami room, Tsuboyu across the lane. About ¥18,000 to ¥25,000 per person with two meals. Not on Booking; Kumano Travel or 0735-42-0012. Book this week, it fills first.",
+   {tier:"Booked",name:"Sansuikan Kawayu Midoriya",price:294,yen:50490,score:8.6,reviews:"992",
+    booked:{conf:"5137473960",room:"Japanese-style family room, breakfast included, booked as a SMOKING room",pay:"¥50,490 charged to the card",cancel:"free until 28 Oct",note:"Check-in 15:00 – 19:00, tell them 18:00. Dinner is not included: request it through Booking before 28 Oct. ¥150 bath tax each, cash. Ask for a non-smoking room in the same message."},
+    blurb:"Ryokan on the Oto river at Kawayu, 10 min below Yunomine, where the river bed itself is hot: dig your own bath in the gravel, then the riverside open-air bath. Free shuttle from Hongu Taisha if arranged. Breakfast in, kaiseki dinner on request.",
+    perks:["River open-air bath","Breakfast included","Shuttle from Hongu"],slug:"sansuikan-kawayu-midoriya",map:"Sansuikan Kawayu Midoriya"},
+   {tier:"Not booked · Yunomine alternative",name:"Ryokan Adumaya",price:290,est:true,score:"—",reviews:"book direct",
+    blurb:"The Edo-period inn of Yunomine, cypress baths, 14-dish dinner in the room, Tsuboyu across the lane. Kumano Travel or 0735-42-0012. Only if Midoriya falls through.",
     perks:["Kaiseki in room","Cypress onsen","Tsuboyu across the lane"],url:"https://www.kumano-travel.com/en/accommodations/ryokan-adumaya",map:"Ryokan Adumaya Yunomine"},
-   {tier:"Booking · ryokan",name:"Sansuikan Kawayu Midoriya",price:292,score:8.6,reviews:"992",
-    blurb:"The one real ryokan bookable on Booking for 3 Nov: on the Oto river at Kawayu, where the river bed itself is hot. Riverside open-air bath, dinner and breakfast, free shuttle from Hongu Taisha at the end of the walk. Take this if the Yunomine inns are full.",
-    perks:["River open-air bath","Dinner + breakfast","Free shuttle"],slug:"sansuikan-kawayu-midoriya",map:"Sansuikan Kawayu Midoriya"},
-   {tier:"Booking · cabins",name:"SEN RETREAT HONGU",price:185,score:9.5,reviews:"4",
-    blurb:"New cabin lodge 10 min from Hongu Taisha, dinner delivered to the room, no onsen of its own: bathe at Tsuboyu or Watarase. Free cancellation, so it is the room to hold while the ryokan answer.",
-    perks:["Free cancellation","Dinner delivered","Near the shrine"],slug:"sen-retreat-hongu",map:"SEN RETREAT HONGU"}]},
+   {tier:"Not booked · Yunomine alternative",name:"Ryokan Yoshinoya",price:150,est:true,score:"—",reviews:"book direct",
+    blurb:"Family ryokan 1 min from Tsuboyu, two meals cooked in the spring, about ¥12,000 a head. Kumano Travel or 0735-42-0101.",
+    perks:["Tsuboyu 1 min","Two meals","Real ryokan"],url:"https://www.kumano-travel.com/en/accommodations",map:"Yoshinoya Yunomine Onsen"}]},
  {id:"osaka",name:"Osaka",dates:"4 – 8 Nov",nights:4,ci:"2026-11-04",co:"2026-11-08",
   opts:[
-   {tier:"Standard",name:"Hotel S-Presso East",price:64,score:8.7,reviews:"221",
-    blurb:"Clean modern rooms in Nipponbashi, 8 min walk to Dotonbori and Kuromon, 5 min to Namba station, Tennoji two stops for the Nara and Miwa days. Holds the takkyubin suitcases arriving on the 4th.",
+   {tier:"Booked",name:"Hotel S-Presso East",price:59,yen:40460,score:8.7,reviews:"221",
+    booked:{conf:"5979724795",room:"Deluxe Apartment, 4 nights",pay:"¥40,460",cancel:"free until 31 Oct"},
+    blurb:"Apartment-style room in Nipponbashi, 8 min walk to Dotonbori and Kuromon, 5 min to Namba station, Tennoji two stops for the Nara, Miwa and Kuroshio days. Holds the takkyubin suitcases arriving on the 4th; confirm the hotel name on the label.",
     perks:["Namba 5 min","Kuromon 5 min","Holds bags"],slug:"s-presso-east-osaka",map:"Hotel S-Presso East Osaka"},
-   {tier:"Upgrade",name:"APA Hotel & Resort Osaka Namba Ekimae Tower",price:100,score:8.4,reviews:"12,500",
-    blurb:"Tower hotel by Namba station with a rooftop pool, open-air bath, spa and bar. Pool is seasonal and may be shut in November; the bath and bar are open. Four nights at €100 with the bath and the bar.",
+   {tier:"Not booked · alternative",name:"APA Hotel & Resort Osaka Namba Ekimae Tower",price:100,score:8.4,reviews:"12,500",
+    blurb:"Tower by Namba station with a rooftop pool (seasonal), open-air bath and bar. The fallback if the S-Presso booking has to move.",
     perks:["Rooftop pool (seasonal)","Open-air bath","Bar"],slug:"apahoterurizotoda-ban-nanbayi-qian-tawa",map:"APA Hotel & Resort Osaka Namba Ekimae Tower"}]},
- {id:"tokyoe",name:"Tokyo east (Nihonbashi / Tsukiji)",dates:"8 – 10 Nov",nights:2,ci:"2026-11-08",co:"2026-11-10",
+ {id:"tokyoe",name:"Tokyo east (Nihonbashi)",dates:"8 – 10 Nov",nights:2,ci:"2026-11-08",co:"2026-11-10",
   opts:[
-   {tier:"Standard",name:"APA Hotel Ningyocho Ekihigashi",price:83,score:8.4,reviews:"1,467",
+   {tier:"Booked",name:"APA Hotel Ningyocho Ekihigashi",price:85,yen:29340,score:8.4,reviews:"1,467",
+    booked:{conf:"5159593448",room:"Double room, 2 nights",pay:"¥29,340",cancel:"free until 6 Nov"},
     blurb:"Ningyocho, old-town Nihonbashi: 10 min to Tokyo Station, Asakusa line straight through to Haneda in 40 min, and to Senso-ji in 10. Sukiyaki and taiyaki streets outside the door.",
     perks:["Haneda direct 40 min","Tokyo Station 10 min","Old town"],slug:"apahoteru-ren-xing-ting-yi-dong",map:"APA Hotel Ningyocho Ekihigashi"},
-   {tier:"Upgrade",name:"Hotel Vista Tokyo Tsukiji",price:153,score:8.4,reviews:"3,216",
-    blurb:"Tsukiji outer market on the doorstep for a sushi breakfast, Ginza and Kabukiza 10 min on foot, Hamarikyu 10 min, Higashi-Ginza on the Asakusa line direct to Haneda.",
-    perks:["Tsukiji market","Ginza on foot","Haneda direct"],slug:"hotel-vista-tokyo-tsukiji",map:"Hotel Vista Tokyo Tsukiji"}]},
- {id:"haneda",name:"Haneda (only if you drop the second east-Tokyo night)",dates:"9 – 10 Nov",nights:0,ci:"2026-11-09",co:"2026-11-10",
-  opts:[
-   {tier:"Standard",name:"hotel MONday Haneda Airport",price:93,score:8.6,reviews:"2,413",
-    blurb:"Free airport shuttle, 10 min to Terminal 3. Only needed if the Tokyo east base feels too far from the 09:35 flight; it is not, the Asakusa line runs through.",
-    perks:["Free shuttle"],slug:"relief-premium-haneda-tokyo",map:"hotel MONday Haneda Airport"},
-   {tier:"Upgrade",name:"Hotel Metropolitan Tokyo Haneda",price:129,score:9.2,reviews:"7,139",
-    blurb:"Inside Haneda Innovation City at Tenkubashi station, one Keikyu stop from Terminal 3. Rooftop footbath with runway views.",
-    perks:["Tenkubashi station","Rooftop footbath"],slug:"metropolitan-tokyo-haneda",map:"Hotel Metropolitan Tokyo Haneda"}]}
+   {tier:"Not booked · alternative",name:"Hotel Vista Tokyo Tsukiji",price:153,score:8.4,reviews:"3,216",
+    blurb:"Tsukiji outer market on the doorstep, Ginza 10 min on foot, Higashi-Ginza on the Asakusa line direct to Haneda. The fallback if Ningyocho has to move.",
+    perks:["Tsukiji market","Ginza on foot","Haneda direct"],slug:"hotel-vista-tokyo-tsukiji",map:"Hotel Vista Tokyo Tsukiji"}]}
 ];
 
 var LOGI=[
- ["Kansai-Hiroshima Area Pass","¥17,000 pp","Buy on the JR West site by 20 Oct, collect at Kyoto Station on 31 Oct. Activate 3 Nov, valid to 7 Nov.","Kuroshio to Kii-Tanabe and from Kii-Katsuura, JR Shingu ⇄ Nachi, Nara and Sakurai lines to Miwa, Nozomi Shin-Osaka ⇄ Hiroshima, JR Miyajima ferry, Osaka Loop Line. Reserved seats free."],
- ["SmartEX tickets","¥29,100 pp","App. 8 Nov leg by 18 Oct for Hayatoku 21; 31 Oct leg by 28 Oct.","Tokyo → Kyoto 31 Oct 07:00, Shin-Osaka → Tokyo 8 Nov 07:30."],
+ ["Kansai-Hiroshima Area Pass","¥17,000 pp","Bought 27 Oct on the JR-WEST site, start date 3 Nov. Collect at a Kyoto Station ticket machine on 1 or 2 Nov, not on the morning of the 3rd: reservation number, the 4-digit ID, the card used, passports with IC chip (no chip: the ticket office).","Valid 3 – 7 Nov. Kuroshio to Kii-Tanabe and from Kii-Katsuura, JR Shingu ⇄ Nachi, Nara and Sakurai lines to Miwa, Nozomi Shin-Osaka ⇄ Hiroshima, JR Miyajima ferry, Osaka Loop Line. Reserved seats free: book Kuroshio 3 and 4 Nov and both Nozomi for 6 Nov online as soon as the pass is paid.",true],
+ ["SmartEX tickets","about ¥26,500 pp","App, now. 31 Oct: standard Nozomi 07:00 ¥13,970, or EX Hayatoku 3 Green Car on a Hikari about ¥14,100, by 28 Oct 23:30. 8 Nov: EX Hayatoku 7 on a Hikari ¥12,490, by 1 Nov 23:30, limited seats.","Tokyo → Kyoto 31 Oct 07:00 (Hikari 25 min slower); Shin-Osaka → Tokyo 8 Nov about 07:30, Tokyo by 10:30 for the omakase. Early-bird tickets cannot be changed, only refunded with a fee. Hayatoku 21 missed for both legs; the two legs were ¥29,100 at walk-up price."],
  ["Welcome Suica x2","¥0 + top-up","Narita T2 B1, JR East Travel Service Center, 28 Oct.","All metro, JR local, buses (Kumano Kotsu included), konbini, the Miwa and Mitake trains. 28-day validity, balance not refundable."],
  ["Narita Express to Shinjuku","¥3,250 pp","Narita T2 on arrival.","Airport → Shinjuku direct, 80 min."],
- ["Kumano Kotsu buses","about ¥3,500 pp total","On board, cash or IC. Tanabe → Hosshinmon-oji ¥1,900, Yunomine → Shingu ¥1,540.","Trail access on 3 and 4 Nov. Not on any JR pass."],
- ["Takkyubin suitcase transfer","about ¥2,500 per bag","Kyoto hotel desk, 3 Nov 06:30.","Suitcases to the Osaka hotel, arrive 4 Nov, the day you do."],
- ["Tsuboyu bath","¥800 pp","Yunomine ticket office, 3 Nov afternoon and 4 Nov 06:00.","30-minute private slot in the UNESCO bath. Twice if you like it."],
- ["Omakase lunches x2","¥8,800 + ¥6,600 pp","Sushi Tokyo Ten (Shinjuku) via its site; Manten Sushi Marunouchi via TableCheck. Book by 22 Oct.","30 Oct and 8 Nov."],
+ ["Kumano Kotsu buses","about ¥3,700 pp total","On board, cash or IC. Tanabe → Hosshinmon-oji ¥1,900, Yunomine → Kawayu about ¥300, Kawayu → Shingu about ¥1,500.","Trail access on 3 and 4 Nov. Not on any JR pass."],
+ ["Takkyubin suitcase transfer","about ¥2,500 per bag","KIORI desk, 3 Nov 06:30, card only (cashless hotel).","Suitcases to Hotel S-Presso East, arrive 4 Nov, the day you do. Write the hotel name and your name in roman letters on the label."],
+ ["Tsuboyu bath","¥800 pp","Yunomine ticket office, 3 Nov about 16:45, on the way down to Kawayu.","30-minute private slot in the UNESCO bath. The morning bath on the 4th is Kawayu's river at Midoriya instead."],
+ ["Omakase lunches x2","¥8,800 + ¥6,600 pp","Sushi Tokyo Ten (Shinjuku) via its site; Manten Sushi Marunouchi via TableCheck. Book now, counters are small.","30 Oct and 8 Nov."],
  ["Shibuya Sky","about ¥2,500 pp","Online, 16:30 slot for 29 Oct.","Rooftop deck, sunset."],
  ["Mount Miwa climbing permit","¥300 pp","Sai Shrine, 5 Nov, by 13:00 (gate closes 14:00).","White sash, rules, the sacred mountain."],
   ["Mitake day","about ¥3,100 pp","Suica for the trains, cash for the bus and cable car, 9 Nov.","Tokyo ⇄ Mitake ¥2,400 return, bus and cable car ¥1,200 return."],
@@ -817,17 +814,14 @@ var LOGI=[
 ];
 
 var OPEN=[
- "Tokyo west: Sakura Fleur Aoyama in Shibuya at €136 or APA Kabukicho Tower in Shinjuku with the rooftop bath at €174",
- "Kyoto, three nights: KIORI Exec Gojo at €143 or Dormy Inn with the rooftop onsen at €216 (Pocket Hotel at €87 if saving)",
- "Yunomine, 3 Nov: Adumaya or Yoshinoya booked direct through Kumano Travel this week; Kawayu Midoriya or the SEN RETREAT cabin as the Booking fallbacks",
- "Second onsen night? Katsuura on 4 Nov: Hotel Urashima cave baths at about €180, Manseiro at €293, TAOYA at €439 with dinner",
- "Osaka, four nights: S-Presso East at €64 or APA Namba Tower with pool and bar at €100",
- "Tokyo east: APA Ningyocho at €83 or Hotel Vista Tsukiji at €153",
+ "SmartEX 31 Oct, by 28 Oct 23:30: standard Nozomi 07:00 at ¥13,970, or the Green Car on a Hikari (EX Hayatoku 3) at about ¥14,100 and 25 min slower",
+ "SmartEX 8 Nov, by 1 Nov 23:30: EX Hayatoku 7 on a Hikari at ¥12,490 saves ¥2,030 each over the Nozomi and still makes the 12:00 omakase",
+ "Midoriya, before 28 Oct: message the inn through Booking for a non-smoking room, dinner for two on 3 Nov and an 18:00 arrival",
+ "Second onsen night? Katsuura on 4 Nov: Hotel Urashima cave baths at about €180, Manseiro at €293, TAOYA at €439 with dinner; Osaka is booked, so it costs a paid night",
  "1 Nov afternoon: Mii-dera and the lakeshore, or Enryaku-ji up Mount Hiei",
  "5 Nov: Nara and the Miwa climb in one day (tight at the 14:00 gate), or Nara alone with Naramachi",
  "2 Nov: Nijo and the Philosopher's Path, or Kinkaku-ji and the north-west",
- "9 Nov, decided at 06:30 by the sky: Kawaguchiko for Fuji itself if clear, Mitake and Odake if not, the east-Tokyo city day if raining",
- "Kumano in three days by borrowing a Tokyo night: see the alternative on the 2 Nov card"
+ "9 Nov, decided at 06:30 by the sky: Kawaguchiko for Fuji itself if clear, Mitake and Odake if not, the east-Tokyo city day if raining"
 ];
 
 var RATIONS=[
@@ -916,27 +910,29 @@ document.getElementById("dayTable").addEventListener("click",function(e){var a=e
 /* ---------- billeting ---------- */
 var sel=store("ors.hotels")||{};
 function eur(n){return "€"+fmt(n)}
+var JPY=172;
 function renderStays(){
-  var html="",tot=0,min=0,max=0,nights=0;
+  var html="",totE=0,totY=0,nights=0;
   STAYS.forEach(function(s){
-    var chosen=sel[s.id]||0; nights+=s.nights;
-    var prices=s.opts.map(function(o){return o.price*s.nights});
-    if(!s.nights){html+='<div class="stay"><header><span class="eyebrow">'+esc(s.name)+'</span><h3>Reserve option, not counted</h3></header><p style="margin:0;color:var(--muted);font-size:14px">'+s.opts.map(function(o){return esc(o.name)+' €'+o.price+' ('+o.score+')'}).join(" · ")+'</p></div>';return}
-    min+=Math.min.apply(null,prices); max+=Math.max.apply(null,prices); tot+=prices[chosen];
-    html+='<div class="stay"><header><span class="eyebrow">'+esc(s.name)+'</span><h3>'+s.dates+' · '+s.nights+(s.nights>1?' nights':' night')+'</h3></header><div class="opts">'+
-      s.opts.map(function(o,j){var over=o.price>BUDGET;
-        return '<label class="opt'+(chosen===j?' sel':'')+'"><input type="radio" name="st-'+s.id+'" id="st-'+s.id+'-'+j+'" value="'+j+'"'+(chosen===j?' checked':'')+'>'+
+    var bi=-1; s.opts.forEach(function(o,j){if(o.booked)bi=j});
+    var chosen=bi>=0?bi:(sel[s.id]||0); nights+=s.nights;
+    var o0=s.opts[chosen]; totE+=o0.price*s.nights; if(o0.yen)totY+=o0.yen;
+    html+='<div class="stay"><header><span class="eyebrow">'+esc(s.name)+'</span><h3>'+s.dates+' · '+s.nights+(s.nights>1?' nights':' night')+'</h3>'+(bi>=0?'<span class="chip live">Booked</span>':'')+'</header><div class="opts">'+
+      s.opts.map(function(o,j){var over=o.price>BUDGET,b=o.booked;
+        return '<label class="opt'+(chosen===j?' sel':'')+(b?' booked':'')+(bi>=0&&!b?' alt':'')+'">'+(bi>=0?'':'<input type="radio" name="st-'+s.id+'" id="st-'+s.id+'-'+j+'" value="'+j+'"'+(chosen===j?' checked':'')+'>')+
         '<div class="tier">'+o.tier+'</div><h4>'+esc(o.name)+'</h4>'+
-        '<div class="price"><b>'+(o.est?'~':'')+eur(o.price)+'</b> / night'+(o.est?' est.':'')+' · '+eur(o.price*s.nights)+' total <span class="chip '+(over?'warn':'ok')+'">'+(over?'over €'+BUDGET:'in budget')+'</span></div>'+
+        (b?'<div class="price"><b>¥'+fmt(o.yen)+'</b> total · about '+eur(o.price)+' / night <span class="chip ok">confirmed</span></div>'+
+           '<div class="conf">Conf. '+esc(b.conf)+' · '+esc(b.room)+'<br>'+esc(b.pay)+' · cancellation '+esc(b.cancel)+(b.note?'<br><b>'+esc(b.note)+'</b>':'')+'</div>'
+          :'<div class="price"><b>'+(o.est?'~':'')+eur(o.price)+'</b> / night'+(o.est?' est.':'')+' · '+eur(o.price*s.nights)+' total <span class="chip '+(over?'warn':'ok')+'">'+(over?'over €'+BUDGET:'in budget')+'</span></div>')+
         '<div class="price">'+(o.est?esc(o.reviews):'Score '+o.score+' · '+o.reviews+' reviews')+'</div><p>'+esc(o.blurb)+'</p>'+
         '<div class="perks">'+o.perks.map(function(p){return '<span class="chip">'+esc(p)+'</span>'}).join("")+'</div>'+
-        '<div class="links">'+(o.url?'<a class="btn primary" target="_blank" rel="noopener" href="'+o.url+'">Book direct</a>':'<a class="btn primary" target="_blank" rel="noopener" href="'+bookUrl(o,s)+'">Booking.com'+(s.ci2?' '+s.ci.slice(8)+' Nov':'')+'</a>')+(s.ci2?'<a class="btn primary" target="_blank" rel="noopener" href="'+bookUrl(o,{ci:s.ci2,co:s.co2})+'">Booking.com '+s.ci2.slice(8)+' Nov</a>':'')+'<a class="btn" target="_blank" rel="noopener" href="'+mapUrl(o.map)+'">Map</a></div></label>'}).join("")+'</div></div>'});
+        '<div class="links">'+(b?'<a class="btn primary" target="_blank" rel="noopener" href="https://secure.booking.com/myreservations.en-gb.html">My bookings</a><a class="btn" target="_blank" rel="noopener" href="'+bookUrl(o,s)+'">Hotel page</a>':(o.url?'<a class="btn primary" target="_blank" rel="noopener" href="'+o.url+'">Book direct</a>':'<a class="btn primary" target="_blank" rel="noopener" href="'+bookUrl(o,s)+'">Booking.com</a>'))+'<a class="btn" target="_blank" rel="noopener" href="'+mapUrl(o.map)+'">Map</a></div></label>'}).join("")+'</div></div>'});
   document.getElementById("stays").innerHTML=html;
-  document.getElementById("selTotal").textContent=eur(tot);
-  document.getElementById("minTotal").textContent=eur(min);
-  document.getElementById("maxTotal").textContent=eur(max);
-  document.getElementById("avgNight").textContent=eur(Math.round(tot/nights));
-  document.getElementById("tileTotal").textContent=eur(tot);
+  document.getElementById("selTotal").textContent=eur(totE);
+  document.getElementById("yenTotal").textContent="¥"+fmt(totY);
+  document.getElementById("avgNight").textContent=eur(Math.round(totE/nights));
+  document.getElementById("nightsTotal").textContent=nights;
+  document.getElementById("tileTotal").textContent=eur(totE);
 }
 renderStays();
 document.getElementById("stays").addEventListener("change",function(e){
@@ -946,7 +942,8 @@ document.getElementById("stays").addEventListener("change",function(e){
 /* ---------- logistics ---------- */
 var logiDone=store("ors.logi")||{};
 document.getElementById("logiTable").insertAdjacentHTML("beforeend",LOGI.map(function(r,i){
-  return '<tr><td><input type="checkbox" id="lg-'+i+'" data-i="'+i+'"'+(logiDone[i]?' checked':'')+' aria-label="done"></td><td><b>'+esc(r[0])+'</b></td><td class="num">'+esc(r[1])+'</td><td>'+esc(r[2])+'</td><td>'+esc(r[3])+'</td></tr>'}).join(""));
+  var d=logiDone[i]!==undefined?logiDone[i]:!!r[4];
+  return '<tr><td><input type="checkbox" id="lg-'+i+'" data-i="'+i+'"'+(d?' checked':'')+' aria-label="done"></td><td><b>'+esc(r[0])+'</b></td><td class="num">'+esc(r[1])+'</td><td>'+esc(r[2])+'</td><td>'+esc(r[3])+'</td></tr>'}).join(""));
 document.getElementById("logiTable").addEventListener("change",function(e){var el=e.target;if(el.type!=="checkbox")return;logiDone[el.dataset.i]=el.checked;store("ors.logi",logiDone)});
 
 /* ---------- SOP & kit ---------- */
@@ -1001,12 +998,13 @@ var PRE=[
  ["Passports valid beyond 10 Nov, photo of each in the group chat","now","Japan needs validity for the stay only, but airlines are stricter."],
  ["Visa status for whoever needs one, dates matching the new itinerary","now","Resubmit if still pending; fine if issued."],
  ["Travel insurance bought, policy number screenshotted","now","Hiking cover included."],
- ["All six hotels booked from the Genius account, confirmations saved offline","20 Oct","Free cancellation where possible; Kumano inns first."],
- ["Kansai-Hiroshima Area Pass bought, voucher saved","20 Oct","Pickup Kyoto Station 4 Nov with passports."],
- ["SmartEX: both shinkansen legs booked, QR codes saved","18 and 28 Oct","Seats D/E on 31 Oct, A/B on 8 Nov, for Fuji."],
+ ["All five hotels booked from the Genius account, confirmations saved offline","done 18 Oct","Kabukicho Tower, KIORI, Midoriya, S-Presso East, APA Ningyocho. Numbers on the Billeting tab.",true],
+ ["Midoriya messaged through Booking: non-smoking room, dinner for two, arrival 18:00","before 28 Oct","Booked as a smoking room; breakfast included, dinner not. Free cancellation ends 28 Oct."],
+ ["Kansai-Hiroshima Area Pass bought on the JR-WEST site, start date 3 Nov, confirmation saved","done 27 Oct","Collect at Kyoto Station 1 or 2 Nov with passports and the card used; then reserve the Kuroshio and Nozomi seats online.",true],
+ ["SmartEX: both shinkansen legs booked, QR codes saved","28 Oct and 1 Nov","31 Oct by 28 Oct 23:30; 8 Nov Hayatoku 7 by 1 Nov 23:30. Seats D/E on 31 Oct, A/B on 8 Nov, for Fuji."],
  ["Shibuya Sky slot booked for 29 Oct 16:30","26 Oct","Official site only."],
- ["Kumano Kotsu timetable screenshotted for 3 and 4 Nov","26 Oct","tb-kumano.jp. The 10:10 Tanabe → Hosshinmon-oji and the 08:00 Yunomine → Shingu are the ones that matter."],
- ["Omakase lunches reserved: Sushi Tokyo Ten 30 Oct, Manten Sushi Marunouchi 8 Nov","22 Oct","Counter seats, 12:00. Say if either of you avoids anything."],
+ ["Kumano Kotsu timetable screenshotted for 3 and 4 Nov","26 Oct","tb-kumano.jp. The 10:10 Tanabe → Hosshinmon-oji, the Yunomine → Kawayu hop about 17:45, and the Kawayu → Shingu bus about 08:10 are the ones that matter."],
+ ["Omakase lunches reserved: Sushi Tokyo Ten 30 Oct, Manten Sushi Marunouchi 8 Nov","now","Counter seats, 12:00. Say if either of you avoids anything."],
  ["Visit Japan Web completed for both, QR screenshotted","26 Oct","Immigration and customs in one QR."],
  ["Bank: cards usable abroad, no travel block, PINs known","26 Oct","Revolut or Wise for the best rate; 7-Eleven ATMs for cash."],
  ["eSIM installed on both phones","26 Oct","Activate on landing, not before."],
@@ -1022,7 +1020,8 @@ var PRE=[
 var buyDone=store("ors.buy")||{};
 function buyRows(id,rows,prefix){
   document.getElementById(id).insertAdjacentHTML("beforeend",rows.map(function(r,i){var k=prefix+i;
-    return '<tr><td><input type="checkbox" id="'+k+'" data-k="'+k+'"'+(buyDone[k]?' checked':'')+' aria-label="done"></td><td><b>'+esc(r[0])+'</b></td><td>'+esc(r[1])+'</td><td>'+esc(r[2])+'</td></tr>'}).join(""));
+    var d=buyDone[k]!==undefined?buyDone[k]:!!r[3];
+    return '<tr><td><input type="checkbox" id="'+k+'" data-k="'+k+'"'+(d?' checked':'')+' aria-label="done"></td><td><b>'+esc(r[0])+'</b></td><td>'+esc(r[1])+'</td><td>'+esc(r[2])+'</td></tr>'}).join(""));
   document.getElementById(id).addEventListener("change",function(e){var el=e.target;if(el.type!=="checkbox")return;buyDone[el.dataset.k]=el.checked;store("ors.buy",buyDone)});
 }
 buyRows("buyTable",BUY,"b-"); buyRows("buyJpTable",BUYJP,"j-"); buyRows("preTable",PRE,"p-");
