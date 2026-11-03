@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Operation Rising Sun" xmlns="http://www.topografix.com/GPX/1/1">
+  <metadata><name>3 Nov v2: Hosshinmon-oji to Hongu, Oyunohara, then the road to Kawayu Midoriya, all on foot</name><desc>6.9 km Nakahechi trail, 1 km to the torii, 4.3 km of road (Route 168 south to Ukegawa, Route 311 west along the Oto river). About 12 km, 3h45 walking. Waypoints from OpenStreetMap; fit to Komoot's network on import.</desc></metadata>
+  <wpt lat="33.8617469" lon="135.7206005"><name>Hosshinmon-oji</name><desc>Bus 14:03. Toilets, water, stamp box.</desc></wpt>
+  <wpt lat="33.8584282" lon="135.7369837"><name>Mizunomi-oji</name><desc>Schoolhouse, spring, stamp box.</desc></wpt>
+  <wpt lat="33.8602049" lon="135.7568176"><name>Fushiogami-oji</name><desc>First view of the torii. Tea house, toilets, stamp box. About 15:20.</desc></wpt>
+  <wpt lat="33.8417477" lon="135.7729220"><name>Haraido-oji</name><desc>Back gate of the shrine.</desc></wpt>
+  <wpt lat="33.8403512" lon="135.7736333"><name>Kumano Hongu Taisha</name><desc>Goshuin office shuts 17:00. World Heritage Centre by the bus stop for a taxi if legs say so.</desc></wpt>
+  <wpt lat="33.8346547" lon="135.7744110"><name>Oyunohara</name><desc>The 34 m torii. Sunset 16:55. Torch on from here.</desc></wpt>
+  <wpt lat="33.8216701" lon="135.7886382"><name>Ukegawa junction</name><desc>Route 168 meets Route 311. Turn right, west, signed Tanabe / Kawayu.</desc></wpt>
+  <wpt lat="33.8129008" lon="135.7702325"><name>Sansuikan Kawayu Midoriya</name><desc>Check-in by 19:00. River bath below the inn.</desc></wpt>
+  <wpt lat="33.8291897" lon="135.7577217"><name>Tsuboyu (evening, optional)</name><desc>2.5 km up the valley from Kawayu, or taxi. Last entry about 21:00.</desc></wpt>
+  <rte><name>Hosshinmon-oji to Kawayu on foot</name>
+    <rtept lat="33.8617469" lon="135.7206005"><name>Hosshinmon-oji</name></rtept>
+    <rtept lat="33.8584282" lon="135.7369837"><name>Mizunomi-oji</name></rtept>
+    <rtept lat="33.8602049" lon="135.7568176"><name>Fushiogami-oji</name></rtept>
+    <rtept lat="33.8417477" lon="135.7729220"><name>Haraido-oji</name></rtept>
+    <rtept lat="33.8403512" lon="135.7736333"><name>Kumano Hongu Taisha</name></rtept>
+    <rtept lat="33.8346547" lon="135.7744110"><name>Oyunohara</name></rtept>
+    <rtept lat="33.8216701" lon="135.7886382"><name>Ukegawa junction</name></rtept>
+    <rtept lat="33.8129008" lon="135.7702325"><name>Sansuikan Kawayu Midoriya</name></rtept>
+  </rte>
+</gpx>
