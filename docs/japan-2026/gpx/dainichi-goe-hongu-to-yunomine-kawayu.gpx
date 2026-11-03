@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Operation Rising Sun" xmlns="http://www.topografix.com/GPX/1/1">
+  <metadata><name>Dainichi-goe: Hongu to Yunomine (Tsuboyu), then the road to Kawayu Midoriya</name><desc>Fallback and no-taxi leg. 3.4 km over the ridge, then 2.5 km of valley road. Let Komoot fit the line to the path.</desc></metadata>
+  <wpt lat="33.8403512" lon="135.7736333"><name>Kumano Hongu Taisha</name></wpt>
+  <wpt lat="33.8333967" lon="135.7713653"><name>Dainichi-goe start (Hongu side)</name><desc>Trail climbs from the road below the shrine.</desc></wpt>
+  <wpt lat="33.8316286" lon="135.7619782"><name>Dainichi-goe ridge</name><desc>Short and steep. Tsukimigaoka shrine near the top.</desc></wpt>
+  <wpt lat="33.8309140" lon="135.7667669"><name>Haraido-oji (Dainichi-goe)</name></wpt>
+  <wpt lat="33.8291897" lon="135.7577217"><name>Tsuboyu</name><desc>UNESCO bath, 30-minute slots, ¥800, last entry about 21:00.</desc></wpt>
+  <wpt lat="33.8286995" lon="135.7575631"><name>Yunomine Onsen bus stop</name><desc>Holiday buses to Kawayu 16:34 and 19:09.</desc></wpt>
+  <wpt lat="33.8129008" lon="135.7702325"><name>Sansuikan Kawayu Midoriya</name><desc>Check-in 15:00-19:00. River bath below the inn.</desc></wpt>
+  <rte><name>Hongu to Yunomine to Kawayu</name>
+    <rtept lat="33.8403512" lon="135.7736333"><name>Kumano Hongu Taisha</name></rtept>
+    <rtept lat="33.8333967" lon="135.7713653"><name>Dainichi-goe start</name></rtept>
+    <rtept lat="33.8309140" lon="135.7667669"><name>Haraido-oji</name></rtept>
+    <rtept lat="33.8316286" lon="135.7619782"><name>Dainichi-goe ridge</name></rtept>
+    <rtept lat="33.8291897" lon="135.7577217"><name>Tsuboyu</name></rtept>
+    <rtept lat="33.8129008" lon="135.7702325"><name>Sansuikan Kawayu Midoriya</name></rtept>
+  </rte>
+</gpx>
