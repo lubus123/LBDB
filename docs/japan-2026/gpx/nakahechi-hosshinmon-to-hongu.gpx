@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Operation Rising Sun" xmlns="http://www.topografix.com/GPX/1/1">
+  <metadata><name>Nakahechi: Hosshinmon-oji to Kumano Hongu Taisha and Oyunohara</name><desc>3 Nov 2026. 6.9 km trail plus 1 km to the torii. Waypoints from OpenStreetMap; let Komoot fit the line to the Kumano Kodo path.</desc></metadata>
+  <wpt lat="33.8617469" lon="135.7206005"><name>Hosshinmon-oji</name><desc>Bus stop, trailhead, stamp box, toilets. 14:03.</desc></wpt>
+  <wpt lat="33.8584282" lon="135.7369837"><name>Mizunomi-oji</name><desc>Old schoolhouse, spring, stamp box.</desc></wpt>
+  <wpt lat="33.8602049" lon="135.7568176"><name>Fushiogami-oji</name><desc>First view of the Oyunohara torii. Tea house, stamp box. About 15:20.</desc></wpt>
+  <wpt lat="33.8417477" lon="135.7729220"><name>Haraido-oji</name><desc>Purification oji at the back gate of the shrine.</desc></wpt>
+  <wpt lat="33.8403512" lon="135.7736333"><name>Kumano Hongu Taisha</name><desc>Goshuin office shuts 17:00. World Heritage Centre by the bus stop below books the taxi.</desc></wpt>
+  <wpt lat="33.8346547" lon="135.7744110"><name>Oyunohara</name><desc>The 34 m torii. Sunset 16:55.</desc></wpt>
+  <rte><name>Nakahechi to Hongu</name>
+    <rtept lat="33.8617469" lon="135.7206005"><name>Hosshinmon-oji</name></rtept>
+    <rtept lat="33.8584282" lon="135.7369837"><name>Mizunomi-oji</name></rtept>
+    <rtept lat="33.8602049" lon="135.7568176"><name>Fushiogami-oji</name></rtept>
+    <rtept lat="33.8417477" lon="135.7729220"><name>Haraido-oji</name></rtept>
+    <rtept lat="33.8403512" lon="135.7736333"><name>Kumano Hongu Taisha</name></rtept>
+    <rtept lat="33.8346547" lon="135.7744110"><name>Oyunohara</name></rtept>
+  </rte>
+</gpx>
